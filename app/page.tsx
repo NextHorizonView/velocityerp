@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import Hello from "@/components/Velocity";
+import SuperAdminDashboard from "@/components/SuperAdminDashboard";
+
 
 
 
@@ -8,7 +9,7 @@ export default function Home() {
     <>
       
         <div>
-         <DashboardLayout><Hello/></DashboardLayout>
+         <DashboardLayout><SuperAdminDashboard /></DashboardLayout>
         
         </div>
     

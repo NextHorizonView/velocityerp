@@ -12,7 +12,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
             <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
             <div className={`${isCollapsed ? 'ml-8' : 'ml-64'} transition-all duration-300`}>
                 <DashboardHeader isCollapsed={isCollapsed} />

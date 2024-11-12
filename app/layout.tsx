@@ -38,7 +38,7 @@ export default function RootLayout({
             
 
             <main className="flex flex-col items-center justify-center min-h-screen w-full">
-              <header className="lg:hidden absolute top-4 left-4 bg-slate-500">
+              <header className="lg:hidden absolute top-4 left-4 bg-slate-500 ">
                
               </header>
               <div className="flex flex-col justify-center w-full mx-auto">
