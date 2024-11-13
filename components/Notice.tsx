@@ -1,5 +1,6 @@
 import React from 'react';
 import { Eye, MoreVertical } from 'lucide-react';
+import Image from 'next/image';
 
 const NoticeBoard = () => {
   return (
@@ -15,10 +16,12 @@ const NoticeBoard = () => {
           <div className="flex items-center space-x-4">
             {/* Notice Image */}
             <div className="w-12 h-12 rounded-lg overflow-hidden">
-              <img 
-                src="/api/placeholder/48/48" 
+              <Image 
+                src="https://images.unsplash.com/photo-1725714834412-7d7154ac4e4e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzfHx8ZW58MHx8fHx8" 
                 alt="Competition notice" 
-                className="w-full h-full object-cover"
+                width={48}
+                height={48}
+                className="object-cover"
               />
             </div>
 

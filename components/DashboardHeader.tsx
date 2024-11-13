@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect, FC } from 'react';
 import {
     RiSearchLine,
     RiMailLine,
-    RiBellLine,
     RiArrowDownSLine
 } from 'react-icons/ri';
 import { IoIosNotifications } from "react-icons/io";
@@ -100,7 +99,7 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
                     {/* Profile */}
                     <div className="flex items-center gap-2 cursor-pointer">
                         <img
-                            src="/api/placeholder/32/32"
+                            src="https://images.unsplash.com/photo-1725714834412-7d7154ac4e4e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzfHx8ZW58MHx8fHx8"
                             alt="Profile"
                             className="h-8 w-8 rounded-full"
                         />
