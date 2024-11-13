@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 
+
+
 const SuperAdminDashboard = () => {
   const [tasks, setTasks] = useState([
     'Distribute the books in all class',
@@ -127,6 +129,7 @@ const SuperAdminDashboard = () => {
           </div>
         </div>
       </div>
+      
     </div>
   );
 };
