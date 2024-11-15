@@ -11,7 +11,7 @@ import {
   RiFileListLine,
   RiNotificationLine,
   RiArrowLeftLine,
-  RiLoginCircleLine,
+
 } from "react-icons/ri";
 import { MdClass } from "react-icons/md";
 import Image from "next/image";
@@ -37,7 +37,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const pathname = usePathname();
 
   const menuItems = [
-    { icon: <RiLoginCircleLine size={20} />, label: "login", path: "/login" },
+   
     {
       icon: <RiDashboardLine size={20} />,
       label: "Dashboard",
