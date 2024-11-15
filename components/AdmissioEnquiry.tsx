@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +10,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type Status = "connected" | "new" | "declined" | "pending" | "enrolled";
 
@@ -27,7 +34,7 @@ interface Student {
   status: Status;
 }
 
-const students: Student[] = [
+const studentsData: Student[] = [
   {
     id: 1,
     name: "Alice Johnson",
@@ -74,15 +81,27 @@ const getStatusButtonVariant = (status: Status): ButtonVariant => {
     case "declined":
       return "destructive";
     case "pending":
-      return "secondary"; // Changed to 'secondary' or another valid variant
+      return "secondary";
     case "enrolled":
       return "default";
     default:
-      return "default"; // In case of any undefined status
+      return "default";
   }
 };
 
 export default function StudentStatusTable() {
+  const [students, setStudents] = React.useState<Student[]>(studentsData);
+  const [openPopover, setOpenPopover] = React.useState<number | null>(null);
+
+  const handleStatusChange = (id: number, newStatus: Status) => {
+    setStudents((prev) =>
+      prev.map((student) =>
+        student.id === id ? { ...student, status: newStatus } : student
+      )
+    );
+    setOpenPopover(null);
+  };
+
   return (
     <div className="container mx-auto py-10">
       <Table>
@@ -101,10 +120,44 @@ export default function StudentStatusTable() {
               <TableCell>{student.number}</TableCell>
               <TableCell>{student.schoolType}</TableCell>
               <TableCell className="text-right">
-                <Button variant={getStatusButtonVariant(student.status)}>
-                  {student.status.charAt(0).toUpperCase() +
-                    student.status.slice(1)}
-                </Button>
+                <Popover
+                  open={openPopover === student.id}
+                  onOpenChange={(isOpen) =>
+                    setOpenPopover(isOpen ? student.id : null)
+                  }
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      className="w-44"
+                      variant={getStatusButtonVariant(student.status)}
+                    >
+                      {student.status.charAt(0).toUpperCase() +
+                        student.status.slice(1)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-4 space-y-2 w-44">
+                    {(
+                      [
+                        "connected",
+                        "new",
+                        "declined",
+                        "pending",
+                        "enrolled",
+                      ] as Status[]
+                    )
+                      .filter((status) => status !== student.status)
+                      .map((status) => (
+                        <Button
+                          key={status}
+                          variant={getStatusButtonVariant(status)}
+                          className="w-full"
+                          onClick={() => handleStatusChange(student.id, status)}
+                        >
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </Button>
+                      ))}
+                  </PopoverContent>
+                </Popover>
               </TableCell>
             </TableRow>
           ))}

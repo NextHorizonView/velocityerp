@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +10,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type Status = "connected" | "new" | "declined" | "pending" | "enrolled";
 
@@ -19,7 +26,7 @@ interface BusinessEnquiry {
   status: Status;
 }
 
-const businessEnquiries: BusinessEnquiry[] = [
+const businessEnquiriesData: BusinessEnquiry[] = [
   {
     id: 1,
     name: "John Doe",
@@ -66,7 +73,7 @@ const getStatusButtonVariant = (status: Status) => {
     case "declined":
       return "destructive";
     case "pending":
-      return "secondary"; // or any other variant you prefer
+      return "secondary";
     case "enrolled":
       return "default";
     default:
@@ -75,6 +82,20 @@ const getStatusButtonVariant = (status: Status) => {
 };
 
 export default function BusinessEnquiryTable() {
+  const [enquiries, setEnquiries] = React.useState<BusinessEnquiry[]>(
+    businessEnquiriesData
+  );
+  const [openPopover, setOpenPopover] = React.useState<number | null>(null);
+
+  const handleStatusChange = (id: number, newStatus: Status) => {
+    setEnquiries((prev) =>
+      prev.map((enquiry) =>
+        enquiry.id === id ? { ...enquiry, status: newStatus } : enquiry
+      )
+    );
+    setOpenPopover(null);
+  };
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-2xl font-bold mb-6">Business Enquiries</h1>
@@ -88,16 +109,50 @@ export default function BusinessEnquiryTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {businessEnquiries.map((enquiry) => (
+          {enquiries.map((enquiry) => (
             <TableRow key={enquiry.id}>
               <TableCell className="font-medium">{enquiry.name}</TableCell>
               <TableCell>{enquiry.number}</TableCell>
               <TableCell>{enquiry.companyName}</TableCell>
               <TableCell className="text-right">
-                <Button variant={getStatusButtonVariant(enquiry.status)}>
-                  {enquiry.status.charAt(0).toUpperCase() +
-                    enquiry.status.slice(1)}
-                </Button>
+                <Popover
+                  open={openPopover === enquiry.id}
+                  onOpenChange={(isOpen) =>
+                    setOpenPopover(isOpen ? enquiry.id : null)
+                  }
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      className="w-44"
+                      variant={getStatusButtonVariant(enquiry.status)}
+                    >
+                      {enquiry.status.charAt(0).toUpperCase() +
+                        enquiry.status.slice(1)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-4 space-y-2 w-44">
+                    {(
+                      [
+                        "connected",
+                        "new",
+                        "declined",
+                        "pending",
+                        "enrolled",
+                      ] as Status[]
+                    )
+                      .filter((status) => status !== enquiry.status)
+                      .map((status) => (
+                        <Button
+                          key={status}
+                          variant={getStatusButtonVariant(status)}
+                          className="w-full"
+                          onClick={() => handleStatusChange(enquiry.id, status)}
+                        >
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </Button>
+                      ))}
+                  </PopoverContent>
+                </Popover>
               </TableCell>
             </TableRow>
           ))}
