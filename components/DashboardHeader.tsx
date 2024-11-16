@@ -1,10 +1,12 @@
 "use client";
 import React, { useState, useRef, useEffect, FC } from 'react';
-import { usePathname } from "next/navigation"; // Import usePathname for the current path
+import { usePathname } from "next/navigation";
 import {
     RiSearchLine,
     RiMailLine,
-    RiArrowDownSLine
+    RiArrowDownSLine,
+    RiMenu3Line,
+    RiCloseLine
 } from 'react-icons/ri';
 import { IoIosNotifications } from "react-icons/io";
 
@@ -14,8 +16,10 @@ interface DashboardHeaderProps {
 
 const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
     const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const pathname = usePathname(); // Get the current path
+    const pathname = usePathname();
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -36,7 +40,6 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
         { code: 'HI', name: 'हिंदी' }
     ];
 
-    // Determine the title based on the current path
     const getTitle = () => {
         if (pathname.includes("/enquiry")) {
             if (pathname === "/enquiry/admission") {
@@ -44,19 +47,32 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
             } else if (pathname === "/enquiry/business") {
                 return "Enquiry - Business";
             }
-            // Add more conditional cases if you have more enquiry subpages
         }
-        return "Dashboard"; // Default to Dashboard if no enquiry path
+        return "Dashboard";
     };
 
     return (
-        <div className={`fixed top-0 ${isCollapsed ? 'left-8' : 'left-64'} right-0 bg-white border-b border-gray-200 z-10 transition-all duration-300`}>
-            <div className="flex items-center justify-between px-6 py-3">
-                <div className="flex items-center gap-8">
-                    <h1 className="text-xl mr-10 font-semibold text-gray-900">{getTitle()}</h1> {/* Dynamic title */}
+        <div className={`fixed top-0 right-0 bg-white border-b border-gray-200 z-10 transition-all duration-300
+            ${isCollapsed ? 'lg:left-8' : 'lg:left-64'} left-0`}>
+            <div className="flex items-center justify-between px-4 lg:px-6 py-3">
+                {/* Mobile Menu Button */}
+                <button 
+                    className="lg:hidden p-2 rounded-md hover:bg-gray-100"
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                >
+                    {isMobileMenuOpen ? (
+                        <RiCloseLine className="h-6 w-6" />
+                    ) : (
+                        <RiMenu3Line className="h-6 w-6" />
+                    )}
+                </button>
 
-                    {/* Search bar */}
-                    <div className="relative max-w-md">
+                {/* Title and Search Section */}
+                <div className="flex items-center gap-4 lg:gap-8">
+                    <h1 className="text-lg lg:text-xl font-semibold text-gray-900 hidden sm:block">{getTitle()}</h1>
+
+                    {/* Search bar - Desktop */}
+                    <div className="hidden lg:block relative max-w-md">
                         <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
                             <RiSearchLine className="h-4 w-4 text-gray-400" />
                         </div>
@@ -66,12 +82,20 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
                             className="pl-8 w-[350px] h-9 text-sm border bg-gray-50 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>
+
+                    {/* Search Icon - Mobile */}
+                    <button 
+                        className="lg:hidden p-2 rounded-md hover:bg-gray-100"
+                        onClick={() => setIsSearchOpen(!isSearchOpen)}
+                    >
+                        <RiSearchLine className="h-5 w-5" />
+                    </button>
                 </div>
 
                 {/* Right side */}
-                <div className="flex items-center gap-10">
-                    {/* Language selector */}
-                    <div className="relative" ref={dropdownRef}>
+                <div className="flex items-center gap-4 lg:gap-10">
+                    {/* Language selector - Desktop */}
+                    <div className="hidden lg:block relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
                             className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-gray-100"
@@ -114,17 +138,58 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
                     {/* Profile */}
                     <div className="flex items-center gap-2 cursor-pointer">
                         <img
-                            src="https://images.unsplash.com/photo-1725714834412-7d7154ac4e4e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzfHx8ZW58MHx8fHx8"
+                            src="/api/placeholder/32/32"
                             alt="Profile"
                             className="h-8 w-8 rounded-full"
                         />
-                        <div className="flex flex-col">
+                        <div className="hidden sm:flex flex-col">
                             <span className="text-sm font-medium text-gray-900">Sanjay Singh</span>
                             <span className="text-xs text-gray-500">Admin</span>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Search Bar */}
+            {isSearchOpen && (
+                <div className="lg:hidden px-4 pb-3">
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
+                            <RiSearchLine className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Find student, teach, etc."
+                            className="pl-8 w-full h-9 text-sm border bg-gray-50 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile Menu */}
+            {isMobileMenuOpen && (
+                <div className="lg:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg">
+                    <div className="px-4 py-3 space-y-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">Language:</span>
+                            <select className="border rounded px-2 py-1 text-sm">
+                                {languages.map((lang) => (
+                                    <option key={lang.code} value={lang.code}>
+                                        {lang.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <span className="text-sm font-medium">Quick Links:</span>
+                            <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Profile Settings</a>
+                            <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Notifications</a>
+                            <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Messages</a>
+                            <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Sign Out</a>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

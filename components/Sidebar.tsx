@@ -27,7 +27,7 @@ interface SidebarProps {
 
 const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const pathname = usePathname();
-  const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(true); // Default to open if required.
+  const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(false);
 
   const menuItems = [
     {
