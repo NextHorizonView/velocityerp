@@ -6,7 +6,7 @@ import NoticeBoard from '@/components/Notice';
 import Tasks from '@/components/Task';
 
 const SuperAdminDashboard: React.FC = () => {
-  const [currentDate] = useState<Date>(new Date(2024, 2));
+
   
   const stats = [
     { label: 'Student', value: '790' },
