@@ -105,22 +105,27 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
         })}
 
         {/* Enquiry Section */}
-        <div>
+        <div
+          className="relative group"
+          onMouseEnter={() => setIsEnquiryExpanded(true)}
+          onMouseLeave={() => setIsEnquiryExpanded(false)}
+          onClick={() => setIsEnquiryExpanded((prev) => !prev)}
+        >
           <div
-            onClick={() => setIsEnquiryExpanded(!isEnquiryExpanded)}
-            className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 hover:bg-gray-50 ${
-              isEnquiryExpanded ? "bg-gray-100 border-r-4 border-red-500" : ""
+            className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 ${
+              isEnquiryExpanded ? "bg-gray-100 border-r-4 border-red-500" : "hover:bg-gray-50"
             }`}
           >
             <AiOutlineQuestionCircle size={20} className="text-gray-700" />
             <span className="ml-4 text-gray-700">Enquiry</span>
           </div>
 
+          {/* Dropdown: Positioned within Sidebar */}
           {isEnquiryExpanded && (
-            <div className="pl-8">
+            <div className="flex flex-col bg-[#FAFAF8] pl-8 pr-4 py-2">
               <Link
                 href="/enquiry/admission"
-                className={`flex items-center py-2 px-4 text-sm cursor-pointer transition-colors duration-200 ${
+                className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${
                   pathname === "/enquiry/admission"
                     ? "text-red-500 font-medium"
                     : "text-gray-700 hover:bg-gray-50"
@@ -131,7 +136,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
               </Link>
               <Link
                 href="/enquiry/business"
-                className={`flex items-center py-2 px-4 text-sm cursor-pointer transition-colors duration-200 ${
+                className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${
                   pathname === "/enquiry/business"
                     ? "text-red-500 font-medium"
                     : "text-gray-700 hover:bg-gray-50"
