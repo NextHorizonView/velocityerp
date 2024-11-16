@@ -1,5 +1,5 @@
 "use client";
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,21 +11,13 @@ import {
   RiFileListLine,
   RiNotificationLine,
   RiArrowLeftLine,
-
+  RiArrowRightDoubleFill,
+  RiUserAddLine,
 } from "react-icons/ri";
 import { MdClass } from "react-icons/md";
 import Image from "next/image";
 import castEducation from "@/public/castEducation.jpg";
-import { RiArrowRightDoubleFill } from "react-icons/ri";
 import { AiOutlineQuestionCircle } from "react-icons/ai";
-import {
-  Menubar,
-  MenubarContent,
-  MenubarItem,
-  MenubarMenu,
-  MenubarTrigger,
-} from "@/components/ui/menubar";
-import { RiUserAddLine } from "react-icons/ri";
 import { FaUserGraduate } from "react-icons/fa";
 
 interface SidebarProps {
@@ -35,9 +27,9 @@ interface SidebarProps {
 
 const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const pathname = usePathname();
+  const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(true); // Default to open if required.
 
   const menuItems = [
-   
     {
       icon: <RiDashboardLine size={20} />,
       label: "Dashboard",
@@ -53,7 +45,6 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     },
     { icon: <MdClass size={20} />, label: "Class", path: "/class" },
     { icon: <RiFileListLine size={20} />, label: "Exam", path: "/exam" },
-
     {
       icon: <RiNotificationLine size={20} />,
       label: "Notice",
@@ -112,45 +103,46 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             </Link>
           );
         })}
-        <Menubar className="border-none shadow-none w-full">
-          <MenubarMenu>
-            <MenubarTrigger
-              className={`flex items-center w-full cursor-pointer transition-colors duration-200 hover:bg-gray-50 ${
-                pathname === "/enquiry/admission" ||
-                pathname === "/enquiry/business"
-                  ? "bg-gray-100 border-r-4 border-red-500"
-                  : "hover:bg-gray-50"
-              }`}
-            >
-              <AiOutlineQuestionCircle size={24} className=" text-gray-700" />
-              <span className="ml-4 text-gray-700">Enquiry</span>
-            </MenubarTrigger>
-            <MenubarContent
-              align="start"
-              alignOffset={-8}
-              className="w-[calc(100%-1rem)] ml-2"
-            >
-              <MenubarItem>
-                <Link
-                  href="/enquiry/admission"
-                  className="flex items-center w-full py-2 px-4 text-sm"
-                >
-                  <RiUserAddLine size={24} />
-                  <span className="ml-4 text-gray-700">Admission</span>
-                </Link>
-              </MenubarItem>
-              <MenubarItem>
-                <Link
-                  href="/enquiry/business"
-                  className="flex items-center w-full py-2 px-4 text-sm text-gray-400"
-                >
-                  <FaUserGraduate size={24} />
-                  <span className="ml-4 text-gray-700">Business</span>
-                </Link>
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
-        </Menubar>
+
+        {/* Enquiry Section */}
+        <div>
+          <div
+            onClick={() => setIsEnquiryExpanded(!isEnquiryExpanded)}
+            className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 hover:bg-gray-50 ${
+              isEnquiryExpanded ? "bg-gray-100 border-r-4 border-red-500" : ""
+            }`}
+          >
+            <AiOutlineQuestionCircle size={20} className="text-gray-700" />
+            <span className="ml-4 text-gray-700">Enquiry</span>
+          </div>
+
+          {isEnquiryExpanded && (
+            <div className="pl-8">
+              <Link
+                href="/enquiry/admission"
+                className={`flex items-center py-2 px-4 text-sm cursor-pointer transition-colors duration-200 ${
+                  pathname === "/enquiry/admission"
+                    ? "text-red-500 font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <RiUserAddLine size={20} />
+                <span className="ml-4">Admission</span>
+              </Link>
+              <Link
+                href="/enquiry/business"
+                className={`flex items-center py-2 px-4 text-sm cursor-pointer transition-colors duration-200 ${
+                  pathname === "/enquiry/business"
+                    ? "text-red-500 font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <FaUserGraduate size={20} />
+                <span className="ml-4">Business</span>
+              </Link>
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* Hide Sidebar Button */}
