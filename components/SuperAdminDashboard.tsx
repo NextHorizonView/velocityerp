@@ -1,5 +1,4 @@
-'use client'
-import React, { useState } from 'react';
+import React from 'react';
 import DashboardStats from '@/components/DashboardStats';
 import AttendanceInfo from '@/components/AttendanceInfo';
 import NoticeBoard from '@/components/Notice';
