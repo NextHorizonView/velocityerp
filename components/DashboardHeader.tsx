@@ -103,7 +103,7 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
             </button>
 
             {isLangDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 py-3">
+              <div className="absolute right-0 mt-1 w-96 bg-white rounded-md shadow-lg border p-10 border-gray-200 py-3">
                 {/* Google Translate Component */}
                 <GoogleTranslate />
               </div>
