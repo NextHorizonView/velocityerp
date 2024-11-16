@@ -80,7 +80,7 @@ export default function StudentStatusTable() {
   return (
     <div className="container mx-auto py-10 px-4">
       <div className="overflow-x-auto">
-        <Table className="min-w-full">
+        <Table className="min-w-full border">
           <TableHeader>
             <TableRow className="">
               <TableHead className="text-left p-4 w-[150px]">Name</TableHead>

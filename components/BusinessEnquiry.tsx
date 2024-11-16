@@ -53,22 +53,22 @@ export default function BusinessEnquiryTable() {
 
   return (
     <div className="container mx-auto py-10 px-4">
-      <Table className="border-separate">
+      <Table className="border-separate border">
         <TableHeader>
           <TableRow>
             <TableHead className="text-left w-1/4">Name</TableHead>
             <TableHead className="text-left w-1/4">Number</TableHead>
-            <TableHead className="text-left w-1/4">Company Name</TableHead>
+           
             <TableHead className="text-center w-1/4">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {enquiries.map((enquiry, index) => (
             <React.Fragment key={enquiry.id}>
-              <TableRow className="bg-white rounded-lg">
+              <TableRow className=" rounded-lg">
                 <TableCell className="font-medium">{enquiry.name}</TableCell>
                 <TableCell>{enquiry.number}</TableCell>
-                <TableCell>{enquiry.companyName}</TableCell>
+        
                 <TableCell className="text-center">
                   <Popover
                     open={openPopover === enquiry.id}
