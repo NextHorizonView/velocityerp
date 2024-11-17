@@ -1,3 +1,5 @@
+
+//
 "use client";
 
 import * as React from "react";
@@ -15,60 +17,79 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { getFirestore, collection, getDocs } from "firebase/firestore";
+
+import { query, where } from "firebase/firestore";
+
+import { db, auth, storage } from "@/firebaseConfig"; 
+
 
 type Status = "connected" | "new" | "declined" | "pending" | "enrolled";
 
 interface Student {
-  id: number;
+  id: string;
   name: string;
   number: string;
-  schoolType: string;
   status: Status;
 }
 
-const studentsData: Student[] = [
-  {
-    id: 1,
-    name: "Alice Johnson",
-    number: "001",
-    schoolType: "High School",
-    status: "connected",
-  },
-  {
-    id: 2,
-    name: "Bob Smith",
-    number: "002",
-    schoolType: "Middle School",
-    status: "new",
-  },
-  {
-    id: 3,
-    name: "Charlie Brown",
-    number: "003",
-    schoolType: "Elementary",
-    status: "declined",
-  },
-  {
-    id: 4,
-    name: "Diana Prince",
-    number: "004",
-    schoolType: "High School",
-    status: "pending",
-  },
-  {
-    id: 5,
-    name: "Ethan Hunt",
-    number: "005",
-    schoolType: "Middle School",
-    status: "enrolled",
-  },
-];
-
 export default function StudentStatusTable() {
-  const [students, setStudents] = React.useState<Student[]>(studentsData);
-  const [openPopover, setOpenPopover] = React.useState<number | null>(null);
+  const [students, setStudents] = React.useState<Student[]>([]);
+  const [openPopover, setOpenPopover] = React.useState<string | null>(null);
 
-  const handleStatusChange = (id: number, newStatus: Status) => {
+  // React.useEffect(() => {
+  //   const fetchStudents = async () => {
+  //     const querySnapshot = await getDocs(collection(db, "AdmissionEnquiry"));
+  //     const data = querySnapshot.docs.map((doc) => {
+  //       const enquiry = doc.data();
+  //       return {
+  //         id: doc.id,
+  //         name: `${enquiry.EnquiryFirstName} ${enquiry.EnquiryLastName}`,
+  //         number: enquiry.EnquiryPhoneNumber,
+  //         status: "new" as Status, // Default status; adjust based on your backend logic
+  //       };
+  //     });
+  //     setStudents(data);
+  //   };
+
+  //   fetchStudents();
+  // }, []);
+
+
+
+
+React.useEffect(() => {
+  const fetchStudents = async () => {
+    try {
+      // Constructing a Firestore query
+      const studentsQuery = query(
+        collection(db, "AdmissionEnquiry"),
+        where("EnquiryType", "==", "Admission")
+      );
+      const querySnapshot = await getDocs(studentsQuery);
+
+      // Mapping the query snapshot to the required format
+      const data = querySnapshot.docs.map((doc) => {
+        const enquiry = doc.data();
+        return {
+          id: doc.id,
+          name: `${enquiry.EnquiryFirstName} ${enquiry.EnquiryLastName}`,
+          number: enquiry.EnquiryPhoneNumber,
+          status: enquiry.EnquiryStatus as Status, // Use the actual status from the database
+        };
+      });
+
+      setStudents(data);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+    }
+  };
+
+  fetchStudents();
+}, []);
+
+
+  const handleStatusChange = (id: string, newStatus: Status) => {
     setStudents((prev) =>
       prev.map((student) =>
         student.id === id ? { ...student, status: newStatus } : student
@@ -82,10 +103,9 @@ export default function StudentStatusTable() {
       <div className="overflow-x-auto">
         <Table className="min-w-full border">
           <TableHeader>
-            <TableRow className="">
+            <TableRow>
               <TableHead className="text-left p-4 w-[150px]">Name</TableHead>
               <TableHead className="text-left p-4 w-[100px]">Number</TableHead>
-              <TableHead className="text-left p-4 w-[150px]">School Type</TableHead>
               <TableHead className="text-center p-4 w-[200px]">Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -94,7 +114,6 @@ export default function StudentStatusTable() {
               <TableRow key={student.id} className="border-t border-gray-200">
                 <TableCell className="p-4 font-medium">{student.name}</TableCell>
                 <TableCell className="p-4">{student.number}</TableCell>
-                <TableCell className="p-4">{student.schoolType}</TableCell>
                 <TableCell className="p-4 text-center">
                   <Popover
                     open={openPopover === student.id}
@@ -115,7 +134,7 @@ export default function StudentStatusTable() {
                         .map((status) => (
                           <Button
                             key={status}
-                            className="w-full bg-gray-200 rounded-3xl  text-gray-700 hover:bg-gray-300"
+                            className="w-full bg-gray-200 rounded-3xl text-gray-700 hover:bg-gray-300"
                             onClick={() => handleStatusChange(student.id, status)}
                           >
                             {status.charAt(0).toUpperCase() + status.slice(1)}
