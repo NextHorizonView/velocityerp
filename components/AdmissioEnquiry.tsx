@@ -17,11 +17,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import {  collection, getDocs } from "firebase/firestore";
 
 import { query, where } from "firebase/firestore";
 
-import { db, auth, storage } from "@/firebaseConfig"; 
+import { db } from "@/firebaseConfig"; 
 
 
 type Status = "connected" | "new" | "declined" | "pending" | "enrolled";
@@ -37,23 +37,7 @@ export default function StudentStatusTable() {
   const [students, setStudents] = React.useState<Student[]>([]);
   const [openPopover, setOpenPopover] = React.useState<string | null>(null);
 
-  // React.useEffect(() => {
-  //   const fetchStudents = async () => {
-  //     const querySnapshot = await getDocs(collection(db, "AdmissionEnquiry"));
-  //     const data = querySnapshot.docs.map((doc) => {
-  //       const enquiry = doc.data();
-  //       return {
-  //         id: doc.id,
-  //         name: `${enquiry.EnquiryFirstName} ${enquiry.EnquiryLastName}`,
-  //         number: enquiry.EnquiryPhoneNumber,
-  //         status: "new" as Status, // Default status; adjust based on your backend logic
-  //       };
-  //     });
-  //     setStudents(data);
-  //   };
 
-  //   fetchStudents();
-  // }, []);
 
 
 
