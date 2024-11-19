@@ -1,4 +1,4 @@
-// page.tsx
+// Login.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -27,7 +27,7 @@ const Login = () => {
 
       if (role === 'admin') {
         console.log('Admin logged in successfully');
-        router.push('/');
+        router.push('/dashboard');
       } else {
         console.error('User does not have admin role');
         alert('You do not have admin privileges');
@@ -48,7 +48,7 @@ const Login = () => {
 
       if (role === 'admin') {
         console.log('Admin signed in with Google');
-        router.push('/');
+        router.push('/dashboard');
       } else {
         console.error('User does not have admin role');
         alert('You do not have admin privileges');

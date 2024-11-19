@@ -20,7 +20,7 @@ import { collection, getDocs } from "firebase/firestore";
 
 import { query, where } from "firebase/firestore";
 
-import { db } from "@/firebaseConfig"; 
+import { db } from "@/lib/firebaseConfig"; 
 
 
 type Status = "connected" | "new" | "declined" | "pending" | "enrolled";
