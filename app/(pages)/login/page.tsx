@@ -1,13 +1,63 @@
-import React from 'react';
+// Page.tsx
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation'; // Import useRouter from next/navigation
 import LoginImage from '@/public/LoginImage.jpg';
 import CastEducation from '@/public/castEducation.jpg';
 import { FcGoogle } from 'react-icons/fc'; 
-import { FaGooglePlay} from 'react-icons/fa'; 
+import { FaGooglePlay } from 'react-icons/fa'; 
 import { AiOutlineApple } from "react-icons/ai";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, getIdTokenResult } from 'firebase/auth';
+import { auth } from '@/lib/firebaseConfig'; // Import Firebase auth
 
 const Page = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const router = useRouter(); // Initialize the router
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      const idTokenResult = await userCredential.user.getIdTokenResult();
+      const role = idTokenResult.claims.role;
+
+      if (role === 'admin') {
+        console.log('Admin logged in successfully');
+        router.push('/');
+      } else {
+        console.error('User does not have admin role');
+        alert('You do not have admin privileges');
+      }
+    } catch (error: any) {
+      console.error('Error logging in:', error.message);
+      alert('Error logging in: ' + error.message);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const idTokenResult = await userCredential.user.getIdTokenResult();
+      const role = idTokenResult.claims.role;
+
+      if (role === 'admin') {
+        console.log('Admin signed in with Google');
+        router.push('/');
+      } else {
+        console.error('User does not have admin role');
+        alert('You do not have admin privileges');
+      }
+    } catch (error: any) {
+      console.error('Error signing in with Google:', error.message);
+      alert('Error signing in with Google: ' + error.message);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left Section with Illustration */}
@@ -44,7 +94,7 @@ const Page = () => {
           </div>
 
           {/* Form */}
-          <form className="mt-8 space-y-6">
+          <form onSubmit={handleLogin} className="mt-8 space-y-6">
             <div className="space-y-5">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700">
@@ -57,6 +107,8 @@ const Page = () => {
                     type="text"
                     required
                     placeholder="Enter your username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
@@ -73,6 +125,8 @@ const Page = () => {
                     type="password"
                     required
                     placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
@@ -114,21 +168,19 @@ const Page = () => {
 
             {/* Login and Google Sign-In Buttons */}
             <div className="space-y-4">
-              <Button className="w-full bg-orange-400 hover:bg-orange-500 text-white py-3 rounded-lg transition-colors duration-200 text-base font-semibold">
+              <Button type="submit" className="w-full bg-orange-400 hover:bg-orange-500 text-white py-3 rounded-lg transition-colors duration-200 text-base font-semibold">
                 Login
               </Button>
 
               <Button
                 variant="outline"
+                onClick={handleGoogleSignIn}
                 className="w-full py-3 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center space-x-3 text-base"
               >
                 <FcGoogle className="w-5 h-5" />
                 <span className="text-gray-900">Sign in with Google</span>
               </Button>
             </div>
-
-            {/* Terms and Policy Checkbox */}
-
           </form>
 
           {/* App Store Buttons Styled as in Image */}
