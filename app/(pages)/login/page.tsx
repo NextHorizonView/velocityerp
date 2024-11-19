@@ -1,7 +1,7 @@
-// Page.tsx
+// page.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation'; // Import useRouter from next/navigation
@@ -10,7 +10,7 @@ import CastEducation from '@/public/castEducation.jpg';
 import { FcGoogle } from 'react-icons/fc'; 
 import { FaGooglePlay } from 'react-icons/fa'; 
 import { AiOutlineApple } from "react-icons/ai";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, getIdTokenResult } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebaseConfig'; // Import Firebase auth
 
 const Page = () => {
