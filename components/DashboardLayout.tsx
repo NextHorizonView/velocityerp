@@ -5,7 +5,7 @@ import DashboardHeader from './DashboardHeader';
 import Calendar from '@/components/Calender';
 import Events from '@/components/Events';  // Added Events import
 import { ReactNode } from 'react';
-
+import withAdminAuth from '@/lib/withAdminAuth';
 interface DashboardLayoutProps {
     children: ReactNode;
 }
@@ -74,4 +74,4 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     );
 };
 
-export default DashboardLayout;
+export default withAdminAuth(DashboardLayout);

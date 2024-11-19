@@ -19,6 +19,7 @@ import Image from "next/image";
 import castEducation from "@/public/castEducation.jpg";
 import { AiOutlineQuestionCircle } from "react-icons/ai";
 import { FaUserGraduate } from "react-icons/fa";
+import withAdminAuth from '@/lib/withAdminAuth';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -162,4 +163,4 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   );
 };
 
-export default Sidebar;
+export default withAdminAuth(Sidebar);

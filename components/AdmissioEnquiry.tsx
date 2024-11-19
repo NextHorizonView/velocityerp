@@ -1,5 +1,3 @@
-
-//
 "use client";
 
 import * as React from "react";
@@ -17,73 +15,58 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {  collection, getDocs } from "firebase/firestore";
-
-import { query, where } from "firebase/firestore";
-
-import { db } from "@/firebaseConfig"; 
-
-
-type Status = "connected" | "new" | "declined" | "pending" | "enrolled";
-
-interface Student {
-  id: string;
-  name: string;
-  number: string;
-  status: Status;
-}
+import useSWR from "swr";
+import { fetchEnquiryDetails, Student ,Status} from "@/components/helper/firebaseHelper";
+import { db } from "@/lib/firebaseConfig";
+import { doc,updateDoc } from "firebase/firestore";
 
 export default function StudentStatusTable() {
-  const [students, setStudents] = React.useState<Student[]>([]);
   const [openPopover, setOpenPopover] = React.useState<string | null>(null);
 
+ 
 
 
+  const { data: students, error,mutate } = useSWR<Student[]>(
+    "Admission", 
+    () => fetchEnquiryDetails("Admission") 
+  );
 
 
+  const handleStatusChange = async (id: string, newStatus: Status) => {
+    if (!students) return;
 
-React.useEffect(() => {
-  const fetchStudents = async () => {
-    try {
-      // Constructing a Firestore query
-      const studentsQuery = query(
-        collection(db, "AdmissionEnquiry"),
-        where("EnquiryType", "==", "Admission")
-      );
-      const querySnapshot = await getDocs(studentsQuery);
-
-      // Mapping the query snapshot to the required format
-      const data = querySnapshot.docs.map((doc) => {
-        const enquiry = doc.data();
-        return {
-          id: doc.id,
-          name: `${enquiry.EnquiryFirstName} ${enquiry.EnquiryLastName}`,
-          number: enquiry.EnquiryPhoneNumber,
-          status: enquiry.EnquiryStatus as Status, // Use the actual status from the database
-        };
-      });
-
-      setStudents(data);
-    } catch (error) {
-      console.error("Error fetching students:", error);
-    }
-  };
-
-  fetchStudents();
-}, []);
-
-
-  const handleStatusChange = (id: string, newStatus: Status) => {
-    setStudents((prev) =>
-      prev.map((student) =>
-        student.id === id ? { ...student, status: newStatus } : student
-      )
+    const updatedStudents = students.map((student) =>
+      student.id === id ? { ...student, status: newStatus } : student
     );
+
+    mutate(updatedStudents, false); 
+
+    try {
+      const studentRef = doc(db, "AdmissionEnquiry", id); 
+      await updateDoc(studentRef, {
+        EnquiryStatus: newStatus, 
+      });
+      console.log("Student status updated successfully in Firestore");
+    } catch (error) {
+      console.error("Error updating student status in Firestore:", error);
+      
+      mutate(); 
+    }
+
     setOpenPopover(null);
   };
 
+  if (error) {
+    return <div>Error fetching data</div>;
+  }
+
+  if (!students) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="container mx-auto py-10 px-4">
+   
       <div className="overflow-x-auto">
         <Table className="min-w-full border">
           <TableHeader>
@@ -101,13 +84,14 @@ React.useEffect(() => {
                 <TableCell className="p-4 text-center">
                   <Popover
                     open={openPopover === student.id}
-                    onOpenChange={(isOpen) => setOpenPopover(isOpen ? student.id : null)}
+                    onOpenChange={(isOpen) =>
+                      setOpenPopover(isOpen ? student.id : null)
+                    }
                   >
                     <PopoverTrigger asChild>
-                      <Button
-                        className="w-[150px] bg-[#FAFAF8] text-gray-700 border rounded-3xl border-gray-300 hover:bg-gray-100"
-                      >
-                        {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+                      <Button className="w-[150px] bg-[#FAFAF8] text-gray-700 border rounded-3xl border-gray-300 hover:bg-gray-100">
+                        {student.status.charAt(0).toUpperCase() +
+                          student.status.slice(1)}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="p-4 space-y-2 w-[200px] border border-gray-300 bg-[#FAFAF8]">
@@ -119,7 +103,9 @@ React.useEffect(() => {
                           <Button
                             key={status}
                             className="w-full bg-gray-200 rounded-3xl text-gray-700 hover:bg-gray-300"
-                            onClick={() => handleStatusChange(student.id, status)}
+                            onClick={() =>
+                              handleStatusChange(student.id, status)
+                            }
                           >
                             {status.charAt(0).toUpperCase() + status.slice(1)}
                           </Button>
