@@ -1,13 +1,15 @@
-import DashboardLayout from "@/components/DashboardLayout";
+
 import SuperAdminDashboard from "@/components/SuperAdminDashboard";
+import Login from "@/components/Login";
 
 export default function Home() {
   return (
     <>
       <div>
-        <DashboardLayout>
-          <SuperAdminDashboard />
-        </DashboardLayout>
+        
+          {/* <SuperAdminDashboard /> */}
+          <Login/>
+        
       </div>
     </>
   );
