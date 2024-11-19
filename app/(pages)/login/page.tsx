@@ -1,7 +1,7 @@
 // page.tsx
 'use client';
 
-import React, { useState} from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation'; // Import useRouter from next/navigation
@@ -10,7 +10,7 @@ import CastEducation from '@/public/castEducation.jpg';
 import { FcGoogle } from 'react-icons/fc'; 
 import { FaGooglePlay } from 'react-icons/fa'; 
 import { AiOutlineApple } from "react-icons/ai";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
 import { auth } from '@/lib/firebaseConfig'; // Import Firebase auth
 
 const Page = () => {
@@ -32,9 +32,10 @@ const Page = () => {
         console.error('User does not have admin role');
         alert('You do not have admin privileges');
       }
-    } catch (error: any) {
-      console.error('Error logging in:', error.message);
-      alert('Error logging in: ' + error.message);
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      console.error('Error logging in:', authError.message);
+      alert('Error logging in: ' + authError.message);
     }
   };
 
@@ -52,9 +53,10 @@ const Page = () => {
         console.error('User does not have admin role');
         alert('You do not have admin privileges');
       }
-    } catch (error: any) {
-      console.error('Error signing in with Google:', error.message);
-      alert('Error signing in with Google: ' + error.message);
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      console.error('Error signing in with Google:', authError.message);
+      alert('Error signing in with Google: ' + authError.message);
     }
   };
 
