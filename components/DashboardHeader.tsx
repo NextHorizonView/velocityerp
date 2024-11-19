@@ -25,7 +25,10 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsLangDropdownOpen(false);
       }
     };
@@ -35,12 +38,14 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
   }, []);
 
   const getTitle = () => {
-    if (pathname.includes("/enquiry")) {
-      if (pathname === "/enquiry/admission") {
-        return "Enquiry - Admission";
-      } else if (pathname === "/enquiry/business") {
-        return "Enquiry - Business";
-      }
+    if (pathname === "/enquiry/admission") {
+      return "Enquiry - Admission";
+    } else if (pathname === "/enquiry/business") {
+      return "Enquiry - Business";
+    } else if (pathname === "/students") {
+      return "Students";
+    } else if (pathname === "/teacher") {
+      return "Teachers";
     }
     return "Dashboard";
   };
