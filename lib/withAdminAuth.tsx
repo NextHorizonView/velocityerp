@@ -20,7 +20,7 @@ const withAdminAuth = <P extends object>(WrappedComponent: ComponentType<P>) => 
             const idTokenResult = await getIdTokenResult(user);
             const role = idTokenResult.claims.role;
 
-            if (role !== 'admin') {
+            if (role !== 'admin' && role !== 'schoolAdmin' && role !== 'superAdmin' && role !== 'student') {
               console.error('User does not have admin role');
               router.push('/login'); // Redirect to login page if not admin
             }

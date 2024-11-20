@@ -13,6 +13,7 @@ import {
 import { Edit, Trash2 } from "lucide-react";
 import { IoIosCloudUpload } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io"; // Importing the search icon
+import Link from 'next/link';
 
 type Student = {
   id: number;
@@ -93,12 +94,16 @@ export default function Students() {
           </Button>
         </div>
         <div className="flex items-center space-x-4">
-          <Button
-            variant="default"
-            className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
-          >
-            + Add new Student
-          </Button>
+          <Link href='/studentform'>
+            <Button
+              variant="default"
+              className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+            >
+              + Add new Student
+            </Button>
+          </Link>
+
+
           <div className="relative">
             <Input
               placeholder="Search"
@@ -149,8 +154,8 @@ export default function Students() {
                 <TableCell className="py-4">
                   <div
                     className={`w-20 h-8 flex items-center justify-center rounded-md text-xs font-medium ${student.gender === "Male"
-                        ? "bg-[#86efac] text-[#166534]"
-                        : "bg-[#fca5a5] text-[#991b1b]"
+                      ? "bg-[#86efac] text-[#166534]"
+                      : "bg-[#fca5a5] text-[#991b1b]"
                       }`}
                   >
                     {student.gender}

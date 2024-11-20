@@ -1,4 +1,3 @@
-// Login.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -25,8 +24,11 @@ const Login = () => {
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
 
-      if (role === 'admin') {
-        console.log('Admin logged in successfully');
+      if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
+        console.log('User logged in successfully');
+        // Store user information in local storage
+        localStorage.setItem('userId', userCredential.user.uid);
+        localStorage.setItem('userRole', role);
         router.push('/dashboard');
       } else {
         console.error('User does not have admin role');
@@ -46,8 +48,11 @@ const Login = () => {
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
 
-      if (role === 'admin') {
-        console.log('Admin signed in with Google');
+      if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
+        console.log('User signed in with Google');
+        // Store user information in local storage
+        localStorage.setItem('userId', userCredential.user.uid);
+        localStorage.setItem('userRole', role);
         router.push('/dashboard');
       } else {
         console.error('User does not have admin role');
