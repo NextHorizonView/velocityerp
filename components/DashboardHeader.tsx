@@ -25,7 +25,10 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsLangDropdownOpen(false);
       }
     };
@@ -35,19 +38,21 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
   }, []);
 
   const getTitle = () => {
-    if (pathname.includes("/enquiry")) {
-      if (pathname === "/enquiry/admission") {
-        return "Enquiry - Admission";
-      } else if (pathname === "/enquiry/business") {
-        return "Enquiry - Business";
-      }
+    if (pathname === "/enquiry/admission") {
+      return "Enquiry - Admission";
+    } else if (pathname === "/enquiry/business") {
+      return "Enquiry - Business";
+    } else if (pathname === "/students") {
+      return "Students";
+    } else if (pathname === "/teacher") {
+      return "Teachers";
     }
     return "Dashboard";
   };
 
   return (
     <div
-      className={`fixed top-0 right-0 bg-white border-b border-gray-200 z-10 transition-all duration-300
+      className={`fixed top-0 right-0 bg-white border-gray-200 z-10 transition-all duration-300
       ${isCollapsed ? "lg:left-8" : "lg:left-64"} left-0`}
     >
       <div className="flex items-center justify-between px-4 lg:px-6 py-3">
@@ -126,10 +131,10 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
             </span>
           </div>
 
-          {/* Profile */}
+            {/* Profile */}
           <div className="flex items-center gap-2 cursor-pointer">
             <img
-              src="/api/placeholder/32/32"
+              src="https://images.unsplash.com/photo-1533636721434-0e2d61030955?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D"
               alt="Profile"
               className="h-8 w-8 rounded-full"
             />
