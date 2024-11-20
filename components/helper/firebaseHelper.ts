@@ -10,11 +10,14 @@ export interface Student {
   status: Status;
 }
 
-
-export const fetchEnquiryDetails = async (enquiryType: string): Promise<Student[]> => {
+export const fetchEnquiryDetails = async (enquiryType: string, userId: string): Promise<Student[]> => {
+  if (!userId) {
+    throw new Error("User ID is required to fetch enquiry details.");
+  }
   const studentsQuery = query(
     collection(db, "AdmissionEnquiry"),
-    where("EnquiryType", "==", enquiryType)
+    where("EnquiryType", "==", enquiryType),
+    where("EnquirySchoolId", "==", userId) 
   );
 
   const querySnapshot = await getDocs(studentsQuery);
