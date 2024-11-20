@@ -119,7 +119,7 @@ export default function Teachers() {
       </div>
 
       <div className="bg-[#FAFAF8] rounded-lg shadow-sm">
-        <Table className='border-b'>
+        <Table className='border-b  '>
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="cursor-pointer py-4 text-sm font-medium">
