@@ -1,6 +1,20 @@
 'use client';
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { FaTrash } from 'react-icons/fa'; 
+import { FaTrash, FaPlus, FaEdit } from 'react-icons/fa';
+
+// Define an enum for field types
+enum FieldType {
+  TEXT = 'text',
+  RADIO = 'radio',
+  DATE = 'date',
+  SELECT = 'select',
+}
+
+interface FormField {
+  name: string;
+  type: FieldType;
+  options?: string[]; // For radio and select types
+}
 
 interface FormData {
   [key: string]: string;
@@ -13,15 +27,29 @@ const StudentForm: React.FC = () => {
     education: '',
     skills: '',
     address: '',
-    gender: '', // Updated field
-    dateOfBirth: '', // Updated field
+    gender: '',
+    dateOfBirth: '', // Date field
     nationality: '',
     religion: '',
   });
 
-  const [fieldOrder, setFieldOrder] = useState<string[]>(Object.keys(formData)); // Maintain the field order
+  const [fields, setFields] = useState<FormField[]>([
+    { name: 'firstName', type: FieldType.TEXT },
+    { name: 'lastName', type: FieldType.TEXT },
+    { name: 'education', type: FieldType.TEXT },
+    { name: 'skills', type: FieldType.TEXT },
+    { name: 'address', type: FieldType.TEXT },
+    { name: 'gender', type: FieldType.RADIO, options: ['Male', 'Female'] },
+    { name: 'dateOfBirth', type: FieldType.DATE }, // Calendar field
+    { name: 'nationality', type: FieldType.TEXT },
+    { name: 'religion', type: FieldType.TEXT },
+  ]);
+
   const [isEditingFieldNames, setIsEditingFieldNames] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
   const [newFieldName, setNewFieldName] = useState('');
+  const [newFieldType, setNewFieldType] = useState<FieldType>(FieldType.TEXT);
+  const [newFieldOptions, setNewFieldOptions] = useState('');
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -38,6 +66,7 @@ const StudentForm: React.FC = () => {
 
   const handleFieldNameChange = (oldName: string, newName: string) => {
     if (newName.trim() && oldName !== newName) {
+      // Update form data
       setFormData((prev) => {
         const newFormData = { ...prev };
         newFormData[newName] = newFormData[oldName];
@@ -45,41 +74,149 @@ const StudentForm: React.FC = () => {
         return newFormData;
       });
 
-      setFieldOrder((prevOrder) =>
-        prevOrder.map((field) => (field === oldName ? newName : field))
+      // Update fields
+      setFields((prevFields) =>
+        prevFields.map((field) =>
+          field.name === oldName ? { ...field, name: newName } : field
+        )
       );
+
+      setEditingField(null);
     }
   };
 
   const handleAddField = () => {
     if (newFieldName.trim() && !formData[newFieldName]) {
+      const newField: FormField = {
+        name: newFieldName,
+        type: newFieldType,
+      };
+
+      if ((newFieldType === FieldType.RADIO || newFieldType === FieldType.SELECT) && newFieldOptions) {
+        newField.options = newFieldOptions.split(',').map((option) => option.trim());
+      }
+
       setFormData((prev) => ({
         ...prev,
         [newFieldName]: '',
       }));
 
-      setFieldOrder((prevOrder) => [...prevOrder, newFieldName]);
+      setFields((prevFields) => [...prevFields, newField]);
+
       setNewFieldName('');
+      setNewFieldType(FieldType.TEXT);
+      setNewFieldOptions('');
     }
   };
 
   const handleDeleteField = (fieldName: string) => {
+    if (['firstName', 'lastName'].includes(fieldName)) {
+      return;
+    }
+
     setFormData((prev) => {
       const newFormData = { ...prev };
       delete newFormData[fieldName];
       return newFormData;
     });
 
-    setFieldOrder((prevOrder) => prevOrder.filter((field) => field !== fieldName));
+    setFields((prevFields) => prevFields.filter((field) => field.name !== fieldName));
   };
 
-  // Helper function to format labels by adding spaces
-  const formatLabel = (label: string): string => {
-    return label
-      .split(/(?=[A-Z])/)
-      .join(' ') // Insert spaces before capital letters
-      .replace(/^./, (str) => str.toUpperCase()); // Capitalize the first letter
+  const renderField = (field: FormField) => {
+    const { name, type, options } = field;
+
+    const formatLabel = (label: string): string => {
+      return label
+        .split(/(?=[A-Z])/)
+        .join(' ')
+        .replace(/^./, (str) => str.toUpperCase());
+    };
+
+    const labelText = formatLabel(name);
+
+    switch (type) {
+      case FieldType.RADIO:
+        return (
+          <div className="relative border border-gray-300 rounded-md">
+            <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
+              {labelText}
+            </label>
+            <div className="flex items-center space-x-4 px-3 pt-5 py-2">
+              {options?.map((option) => (
+                <label key={option} className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name={name}
+                    value={option}
+                    checked={formData[name] === option}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-0"
+                  />
+                  <span className="text-sm text-gray-600">{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+
+      case FieldType.DATE:
+        return (
+          <div className="relative border border-gray-300 rounded-md pt-2">
+            <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
+              {labelText}
+            </label>
+            <input
+              type="date"
+              name={name}
+              value={formData[name] || ''}
+              onChange={handleChange}
+              className="w-full px-3 py-2 pt-2 border-0 focus:ring-0 focus:outline-none"
+            />
+          </div>
+        );
+
+      case FieldType.SELECT:
+        return (
+          <div className="relative border border-gray-300 rounded-md pt-2">
+            <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
+              {labelText}
+            </label>
+            <select
+              name={name}
+              value={formData[name] || ''}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border-0 focus:ring-0 focus:outline-none"
+            >
+              <option value="" disabled>
+                -- Select an option --
+              </option>
+              {options?.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="relative border border-gray-300 rounded-md pt-2">
+            <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
+              {labelText}
+            </label>
+            <input
+              name={name}
+              value={formData[name]}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border-0 focus:ring-0 focus:outline-none"
+            />
+          </div>
+        );
+    }
   };
+
 
   return (
     <div className="w-[100vh] max-w-2xl mx-auto p-4">
@@ -92,140 +229,117 @@ const StudentForm: React.FC = () => {
 
         <div className="px-6 py-8">
           <form onSubmit={handleSubmit} className="space-y-9">
-            {fieldOrder.map((key) => {
-              // Gender field as radio buttons
-              if (key === 'gender') {
-                return (
-                  <div key={key} className="relative border border-gray-300 rounded-md">
-                    <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
-                      Gender
-                    </label>
-                    <div className="flex items-center space-x-4 px-3 pt-5 py-2">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="gender"
-                          value="Male"
-                          checked={formData.gender === 'Male'}
-                          onChange={handleChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-0"
-                        />
-                        <span className="text-sm text-gray-600">Male</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="gender"
-                          value="Female"
-                          checked={formData.gender === 'Female'}
-                          onChange={handleChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-0"
-                        />
-                        <span className="text-sm text-gray-600">Female</span>
-                      </label>
-                    </div>
+            {fields.map((field) => (
+              <div key={field.name} className="relative group">
+                {renderField(field)}
+                {isEditingFieldNames && (
+                  <div className="absolute top-0 right-0 flex space-x-2">
+                    {field.name !== 'firstName' && field.name !== 'lastName' && (
+                      <>
+                        {editingField === field.name ? (
+                          <button
+                            type="button"
+                            onClick={() => setEditingField(null)}
+                            className="text-green-500 p-2 hover:bg-green-100 rounded-full"
+                            title="Save"
+                          >
+                            ✓
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setEditingField(field.name)}
+                            className="text-blue-500 p-2 hover:bg-blue-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            title="Edit Field"
+                          >
+                            <FaEdit />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteField(field.name)}
+                          className="text-black p-2 hover:bg-gray-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          title="Delete Field"
+                        >
+                          <FaTrash />
+                        </button>
+                      </>
+                    )}
                   </div>
-                );
-              }
-
-              // Date of Birth field with calendar
-              if (key === 'dateOfBirth') {
-                return (
-                  <div key={key} className="relative border border-gray-300 rounded-md">
-                    <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
-                      Date of Birth
-                    </label>
-                    <input
-                      type="date"
-                      name="dateOfBirth"
-                      value={formData.dateOfBirth}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pt-5  border-0 focus:ring-0 focus:outline-none"
-                    />
-                  </div>
-                );
-              }
-
-              // Format the label text for other fields
-              const labelText = formatLabel(key);
-
-              return (
-                <div key={key} className="relative border border-gray-300 rounded-md">
-                  {isEditingFieldNames ? (
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="text"
-                        defaultValue={key}
-                        onBlur={(e) => handleFieldNameChange(key, e.target.value)}
-                        className="w-1/2 px-3 text-lg py-2 border-0 focus:ring-0 focus:outline-none"
-                      />
-                      <input
-                        name={key}
-                        value={formData[key]}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border-0 focus:ring-0 focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteField(key)}
-                        className="text-black p-2"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
-                        {labelText}
-                      </label>
-                      <input
-                        name={key}
-                        value={formData[key]}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border-0 focus:ring-0 focus:outline-none"
-                      />
-                    </>
-                  )}
-                </div>
-              );
-            })}
+                )}
+              </div>
+            ))}
 
             {isEditingFieldNames && (
               <div className="flex flex-col items-start space-y-3">
-                <input
-                  type="text"
-                  value={newFieldName}
-                  onChange={(e) => setNewFieldName(e.target.value)}
-                  placeholder="Enter field name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
+                <div className="w-full grid grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    value={newFieldName}
+                    onChange={(e) => setNewFieldName(e.target.value)}
+                    placeholder="Enter field name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-0 focus:outline-none"
+                  />
+                  <select
+                    value={newFieldType}
+                    onChange={(e) => setNewFieldType(e.target.value as FieldType)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-0 focus:outline-none"
+                  >
+                    <option value={FieldType.TEXT}>Text</option>
+                    <option value={FieldType.RADIO}>Radio</option>
+                    <option value={FieldType.DATE}>Date</option>
+                    <option value={FieldType.SELECT}>Select</option>
+                  </select>
+                </div>
+
+                {(newFieldType === FieldType.RADIO || newFieldType === FieldType.SELECT) && (
+                  <input
+                    type="text"
+                    value={newFieldOptions}
+                    onChange={(e) => setNewFieldOptions(e.target.value)}
+                    placeholder="Enter options (comma-separated)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-0 focus:outline-none"
+                  />
+                )}
+
                 <button
                   type="button"
                   onClick={handleAddField}
-                  className="bg-green-500 text-white px-4 py-2 rounded-md"
+                  className="w-full py-2 bg-[#576086] text-white rounded-md"
                 >
                   Add Field
                 </button>
               </div>
             )}
 
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={() => setIsEditingFieldNames(!isEditingFieldNames)}
-                className="py-2 w-1/2 rounded-md text-white bg-[#576086] transition-colors"
-              >
-                {isEditingFieldNames ? 'Save Fields' : 'Edit Fields'}
-              </button>
-            </div>
+<div className="flex flex-col max-w-screen justify-center space-y-4 mt-6">
+  {/* Edit Fields / Save Changes Button */}
+  <button
+    type="button"
+    onClick={() => {
+      setIsEditingFieldNames(!isEditingFieldNames);
+      setEditingField(null);
+    }}
+    className={`py-2 px-4 flex justify-center items-center space-x-2 rounded-md text-white transition-colors ${isEditingFieldNames ? 'bg-blue-500' : 'bg-gray-500'}`}
+    style={{
+      backgroundColor: '#576086',
+    }}
+  >
+    <FaEdit />
+    <span>{isEditingFieldNames ? 'Save Changes' : 'Edit Fields'}</span>
+  </button>
 
-            <button
-              type="submit"
-              className="w-full py-2 rounded-md text-black transition-colors"
-              style={{ backgroundColor: '#FFD4BA' }}
-            >
-              Submit Form
-            </button>
+  {/* Click to Proceed Button */}
+  <button
+    type="button"
+    onClick={() => alert('Proceeding')} // Replace with your logic
+    className="py-2 px-8 bg-[#F7B696] text-[#0A3749] font-semibold rounded-md text-lg hover:bg-[#f79e7b] transition-colors duration-200"
+  >
+    Click to proceed
+  </button>
+</div>
+
+
           </form>
         </div>
       </div>
