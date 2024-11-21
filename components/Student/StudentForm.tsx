@@ -1,13 +1,13 @@
 'use client';
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { FaTrash, FaPlus, FaEdit } from 'react-icons/fa'; 
+import { FaTrash, FaPlus, FaEdit } from 'react-icons/fa';
 
 // Define an enum for field types
 enum FieldType {
   TEXT = 'text',
   RADIO = 'radio',
   DATE = 'date',
-  SELECT = 'select'
+  SELECT = 'select',
 }
 
 interface FormField {
@@ -28,7 +28,7 @@ const StudentForm: React.FC = () => {
     skills: '',
     address: '',
     gender: '',
-    dateOfBirth: '',
+    dateOfBirth: '', // Date field
     nationality: '',
     religion: '',
   });
@@ -40,7 +40,7 @@ const StudentForm: React.FC = () => {
     { name: 'skills', type: FieldType.TEXT },
     { name: 'address', type: FieldType.TEXT },
     { name: 'gender', type: FieldType.RADIO, options: ['Male', 'Female'] },
-    { name: 'dateOfBirth', type: FieldType.DATE },
+    { name: 'dateOfBirth', type: FieldType.DATE }, // Calendar field
     { name: 'nationality', type: FieldType.TEXT },
     { name: 'religion', type: FieldType.TEXT },
   ]);
@@ -75,40 +75,34 @@ const StudentForm: React.FC = () => {
       });
 
       // Update fields
-      setFields((prevFields) => 
-        prevFields.map((field) => 
+      setFields((prevFields) =>
+        prevFields.map((field) =>
           field.name === oldName ? { ...field, name: newName } : field
         )
       );
 
-      // Reset editing state
       setEditingField(null);
     }
   };
 
   const handleAddField = () => {
     if (newFieldName.trim() && !formData[newFieldName]) {
-      // Prepare field configuration
       const newField: FormField = {
         name: newFieldName,
-        type: newFieldType
+        type: newFieldType,
       };
 
-      // Add options for radio and select types
       if ((newFieldType === FieldType.RADIO || newFieldType === FieldType.SELECT) && newFieldOptions) {
-        newField.options = newFieldOptions.split(',').map(option => option.trim());
+        newField.options = newFieldOptions.split(',').map((option) => option.trim());
       }
 
-      // Update form data
       setFormData((prev) => ({
         ...prev,
         [newFieldName]: '',
       }));
 
-      // Add to fields array
       setFields((prevFields) => [...prevFields, newField]);
 
-      // Reset input fields
       setNewFieldName('');
       setNewFieldType(FieldType.TEXT);
       setNewFieldOptions('');
@@ -116,7 +110,6 @@ const StudentForm: React.FC = () => {
   };
 
   const handleDeleteField = (fieldName: string) => {
-    // Prevent deletion of core fields
     if (['firstName', 'lastName'].includes(fieldName)) {
       return;
     }
@@ -131,51 +124,8 @@ const StudentForm: React.FC = () => {
   };
 
   const renderField = (field: FormField) => {
-    // If this field is currently being edited
-    if (editingField === field.name) {
-      return (
-        <div className="flex items-center space-x-2">
-          <input
-            type="text"
-            defaultValue={field.name}
-            onBlur={(e) => handleFieldNameChange(field.name, e.target.value)}
-            className="w-1/2 px-3 text-lg py-2 border border-gray-300 rounded-md"
-          />
-          <select
-            value={field.type}
-            onChange={(e) => {
-              const newType = e.target.value as FieldType;
-              setFields(prevFields => 
-                prevFields.map(f => 
-                  f.name === field.name 
-                    ? { 
-                        ...f, 
-                        type: newType, 
-                        // Reset options if changing to a type that doesn't support them
-                        options: (newType === FieldType.RADIO || newType === FieldType.SELECT) 
-                          ? f.options || ['Option 1', 'Option 2']
-                          : undefined 
-                      } 
-                    : f
-                )
-              );
-            }}
-            className="w-1/2 px-3 py-2 border border-gray-300 rounded-md"
-          >
-            {Object.values(FieldType).map((type) => (
-              <option key={type} value={type}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
-      );
-    }
-
-    // Rest of the rendering logic remains the same as in the previous implementation
     const { name, type, options } = field;
 
-    // Helper function to format labels
     const formatLabel = (label: string): string => {
       return label
         .split(/(?=[A-Z])/)
@@ -185,8 +135,6 @@ const StudentForm: React.FC = () => {
 
     const labelText = formatLabel(name);
 
-    // Existing rendering logic for different field types (TEXT, RADIO, DATE, SELECT)
-    // ... (same as in previous implementation)
     switch (type) {
       case FieldType.RADIO:
         return (
@@ -212,10 +160,49 @@ const StudentForm: React.FC = () => {
           </div>
         );
 
-      // ... (other field type renderings remain the same)
+      case FieldType.DATE:
+        return (
+          <div className="relative border border-gray-300 rounded-md pt-2">
+            <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
+              {labelText}
+            </label>
+            <input
+              type="date"
+              name={name}
+              value={formData[name] || ''}
+              onChange={handleChange}
+              className="w-full px-3 py-2 pt-2 border-0 focus:ring-0 focus:outline-none"
+            />
+          </div>
+        );
+
+      case FieldType.SELECT:
+        return (
+          <div className="relative border border-gray-300 rounded-md pt-2">
+            <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
+              {labelText}
+            </label>
+            <select
+              name={name}
+              value={formData[name] || ''}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border-0 focus:ring-0 focus:outline-none"
+            >
+              <option value="" disabled>
+                -- Select an option --
+              </option>
+              {options?.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+
       default:
         return (
-          <div className="relative border border-gray-300 rounded-md">
+          <div className="relative border border-gray-300 rounded-md pt-2">
             <label className="absolute -top-2 left-2 bg-white px-1 text-md text-[#0A3749]">
               {labelText}
             </label>
@@ -229,6 +216,7 @@ const StudentForm: React.FC = () => {
         );
     }
   };
+
 
   return (
     <div className="w-[100vh] max-w-2xl mx-auto p-4">
@@ -282,7 +270,6 @@ const StudentForm: React.FC = () => {
               </div>
             ))}
 
-            {/* Rest of the form remains the same */}
             {isEditingFieldNames && (
               <div className="flex flex-col items-start space-y-3">
                 <div className="w-full grid grid-cols-2 gap-4">
@@ -291,18 +278,17 @@ const StudentForm: React.FC = () => {
                     value={newFieldName}
                     onChange={(e) => setNewFieldName(e.target.value)}
                     placeholder="Enter field name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-0 focus:outline-none"
                   />
                   <select
                     value={newFieldType}
                     onChange={(e) => setNewFieldType(e.target.value as FieldType)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-0 focus:outline-none"
                   >
-                    {Object.values(FieldType).map((type) => (
-                      <option key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </option>
-                    ))}
+                    <option value={FieldType.TEXT}>Text</option>
+                    <option value={FieldType.RADIO}>Radio</option>
+                    <option value={FieldType.DATE}>Date</option>
+                    <option value={FieldType.SELECT}>Select</option>
                   </select>
                 </div>
 
@@ -311,41 +297,49 @@ const StudentForm: React.FC = () => {
                     type="text"
                     value={newFieldOptions}
                     onChange={(e) => setNewFieldOptions(e.target.value)}
-                    placeholder="Enter comma-separated options"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="Enter options (comma-separated)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-0 focus:outline-none"
                   />
                 )}
 
                 <button
                   type="button"
                   onClick={handleAddField}
-                  className="bg-green-500 text-white px-4 py-2 rounded-md flex items-center space-x-2"
+                  className="w-full py-2 bg-[#576086] text-white rounded-md"
                 >
-                  <FaPlus /> <span>Add Field</span>
+                  Add Field
                 </button>
               </div>
             )}
 
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditingFieldNames(!isEditingFieldNames);
-                  setEditingField(null);
-                }}
-                className="py-2 w-1/2 rounded-md text-white bg-[#576086] transition-colors"
-              >
-                {isEditingFieldNames ? 'Save Fields' : 'Edit Fields'}
-              </button>
-            </div>
+<div className="flex flex-col max-w-screen justify-center space-y-4 mt-6">
+  {/* Edit Fields / Save Changes Button */}
+  <button
+    type="button"
+    onClick={() => {
+      setIsEditingFieldNames(!isEditingFieldNames);
+      setEditingField(null);
+    }}
+    className={`py-2 px-4 flex justify-center items-center space-x-2 rounded-md text-white transition-colors ${isEditingFieldNames ? 'bg-blue-500' : 'bg-gray-500'}`}
+    style={{
+      backgroundColor: '#576086',
+    }}
+  >
+    <FaEdit />
+    <span>{isEditingFieldNames ? 'Save Changes' : 'Edit Fields'}</span>
+  </button>
 
-            <button
-              type="submit"
-              className="w-full py-2 rounded-md text-black transition-colors"
-              style={{ backgroundColor: '#FFD4BA' }}
-            >
-              Submit Form
-            </button>
+  {/* Click to Proceed Button */}
+  <button
+    type="button"
+    onClick={() => alert('Proceeding')} // Replace with your logic
+    className="py-2 px-8 bg-[#F7B696] text-[#0A3749] font-semibold rounded-md text-lg hover:bg-[#f79e7b] transition-colors duration-200"
+  >
+    Click to proceed
+  </button>
+</div>
+
+
           </form>
         </div>
       </div>
