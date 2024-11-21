@@ -26,9 +26,15 @@ export default function StudentStatusTable() {
  
 
 
+
+  const userId = React.useMemo(() => {
+    const storedUserId = localStorage.getItem("userId");
+    return storedUserId || null;
+  }, []);
+
   const { data: students, error, mutate } = useSWR<Student[]>(
-    "Business", 
-    () => fetchEnquiryDetails("Business") 
+    userId ? `Business-${userId}` : null, 
+    () => (userId ? fetchEnquiryDetails("Business", userId) : Promise.resolve([])) 
   );
 
 
@@ -39,24 +45,22 @@ export default function StudentStatusTable() {
   const handleStatusChange = async (id: string, newStatus: Status) => {
     if (!students) return;
 
-    // Update the status locally for an optimistic UI update
     const updatedStudents = students.map((student) =>
       student.id === id ? { ...student, status: newStatus } : student
     );
 
     mutate(updatedStudents, false); // Optimistically update the UI
 
-    // Update the status in Firestore
     try {
-      const studentRef = doc(db, "AdmissionEnquiry", id); // Reference to the student's document
+      const studentRef = doc(db, "AdmissionEnquiry", id); 
       await updateDoc(studentRef, {
-        EnquiryStatus: newStatus, // Update the status field
+        EnquiryStatus: newStatus, 
       });
       console.log("Student status updated successfully in Firestore");
     } catch (error) {
       console.error("Error updating student status in Firestore:", error);
       // Optionally, revert the optimistic update in case of error
-      mutate(); // Re-fetch to get the correct data
+      mutate(); 
     }
 
     setOpenPopover(null);

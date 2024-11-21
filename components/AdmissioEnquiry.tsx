@@ -24,12 +24,16 @@ export default function StudentStatusTable() {
   const [openPopover, setOpenPopover] = React.useState<string | null>(null);
 
  
+  const userId = React.useMemo(() => {
+    const storedUserId = localStorage.getItem("userId");
+    return storedUserId || null;
+  }, []);
 
-
-  const { data: students, error,mutate } = useSWR<Student[]>(
-    "Admission", 
-    () => fetchEnquiryDetails("Admission") 
+  const { data: students, error, mutate } = useSWR<Student[]>(
+    userId ? `Admission-${userId}` : null, 
+    () => (userId ? fetchEnquiryDetails("Admission", userId) : Promise.resolve([])) 
   );
+
 
 
   const handleStatusChange = async (id: string, newStatus: Status) => {
