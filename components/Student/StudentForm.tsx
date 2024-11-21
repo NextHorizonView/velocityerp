@@ -12,9 +12,9 @@ enum FieldType {
 
 interface FormField {
   name: string;
-  label: string; // Added label property
+  label: string;
   type: FieldType;
-  options?: string[]; // For radio and select types
+  options?: string[];
 }
 
 interface FormData {
@@ -25,11 +25,14 @@ const StudentForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
+    city: '',
+    state: '',
+    pincode: '',
     education: '',
     skills: '',
     address: '',
     gender: '',
-    dateOfBirth: '', // Date field
+    dateOfBirth: '',
     nationality: '',
     religion: '',
   });
@@ -37,11 +40,24 @@ const StudentForm: React.FC = () => {
   const [fields, setFields] = useState<FormField[]>([
     { name: 'firstName', label: 'First Name', type: FieldType.TEXT },
     { name: 'lastName', label: 'Last Name', type: FieldType.TEXT },
+    { 
+      name: 'city', 
+      label: 'City', 
+      type: FieldType.SELECT, 
+      options: ['Mumbai', 'Delhi', 'Bangalore', 'Kolkata', 'Chennai'] 
+    },
+    { 
+      name: 'state', 
+      label: 'State', 
+      type: FieldType.SELECT, 
+      options: ['Maharashtra', 'Delhi', 'Karnataka', 'West Bengal', 'Tamil Nadu'] 
+    },
+    { name: 'pincode', label: 'Pincode', type: FieldType.TEXT },
     { name: 'education', label: 'Education', type: FieldType.TEXT },
     { name: 'skills', label: 'Skills', type: FieldType.TEXT },
     { name: 'address', label: 'Address', type: FieldType.TEXT },
     { name: 'gender', label: 'Gender', type: FieldType.RADIO, options: ['Male', 'Female'] },
-    { name: 'dateOfBirth', label: 'Date of Birth', type: FieldType.DATE }, // Calendar field
+    { name: 'dateOfBirth', label: 'Date of Birth', type: FieldType.DATE },
     { name: 'nationality', label: 'Nationality', type: FieldType.TEXT },
     { name: 'religion', label: 'Religion', type: FieldType.TEXT },
   ]);
@@ -76,32 +92,11 @@ const StudentForm: React.FC = () => {
     }
   };
 
-  // const handleFieldNameChange = (oldName: string, newName: string) => {
-  //   if (newName.trim() && oldName !== newName) {
-  //     // Update form data
-  //     setFormData((prev) => {
-  //       const newFormData = { ...prev };
-  //       newFormData[newName] = newFormData[oldName];
-  //       delete newFormData[oldName];
-  //       return newFormData;
-  //     });
-
-  //     // Update fields
-  //     setFields((prevFields) =>
-  //       prevFields.map((field) =>
-  //         field.name === oldName ? { ...field, name: newName } : field
-  //       )
-  //     );
-
-  //     setEditingField(null);
-  //   }
-  // };
-
   const handleAddField = () => {
     if (newFieldName.trim() && !formData[newFieldName]) {
       const newField: FormField = {
         name: newFieldName,
-        label: newFieldName.charAt(0).toUpperCase() + newFieldName.slice(1), // Capitalize first letter
+        label: newFieldName.charAt(0).toUpperCase() + newFieldName.slice(1),
         type: newFieldType,
       };
 
@@ -123,7 +118,7 @@ const StudentForm: React.FC = () => {
   };
 
   const handleDeleteField = (fieldName: string) => {
-    if (['firstName', 'lastName'].includes(fieldName)) {
+    if (['firstName', 'lastName', 'city', 'state', 'pincode'].includes(fieldName)) {
       return;
     }
 
@@ -277,7 +272,7 @@ const StudentForm: React.FC = () => {
                 {renderField(field)}
                 {isEditingFieldNames && (
                   <div className="absolute top-0 right-0 flex space-x-2">
-                    {field.name !== 'firstName' && field.name !== 'lastName' && (
+                    {!['firstName', 'lastName', 'city', 'state', 'pincode'].includes(field.name) && (
                       <>
                         {editingField === field.name ? (
                           <button
