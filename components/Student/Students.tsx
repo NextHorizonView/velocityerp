@@ -12,8 +12,26 @@ import {
 } from "@/components/ui/table";
 import { Edit, Trash2 } from "lucide-react";
 import { IoIosCloudUpload } from "react-icons/io";
-import { IoIosSearch } from "react-icons/io"; // Importing the search icon
+import { IoIosSearch } from "react-icons/io";
 import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Student = {
   id: number;
@@ -22,22 +40,157 @@ type Student = {
   phone: string;
   email: string;
   gender: "Male" | "Female";
+  // Additional fields
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  religion: string;
 };
 
 const ITEMS_PER_PAGE = 8;
 
 export default function Students() {
-  const [students] = useState<Student[]>([
-    { id: 1, name: "Jane Cooper", class: "VII A", phone: "(225) 555-0118", email: "jane@microsoft.com", gender: "Male" },
-    { id: 2, name: "Floyd Miles", class: "VIII B", phone: "(205) 555-0100", email: "floyd@yahoo.com", gender: "Female" },
-    { id: 3, name: "Ronald Richards", class: "IX A", phone: "(302) 555-0107", email: "ronald@adobe.com", gender: "Female" },
-    { id: 4, name: "Marvin McKinney", class: "X A", phone: "(252) 555-0126", email: "marvin@tesla.com", gender: "Male" },
-    { id: 5, name: "Jerome Bell", class: "VII A", phone: "(629) 555-0129", email: "jerome@google.com", gender: "Male" },
-    { id: 6, name: "Kathryn Murphy", class: "VIII B", phone: "(406) 555-0120", email: "kathryn@microsoft.com", gender: "Male" },
-    { id: 7, name: "Jacob Jones", class: "IX A", phone: "(208) 555-0112", email: "jacob@yahoo.com", gender: "Male" },
-    { id: 8, name: "Kristin Watson", class: "X A", phone: "(704) 555-0127", email: "kristin@facebook.com", gender: "Female" },
-    { id: 9, name: "Kristin Watson", class: "VII A", phone: "(704) 555-0127", email: "kristin@facebook.com", gender: "Female" },
-    { id: 10, name: "Kristin Watson", class: "VIII B", phone: "(704) 555-0127", email: "kristin@facebook.com", gender: "Female" },
+  const [students, setStudents] = useState<Student[]>([
+    {
+      id: 1,
+      name: "Jane Cooper",
+      class: "VII A",
+      phone: "(225) 555-0118",
+      email: "jane@microsoft.com",
+      gender: "Male",
+      address: "123 Main St",
+      city: "New York",
+      state: "NY",
+      pincode: "10001",
+      religion: "Christianity"
+    },
+    {
+      id: 2,
+      name: "Floyd Miles",
+      class: "VIII B",
+      phone: "(205) 555-0100",
+      email: "floyd@yahoo.com",
+      gender: "Female",
+      address: "456 Oak St",
+      city: "Los Angeles",
+      state: "CA",
+      pincode: "90001",
+      religion: "Islam",
+      
+    },
+    {
+      id: 3,
+      name: "Ronald Richards",
+      class: "IX A",
+      phone: "(302) 555-0107",
+      email: "ronald@adobe.com",
+      gender: "Female",
+      address: "789 Pine St",
+      city: "Chicago",
+      state: "IL",
+      pincode: "60601",
+      religion: "Hinduism",
+      
+    },
+    {
+      id: 4,
+      name: "Marvin McKinney",
+      class: "X A",
+      phone: "(252) 555-0126",
+      email: "marvin@tesla.com",
+      gender: "Male",
+      address: "321 Elm St",
+      city: "Houston",
+      state: "TX",
+      pincode: "77001",
+      religion: "Buddhism",
+    
+    },
+    {
+      id: 5,
+      name: "Jerome Bell",
+      class: "VII A",
+      phone: "(629) 555-0129",
+      email: "jerome@google.com",
+      gender: "Male",
+      address: "654 Maple St",
+      city: "Phoenix",
+      state: "AZ",
+      pincode: "85001",
+      religion: "Christianity",
+    
+    },
+    {
+      id: 6,
+      name: "Kathryn Murphy",
+      class: "VIII B",
+      phone: "(406) 555-0120",
+      email: "kathryn@microsoft.com",
+      gender: "Male",
+      address: "987 Cedar St",
+      city: "Philadelphia",
+      state: "PA",
+      pincode: "19101",
+      religion: "Islam",  
+      
+    },
+    {
+      id: 7,
+      name: "Jacob Jones",
+      class: "IX A",
+      phone: "(208) 555-0112",
+      email: "jacob@yahoo.com",
+      gender: "Male",
+      address: "741 Birch St",
+      city: "San Antonio",
+      state: "TX",
+      pincode: "78201",
+      religion: "Judaism",
+     
+    },
+    {
+      id: 8,
+      name: "Kristin Watson",
+      class: "X A",
+      phone: "(704) 555-0127",
+      email: "kristin@facebook.com",
+      gender: "Female",
+      address: "852 Walnut St",
+      city: "San Diego",
+      state: "CA",
+      pincode: "92101",
+      religion: "Sikhism",
+      
+    },
+    {
+      id: 9,
+      name: "Kristin Watson",
+      class: "VII A",
+      phone: "(704) 555-0127",
+      email: "kristin@facebook.com",
+      gender: "Female",
+      address: "963 Oak St",
+      city: "Dallas",
+      state: "TX",
+      pincode: "75201",
+      religion: "Christianity",
+     
+    },
+    {
+      id: 10,
+      name: "Kristin Watson",
+      class: "VIII B",
+      phone: "(704) 555-0127",
+      email: "kristin@facebook.com",
+      gender: "Female",
+      address: "159 Pine St",
+      city: "San Jose",
+      state: "CA",
+      pincode: "95101",
+      religion: "Hinduism",
+      
+    }
   ]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,6 +199,38 @@ export default function Students() {
     key: keyof Student;
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const handleEdit = (student: Student) => {
+    setEditingStudent({ ...student });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = (student: Student) => {
+    setStudentToDelete(student);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingStudent) {
+      setStudents(students.map(student =>
+        student.id === editingStudent.id ? editingStudent : student
+      ));
+      setIsEditDialogOpen(false);
+      setEditingStudent(null);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (studentToDelete) {
+      setStudents(students.filter(student => student.id !== studentToDelete.id));
+      setIsDeleteDialogOpen(false);
+      setStudentToDelete(null);
+    }
+  };
 
   const handleSort = (key: keyof Student) => {
     setSortConfig({
@@ -83,7 +268,7 @@ export default function Students() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-between items-start mb-6">
+    <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col space-y-2">
           <h1 className="text-2xl font-bold text-[#576086]">All Students</h1>
           <Button
@@ -102,7 +287,6 @@ export default function Students() {
               + Add new Student
             </Button>
           </Link>
-
 
           <div className="relative">
             <Input
@@ -153,20 +337,31 @@ export default function Students() {
                 <TableCell className="py-4">{student.email}</TableCell>
                 <TableCell className="py-4">
                   <div
-                    className={`w-20 h-8 flex items-center justify-center rounded-md text-xs font-medium ${student.gender === "Male"
-                      ? "bg-[#86efac] text-[#166534]"
-                      : "bg-[#fca5a5] text-[#991b1b]"
-                      }`}
+                    className={`w-20 h-8 flex items-center justify-center rounded-md text-xs font-medium ${
+                      student.gender === "Male"
+                        ? "bg-transparent text-black"
+                        : "bg-transparent text-black"
+                    }`}
                   >
                     {student.gender}
                   </div>
                 </TableCell>
                 <TableCell className="py-4">
                   <div className="flex space-x-2">
-                    <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-9 h-9 p-0"
+                      onClick={() => handleEdit(student)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-9 h-9 p-0"
+                      onClick={() => handleDelete(student)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -176,43 +371,216 @@ export default function Students() {
           </TableBody>
         </Table>
 
-
-        <div className="flex items-center justify-between px-6 py-4 border-t">
-          <div className="text-sm text-gray-500">
-            Showing data 1 to {Math.min(ITEMS_PER_PAGE, filteredAndSortedStudents.length)} of {filteredAndSortedStudents.length} entries
-          </div>
-          <div className="flex space-x-1">
+      <div className="flex items-center justify-between px-6 py-4 border-t">
+        <div className="text-sm text-gray-500">
+          Showing data {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedStudents.length)} of {filteredAndSortedStudents.length} entries
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <Button
-              variant="outline"
-              size="icon"
-              className="w-9 h-9"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCurrentPage(page)}
+              className={currentPage === page ? "bg-[#F7B696]" : ""}
             >
-              &lt;
+              {page}
             </Button>
-            {[...Array(totalPages)].map((_, index) => (
-              <Button
-                key={index}
-                variant={currentPage === index + 1 ? "default" : "outline"}
-                className={`w-9 h-9 ${currentPage === index + 1 ? "bg-[#F7B696]" : ""}`}
-                onClick={() => setCurrentPage(index + 1)}
-              >
-                {index + 1}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="icon"
-              className="w-9 h-9"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
-              &gt;
-            </Button>
-          </div>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
         </div>
       </div>
+
+   
+<Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+  <DialogContent className="max-w-md">
+    <DialogHeader>
+      <DialogTitle className="text-base">Edit Student Information</DialogTitle>
+    </DialogHeader>
+    {editingStudent && (
+      <div className="grid gap-3 py-2">
+        {/* Name */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Name</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.name}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, name: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Class */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Class</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.class}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, class: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Phone */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Phone</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.phone}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, phone: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Email */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Email</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.email}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, email: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Gender */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Gender</label>
+          <select
+            className="border rounded-md px-3 h-6 text-sm"
+            value={editingStudent.gender}
+            onChange={(e) =>
+              setEditingStudent({
+                ...editingStudent,
+                gender: e.target.value as "Male" | "Female",
+              })
+            }
+          >
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        {/* Address */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Address</label>
+          <textarea
+            className="border rounded-md px-3 py-1 h-8 text-sm resize-none"
+            value={editingStudent.address}
+            onChange={(e) =>
+              setEditingStudent({
+                ...editingStudent,
+                address: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        {/* City */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">City</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.city}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, city: e.target.value })
+            }
+          />
+        </div>
+
+        {/* State */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">State</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.state}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, state: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Pincode */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Pincode</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.pincode}
+            onChange={(e) =>
+              setEditingStudent({
+                ...editingStudent,
+                pincode: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        {/* Religion */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Religion</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.religion}
+            onChange={(e) =>
+              setEditingStudent({
+                ...editingStudent,
+                religion: e.target.value,
+              })
+            }
+          />
+        </div>
+      </div>
+    )}
+    <DialogFooter>
+      <DialogClose asChild>
+        <Button variant="outline" size="sm">
+          Cancel
+        </Button>
+      </DialogClose>
+      <Button onClick={handleSaveEdit} size="sm" className="bg-[#576086]">
+        Save changes
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Student</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this student? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
     </div>
   );
 }
