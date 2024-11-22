@@ -12,8 +12,26 @@ import {
 } from "@/components/ui/table";
 import { Edit, Trash2 } from "lucide-react";
 import { IoIosCloudUpload } from "react-icons/io";
-import { IoIosSearch } from "react-icons/io"; // Importing the search icon
+import { IoIosSearch } from "react-icons/io";
 import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Student = {
   id: number;
@@ -27,7 +45,7 @@ type Student = {
 const ITEMS_PER_PAGE = 8;
 
 export default function Students() {
-  const [students] = useState<Student[]>([
+  const [students, setStudents] = useState<Student[]>([
     { id: 1, name: "Jane Cooper", class: "VII A", phone: "(225) 555-0118", email: "jane@microsoft.com", gender: "Male" },
     { id: 2, name: "Floyd Miles", class: "VIII B", phone: "(205) 555-0100", email: "floyd@yahoo.com", gender: "Female" },
     { id: 3, name: "Ronald Richards", class: "IX A", phone: "(302) 555-0107", email: "ronald@adobe.com", gender: "Female" },
@@ -46,6 +64,42 @@ export default function Students() {
     key: keyof Student;
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
+
+  // New state for edit functionality
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  
+  // New state for delete functionality
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+
+  const handleEdit = (student: Student) => {
+    setEditingStudent({ ...student });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = (student: Student) => {
+    setStudentToDelete(student);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingStudent) {
+      setStudents(students.map(student => 
+        student.id === editingStudent.id ? editingStudent : student
+      ));
+      setIsEditDialogOpen(false);
+      setEditingStudent(null);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (studentToDelete) {
+      setStudents(students.filter(student => student.id !== studentToDelete.id));
+      setIsDeleteDialogOpen(false);
+      setStudentToDelete(null);
+    }
+  };
 
   const handleSort = (key: keyof Student) => {
     setSortConfig({
@@ -103,7 +157,6 @@ export default function Students() {
             </Button>
           </Link>
 
-
           <div className="relative">
             <Input
               placeholder="Search"
@@ -153,20 +206,31 @@ export default function Students() {
                 <TableCell className="py-4">{student.email}</TableCell>
                 <TableCell className="py-4">
                   <div
-                    className={`w-20 h-8 flex items-center justify-center rounded-md text-xs font-medium ${student.gender === "Male"
-                      ? "bg-[#86efac] text-[#166534]"
-                      : "bg-[#fca5a5] text-[#991b1b]"
-                      }`}
+                    className={`w-20 h-8 flex items-center justify-center rounded-md text-xs font-medium ${
+                      student.gender === "Male"
+                        ? "bg-transparent text-black"
+                        : "bg-transparent text-black"
+                    }`}
                   >
                     {student.gender}
                   </div>
                 </TableCell>
                 <TableCell className="py-4">
                   <div className="flex space-x-2">
-                    <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-9 h-9 p-0"
+                      onClick={() => handleEdit(student)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-9 h-9 p-0"
+                      onClick={() => handleDelete(student)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -175,7 +239,6 @@ export default function Students() {
             ))}
           </TableBody>
         </Table>
-
 
         <div className="flex items-center justify-between px-6 py-4 border-t">
           <div className="text-sm text-gray-500">
@@ -213,6 +276,92 @@ export default function Students() {
           </div>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
+          </DialogHeader>
+          {editingStudent && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Name</label>
+                <Input
+                  value={editingStudent.name}
+                  onChange={(e) =>
+                    setEditingStudent({ ...editingStudent, name: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Class</label>
+                <Input
+                  value={editingStudent.class}
+                  onChange={(e) =>
+                    setEditingStudent({ ...editingStudent, class: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Phone</label>
+                <Input
+                  value={editingStudent.phone}
+                  onChange={(e) =>
+                    setEditingStudent({ ...editingStudent, phone: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input
+                  value={editingStudent.email}
+                  onChange={(e) =>
+                    setEditingStudent({ ...editingStudent, email: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Gender</label>
+                <select
+                  value={editingStudent.gender}
+                  onChange={(e) =>
+                    setEditingStudent({
+                      ...editingStudent,
+                      gender: e.target.value as "Male" | "Female",
+                    })
+                  }
+                  className="w-full border rounded-md px-3 py-2"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the student's data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  );
-}
+  )};
