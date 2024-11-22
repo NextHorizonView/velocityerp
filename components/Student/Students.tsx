@@ -40,22 +40,192 @@ type Student = {
   phone: string;
   email: string;
   gender: "Male" | "Female";
+  // Additional fields
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  religion: string;
+  bloodGroup: string;
+  dateOfBirth: string;
+  fatherName: string;
+  motherName: string;
 };
 
 const ITEMS_PER_PAGE = 8;
 
 export default function Students() {
   const [students, setStudents] = useState<Student[]>([
-    { id: 1, name: "Jane Cooper", class: "VII A", phone: "(225) 555-0118", email: "jane@microsoft.com", gender: "Male" },
-    { id: 2, name: "Floyd Miles", class: "VIII B", phone: "(205) 555-0100", email: "floyd@yahoo.com", gender: "Female" },
-    { id: 3, name: "Ronald Richards", class: "IX A", phone: "(302) 555-0107", email: "ronald@adobe.com", gender: "Female" },
-    { id: 4, name: "Marvin McKinney", class: "X A", phone: "(252) 555-0126", email: "marvin@tesla.com", gender: "Male" },
-    { id: 5, name: "Jerome Bell", class: "VII A", phone: "(629) 555-0129", email: "jerome@google.com", gender: "Male" },
-    { id: 6, name: "Kathryn Murphy", class: "VIII B", phone: "(406) 555-0120", email: "kathryn@microsoft.com", gender: "Male" },
-    { id: 7, name: "Jacob Jones", class: "IX A", phone: "(208) 555-0112", email: "jacob@yahoo.com", gender: "Male" },
-    { id: 8, name: "Kristin Watson", class: "X A", phone: "(704) 555-0127", email: "kristin@facebook.com", gender: "Female" },
-    { id: 9, name: "Kristin Watson", class: "VII A", phone: "(704) 555-0127", email: "kristin@facebook.com", gender: "Female" },
-    { id: 10, name: "Kristin Watson", class: "VIII B", phone: "(704) 555-0127", email: "kristin@facebook.com", gender: "Female" },
+    {
+      id: 1,
+      name: "Jane Cooper",
+      class: "VII A",
+      phone: "(225) 555-0118",
+      email: "jane@microsoft.com",
+      gender: "Male",
+      address: "123 Main St",
+      city: "New York",
+      state: "NY",
+      pincode: "10001",
+      religion: "Christianity",
+      bloodGroup: "A+",
+      dateOfBirth: "1999-05-15",
+      fatherName: "John Cooper",
+      motherName: "Mary Cooper"
+    },
+    {
+      id: 2,
+      name: "Floyd Miles",
+      class: "VIII B",
+      phone: "(205) 555-0100",
+      email: "floyd@yahoo.com",
+      gender: "Female",
+      address: "456 Oak St",
+      city: "Los Angeles",
+      state: "CA",
+      pincode: "90001",
+      religion: "Islam",
+      bloodGroup: "B+",
+      dateOfBirth: "1998-07-20",
+      fatherName: "Robert Miles",
+      motherName: "Sarah Miles"
+    },
+    {
+      id: 3,
+      name: "Ronald Richards",
+      class: "IX A",
+      phone: "(302) 555-0107",
+      email: "ronald@adobe.com",
+      gender: "Female",
+      address: "789 Pine St",
+      city: "Chicago",
+      state: "IL",
+      pincode: "60601",
+      religion: "Hinduism",
+      bloodGroup: "O+",
+      dateOfBirth: "1999-03-10",
+      fatherName: "James Richards",
+      motherName: "Linda Richards"
+    },
+    {
+      id: 4,
+      name: "Marvin McKinney",
+      class: "X A",
+      phone: "(252) 555-0126",
+      email: "marvin@tesla.com",
+      gender: "Male",
+      address: "321 Elm St",
+      city: "Houston",
+      state: "TX",
+      pincode: "77001",
+      religion: "Buddhism",
+      bloodGroup: "AB+",
+      dateOfBirth: "1997-12-05",
+      fatherName: "William McKinney",
+      motherName: "Patricia McKinney"
+    },
+    {
+      id: 5,
+      name: "Jerome Bell",
+      class: "VII A",
+      phone: "(629) 555-0129",
+      email: "jerome@google.com",
+      gender: "Male",
+      address: "654 Maple St",
+      city: "Phoenix",
+      state: "AZ",
+      pincode: "85001",
+      religion: "Christianity",
+      bloodGroup: "A-",
+      dateOfBirth: "1998-09-15",
+      fatherName: "Thomas Bell",
+      motherName: "Dorothy Bell"
+    },
+    {
+      id: 6,
+      name: "Kathryn Murphy",
+      class: "VIII B",
+      phone: "(406) 555-0120",
+      email: "kathryn@microsoft.com",
+      gender: "Male",
+      address: "987 Cedar St",
+      city: "Philadelphia",
+      state: "PA",
+      pincode: "19101",
+      religion: "Islam",
+      bloodGroup: "B-",
+      dateOfBirth: "1999-01-25",
+      fatherName: "Charles Murphy",
+      motherName: "Elizabeth Murphy"
+    },
+    {
+      id: 7,
+      name: "Jacob Jones",
+      class: "IX A",
+      phone: "(208) 555-0112",
+      email: "jacob@yahoo.com",
+      gender: "Male",
+      address: "741 Birch St",
+      city: "San Antonio",
+      state: "TX",
+      pincode: "78201",
+      religion: "Judaism",
+      bloodGroup: "O-",
+      dateOfBirth: "1997-11-30",
+      fatherName: "Michael Jones",
+      motherName: "Barbara Jones"
+    },
+    {
+      id: 8,
+      name: "Kristin Watson",
+      class: "X A",
+      phone: "(704) 555-0127",
+      email: "kristin@facebook.com",
+      gender: "Female",
+      address: "852 Walnut St",
+      city: "San Diego",
+      state: "CA",
+      pincode: "92101",
+      religion: "Sikhism",
+      bloodGroup: "AB-",
+      dateOfBirth: "1998-04-20",
+      fatherName: "Daniel Watson",
+      motherName: "Jennifer Watson"
+    },
+    {
+      id: 9,
+      name: "Kristin Watson",
+      class: "VII A",
+      phone: "(704) 555-0127",
+      email: "kristin@facebook.com",
+      gender: "Female",
+      address: "963 Oak St",
+      city: "Dallas",
+      state: "TX",
+      pincode: "75201",
+      religion: "Christianity",
+      bloodGroup: "A+",
+      dateOfBirth: "1999-06-15",
+      fatherName: "Christopher Watson",
+      motherName: "Margaret Watson"
+    },
+    {
+      id: 10,
+      name: "Kristin Watson",
+      class: "VIII B",
+      phone: "(704) 555-0127",
+      email: "kristin@facebook.com",
+      gender: "Female",
+      address: "159 Pine St",
+      city: "San Jose",
+      state: "CA",
+      pincode: "95101",
+      religion: "Hinduism",
+      bloodGroup: "B+",
+      dateOfBirth: "1998-08-10",
+      fatherName: "Kenneth Watson",
+      motherName: "Michelle Watson"
+    }
   ]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,14 +235,10 @@ export default function Students() {
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
 
-  // New state for edit functionality
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  
-  // New state for delete functionality
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
-
   const handleEdit = (student: Student) => {
     setEditingStudent({ ...student });
     setIsEditDialogOpen(true);
@@ -85,7 +251,7 @@ export default function Students() {
 
   const handleSaveEdit = () => {
     if (editingStudent) {
-      setStudents(students.map(student => 
+      setStudents(students.map(student =>
         student.id === editingStudent.id ? editingStudent : student
       ));
       setIsEditDialogOpen(false);
@@ -137,7 +303,7 @@ export default function Students() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-between items-start mb-6">
+    <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col space-y-2">
           <h1 className="text-2xl font-bold text-[#576086]">All Students</h1>
           <Button
@@ -240,128 +406,216 @@ export default function Students() {
           </TableBody>
         </Table>
 
-        <div className="flex items-center justify-between px-6 py-4 border-t">
-          <div className="text-sm text-gray-500">
-            Showing data 1 to {Math.min(ITEMS_PER_PAGE, filteredAndSortedStudents.length)} of {filteredAndSortedStudents.length} entries
-          </div>
-          <div className="flex space-x-1">
+      <div className="flex items-center justify-between px-6 py-4 border-t">
+        <div className="text-sm text-gray-500">
+          Showing data {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedStudents.length)} of {filteredAndSortedStudents.length} entries
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <Button
-              variant="outline"
-              size="icon"
-              className="w-9 h-9"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCurrentPage(page)}
+              className={currentPage === page ? "bg-[#576086]" : ""}
             >
-              &lt;
+              {page}
             </Button>
-            {[...Array(totalPages)].map((_, index) => (
-              <Button
-                key={index}
-                variant={currentPage === index + 1 ? "default" : "outline"}
-                className={`w-9 h-9 ${currentPage === index + 1 ? "bg-[#F7B696]" : ""}`}
-                onClick={() => setCurrentPage(index + 1)}
-              >
-                {index + 1}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="icon"
-              className="w-9 h-9"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
-              &gt;
-            </Button>
-          </div>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
         </div>
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Student</DialogTitle>
-          </DialogHeader>
-          {editingStudent && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  value={editingStudent.name}
-                  onChange={(e) =>
-                    setEditingStudent({ ...editingStudent, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Class</label>
-                <Input
-                  value={editingStudent.class}
-                  onChange={(e) =>
-                    setEditingStudent({ ...editingStudent, class: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Phone</label>
-                <Input
-                  value={editingStudent.phone}
-                  onChange={(e) =>
-                    setEditingStudent({ ...editingStudent, phone: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <Input
-                  value={editingStudent.email}
-                  onChange={(e) =>
-                    setEditingStudent({ ...editingStudent, email: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Gender</label>
-                <select
-                  value={editingStudent.gender}
-                  onChange={(e) =>
-                    setEditingStudent({
-                      ...editingStudent,
-                      gender: e.target.value as "Male" | "Female",
-                    })
-                  }
-                  className="w-full border rounded-md px-3 py-2"
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button onClick={handleSaveEdit}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+   
+<Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+  <DialogContent className="max-w-md">
+    <DialogHeader>
+      <DialogTitle className="text-base">Edit Student Information</DialogTitle>
+    </DialogHeader>
+    {editingStudent && (
+      <div className="grid gap-3 py-2">
+        {/* Name */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Name</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.name}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, name: e.target.value })
+            }
+          />
+        </div>
 
-      {/* Delete Confirmation Dialog */}
+        {/* Class */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Class</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.class}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, class: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Phone */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Phone</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.phone}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, phone: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Email */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Email</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.email}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, email: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Gender */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Gender</label>
+          <select
+            className="border rounded-md px-3 h-6 text-sm"
+            value={editingStudent.gender}
+            onChange={(e) =>
+              setEditingStudent({
+                ...editingStudent,
+                gender: e.target.value as "Male" | "Female",
+              })
+            }
+          >
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        {/* Address */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Address</label>
+          <textarea
+            className="border rounded-md px-3 py-1 h-8 text-sm resize-none"
+            value={editingStudent.address}
+            onChange={(e) =>
+              setEditingStudent({
+                ...editingStudent,
+                address: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        {/* City */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">City</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.city}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, city: e.target.value })
+            }
+          />
+        </div>
+
+        {/* State */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">State</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.state}
+            onChange={(e) =>
+              setEditingStudent({ ...editingStudent, state: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Pincode */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Pincode</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.pincode}
+            onChange={(e) =>
+              setEditingStudent({
+                ...editingStudent,
+                pincode: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        {/* Religion */}
+        <div className="grid gap-1">
+          <label className="text-sm font-medium">Religion</label>
+          <Input
+            className="h-6 text-sm"
+            value={editingStudent.religion}
+            onChange={(e) =>
+              setEditingStudent({
+                ...editingStudent,
+                religion: e.target.value,
+              })
+            }
+          />
+        </div>
+      </div>
+    )}
+    <DialogFooter>
+      <DialogClose asChild>
+        <Button variant="outline" size="sm">
+          Cancel
+        </Button>
+      </DialogClose>
+      <Button onClick={handleSaveEdit} size="sm" className="bg-[#576086]">
+        Save changes
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
+      {/* Delete Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Student</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the student's data.
+              Are you sure you want to delete this student? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600">
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )};
+    </div>
+  );
+}
