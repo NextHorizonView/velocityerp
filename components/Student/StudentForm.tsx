@@ -7,7 +7,8 @@ import {
   addFormField, 
   fetchFormFields, 
   deleteFormField, 
-  updateFormField 
+  updateFormField, 
+  saveStudentData
 } from '@/components/helper/firebaseHelper';
 import { FormField, FieldType, FormData } from '@/components/helper/firebaseHelper';
 
@@ -77,37 +78,6 @@ const StudentForm: React.FC = () => {
     }
   };
 
-  // const handleUpdateField = async (updatedField: FormField) => {
-  //   if (!userId || !updatedField.FormFieldID) return;
-
-  //   setIsLoading(true);
-
-  //   try {
-  //     await updateFormField(userId, updatedField);
-  //     mutate(`formFields-${userId}`);
-  //     setEditingFieldId(null);
-  //   } catch (error) {
-  //     console.error('Error updating field:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // const handleDeleteField = async (fieldId: string) => {
-  //   if (!userId) return;
-
-  //   setIsLoading(true);
-
-  //   try {
-  //     await deleteFormField(userId, fieldId);
-  //     mutate(`formFields-${userId}`);
-  //   } catch (error) {
-  //     console.error('Error deleting field:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
 
 
 
@@ -120,13 +90,10 @@ const StudentForm: React.FC = () => {
     setIsLoading(true);
   
     try {
-      // Call the backend function to update the field
       await updateFormField(formFieldId, currentFieldName, updates);
   
-      // Revalidate the cached data to reflect the changes
       mutate(`formFields-${userId}`);
   
-      // Reset editing state
       setEditingFieldId(null);
     } catch (error) {
       console.error('Error updating field:', error);
@@ -141,10 +108,8 @@ const StudentForm: React.FC = () => {
     setIsLoading(true);
   
     try {
-      // Call the backend function to delete the field
       await deleteFormField(formFieldId, fieldName);
   
-      // Revalidate the cached data to reflect the changes
       mutate(`formFields-${userId}`);
     } catch (error) {
       console.error('Error deleting field:', error);
@@ -157,12 +122,11 @@ const StudentForm: React.FC = () => {
   const renderField = (field: FormField) => {
     const { FormFields } = field;
   
-    if (!FormFields || FormFields.length === 0) return null;  // Make sure to return `null` if there are no form fields
+    if (!FormFields || FormFields.length === 0) return null;  
   
     return FormFields.map((f: any) => {
       const { FieldName, FieldType: type, Options } = f;
   
-      // Generate a unique key for each form field, here I'm using FieldName + type as the key
       const fieldKey = `${FieldName}-${type}`;
   
       switch (type) {
@@ -243,9 +207,20 @@ const StudentForm: React.FC = () => {
   
 
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await saveStudentData(formData); // Call the Firebase helper function
+      alert('Student data saved successfully!');
+    } catch (error) {
+      console.error('Error saving student data:', error);
+      alert('Failed to save student data.');
+    }
+  };
+
+
   
 
-// console.log("ddd",fields[0]?.FormFieldID);
 if (fields && fields.length > 0) {
   console.log("ddd35", fields[0]?.FormFields);
 } else {
@@ -342,7 +317,12 @@ if (fields && fields.length > 0) {
         >
           {isLoading ? 'Adding...' : 'Add Field'}
         </button>
-
+{/* <button onClick={()=> handleUpdateField('An1M7tDcYNLPSm3G7CWF', 'sssss', { FieldName: 'xyz' })}>
+  edit
+</button>
+<button onClick={()=> handleDeleteField('An1M7tDcYNLPSm3G7CWF', 'xyz')}>
+  delete
+</button> */}
         <button
                 type="button"
                 onClick={() => alert('Proceeding')} // Replace with your logic
@@ -356,329 +336,3 @@ if (fields && fields.length > 0) {
 };
 
 export default StudentForm;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // new codeeeeee
-
-
-// 'use client';
-
-// import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
-// import { FaTrash, FaEdit } from 'react-icons/fa';
-// import useSWR, { mutate } from 'swr';
-// import { v4 as uuidv4 } from 'uuid';
-// import { 
-//   addFormField, 
-//   fetchFormFields, 
-//   deleteFormField, 
-//   updateFormField 
-// } from '@/components/helper/firebaseHelper';
-// import { FormField, FieldType,FormData } from '@/components/helper/firebaseHelper';
-
-// const StudentForm: React.FC = () => {
-//   const [formData, setFormData] = useState<FormData>({});
-//   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
-//   const [newFieldName, setNewFieldName] = useState('');
-//   const [newFieldType, setNewFieldType] = useState<FieldType>(FieldType.TEXT);
-//   const [newFieldOptions, setNewFieldOptions] = useState('');
-//   const [isLoading, setIsLoading] = useState(false);
-
-//   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
-
-//   if (!userId) {
-//     return <div>User not authenticated. Please log in.</div>;
-//   }
-
-//   const { data: fields, error } = useSWR<FormField[]>(
-//     userId ? `formFields-${userId}` : null,
-//     () => fetchFormFields(userId),
-//     { revalidateOnFocus: false, revalidateIfStale: false }
-//   );
-
-//   useEffect(() => {
-//     if (fields) {
-//       const initialFormData: FormData = {};
-//       fields.forEach((field) => {
-//         initialFormData[field.FieldName] = field.DefaultValue || '';
-//       });
-//       setFormData(initialFormData);
-//     }
-//   }, [fields]);
-
-//   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-//     const { name, value } = e.target;
-//     setFormData((prev:any) => ({ ...prev, [name]: value }));
-//   };
-
-//   // const handleAddField = async () => {
-//   //   if (!newFieldName.trim() || !userId) return;
-
-//   //   if ((newFieldType === FieldType.RADIO || newFieldType === FieldType.SELECT) && !newFieldOptions.trim()) {
-//   //     console.error('Options are required for Radio or Select fields.');
-//   //     return;
-//   //   }
-
-//   //   setIsLoading(true);
-
-//   //   try {
-//   //     const newField: FormField = {
-//   //       // FormFieldID: uuidv4(),
-//   //       FormFieldSchoolId: userId,
-//   //       FieldName: newFieldName,
-//   //       FieldType: newFieldType,
-//   //       IsRequired: true,
-//   //       Sequence: (fields?.length || 0) + 1,
-//   //       Options:
-//   //         (newFieldType === FieldType.RADIO || newFieldType === FieldType.SELECT)
-//   //           ? newFieldOptions.split(',').map((option) => option.trim())
-//   //           : undefined,
-//   //     };
-
-//   //     await addFormField(userId, newField);
-//   //     mutate(`formFields-${userId}`);
-
-//   //     setNewFieldName('');
-//   //     setNewFieldType(FieldType.TEXT);
-//   //     setNewFieldOptions('');
-//   //   } catch (error) {
-//   //     console.error('Error adding field:', error);
-//   //   } finally {
-//   //     setIsLoading(false);
-//   //   }
-//   // };
-
-
-
-
-//   const handleAddField = async () => {
-//     if (!userId) return;
-  
-//     const sequenceNumber = (fields?.length || 0) + 1;
-  
-//     // Ensure newFieldType is a valid FieldType value
-//     const isValidFieldType = (value: string): value is FieldType => 
-//       Object.values(FieldType).includes(value as FieldType);
-  
-//     const fieldType = isValidFieldType(newFieldType) ? (newFieldType as FieldType) : FieldType.TEXT;
-  
-//     const newField: FormField = {
-//       FormFieldSchoolId: userId,
-//       FieldName: newFieldName.trim(),
-//       FieldType: fieldType,
-//       IsRequired: true,
-//       Sequence: sequenceNumber,
-//       DefaultValue: '',
-//       Options:
-//         fieldType === FieldType.RADIO || fieldType === FieldType.SELECT
-//           ? newFieldOptions.split(',').map((option) => option.trim())
-//           : undefined,
-//     };
-  
-//     try {
-//       await addFormField(userId, newField);
-//       mutate(`formFields-${userId}`);
-//     } catch (error) {
-//       console.error('Failed to add new field:', error);
-//     }
-//   };
-  
-  
-  
-
-//   const handleUpdateField = async (updatedField: FormField) => {
-//     if (!userId || !updatedField.FormFieldID) return;
-
-//     setIsLoading(true);
-
-//     try {
-//       const updatedFieldData: FormField = {
-//         ...updatedField,
-//         Options:
-//           updatedField.FieldType === FieldType.RADIO || updatedField.FieldType === FieldType.SELECT
-//             ? updatedField.Options
-//             : undefined,
-//       };
-
-//       await updateFormField(userId, updatedFieldData);
-//       mutate(`formFields-${userId}`);
-//       setEditingFieldId(null);
-//     } catch (error) {
-//       console.error('Error updating field:', error);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   const handleDeleteField = async (fieldId: string) => {
-//     if (!userId) return;
-
-//     setIsLoading(true);
-
-//     try {
-//       await deleteFormField(userId, fieldId);
-//       mutate(`formFields-${userId}`);
-//     } catch (error) {
-//       console.error('Error deleting field:', error);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   const renderField = (field: FormField) => {
-//     const { FieldName, FieldType: type, Options } = field;
-
-//     switch (type) {
-//       case FieldType.RADIO:
-//         return (
-//           <div>
-//             {Options?.map((option:any) => (
-//               <label key={option} className="flex items-center space-x-2">
-//                 <input
-//                   type="radio"
-//                   name={FieldName}
-//                   value={option}
-//                   checked={formData[FieldName] === option}
-//                   onChange={handleChange}
-//                   className="h-4 w-4 text-blue-600 focus:ring-0"
-//                 />
-//                 <span className="text-sm text-gray-600">{option}</span>
-//               </label>
-//             ))}
-//           </div>
-//         );
-//       case FieldType.SELECT:
-//         return (
-//           <select
-//             name={FieldName}
-//             value={formData[FieldName]}
-//             onChange={handleChange}
-//             className="w-full px-3 py-2 mt-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-//           >
-//             <option value="">Select...</option>
-//             {Options?.map((option) => (
-//               <option key={option} value={option}>
-//                 {option}
-//               </option>
-//             ))}
-//           </select>
-//         );
-//       case FieldType.DATE:
-//         return (
-//           <input
-//             type="date"
-//             name={FieldName}
-//             value={formData[FieldName]}
-//             onChange={handleChange}
-//             className="w-full px-3 py-2 mt-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-//           />
-//         );
-//       default:
-//         return (
-//           <input
-//             name={FieldName}
-//             value={formData[FieldName] || ''}
-//             onChange={handleChange}
-//             className="w-full px-3 py-2 mt-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-//           />
-//         );
-//     }
-//   };
-
-//   if (!fields && !error) return <p>Loading...</p>;
-//   if (error) return <p>Error loading fields</p>;
-
-//   return (
-//     <div className="w-full max-w-2xl mx-auto p-4 bg-white shadow-sm rounded-lg">
-//       <h1 className="text-3xl font-medium text-[#0A3749] text-center py-4">Student Form</h1>
-//       <form>
-//         {fields?.map((field) => (
-//           <div key={field.FormFieldID} className="mb-4">
-//             <div className="relative">
-//               {editingFieldId === field.FormFieldID ? (
-//                 <input
-//                   value={field.FieldName}
-//                   onChange={(e) => handleUpdateField({ ...field, FieldName: e.target.value })}
-//                   className="w-full px-3 py-2 mt-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-//                 />
-//               ) : (
-//                 renderField(field)
-//               )}
-//               <div className="absolute top-0 right-0 flex space-x-2">
-//                 <button
-//                   type="button"
-//                   onClick={() => setEditingFieldId(field.FormFieldID || null)}
-//                   className="text-[#0A3749] text-sm p-2"
-//                 >
-//                   <FaEdit />
-//                 </button>
-//                 <button
-//                   type="button"
-//                   onClick={() => handleDeleteField(field.FormFieldID || '')}
-//                   className="text-red-600 text-sm p-2"
-//                 >
-//                   <FaTrash />
-//                 </button>
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//       </form>
-
-//       <div className="mt-6 border-t pt-4">
-//         <h2 className="text-xl text-[#0A3749]">Add New Field</h2>
-//         <div className="mb-4">
-//           <input
-//             value={newFieldName}
-//             onChange={(e) => setNewFieldName(e.target.value)}
-//             placeholder="Enter field name"
-//             className="w-full px-3 py-2 mt-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-//           />
-//         </div>
-
-//         <select
-//           value={newFieldType}
-//           onChange={(e) => setNewFieldType(e.target.value as FieldType)}
-//           className="w-full px-3 py-2 mt-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-//         >
-//           <option value={FieldType.TEXT}>Text</option>
-//           <option value={FieldType.RADIO}>Radio</option>
-//           <option value={FieldType.DATE}>Date</option>
-//           <option value={FieldType.SELECT}>Select</option>
-//         </select>
-
-//         {(newFieldType === FieldType.RADIO || newFieldType === FieldType.SELECT) && (
-//           <input
-//             value={newFieldOptions}
-//             onChange={(e) => setNewFieldOptions(e.target.value)}
-//             placeholder="Enter options (comma-separated)"
-//             className="w-full px-3 py-2 mt-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-//           />
-//         )}
-
-//         <button
-//           type="button"
-//           onClick={handleAddField}
-//           disabled={isLoading}
-//           className="bg-[#0A3749] text-white p-3 rounded-xl mt-4 flex items-center justify-center space-x-3"
-//         >
-//           {isLoading ? 'Adding...' : 'Add Field'}
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default StudentForm;
