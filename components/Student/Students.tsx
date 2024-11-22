@@ -46,10 +46,6 @@ type Student = {
   state: string;
   pincode: string;
   religion: string;
-  bloodGroup: string;
-  dateOfBirth: string;
-  fatherName: string;
-  motherName: string;
 };
 
 const ITEMS_PER_PAGE = 8;
@@ -67,11 +63,7 @@ export default function Students() {
       city: "New York",
       state: "NY",
       pincode: "10001",
-      religion: "Christianity",
-      bloodGroup: "A+",
-      dateOfBirth: "1999-05-15",
-      fatherName: "John Cooper",
-      motherName: "Mary Cooper"
+      religion: "Christianity"
     },
     {
       id: 2,
@@ -85,10 +77,7 @@ export default function Students() {
       state: "CA",
       pincode: "90001",
       religion: "Islam",
-      bloodGroup: "B+",
-      dateOfBirth: "1998-07-20",
-      fatherName: "Robert Miles",
-      motherName: "Sarah Miles"
+      
     },
     {
       id: 3,
@@ -102,10 +91,7 @@ export default function Students() {
       state: "IL",
       pincode: "60601",
       religion: "Hinduism",
-      bloodGroup: "O+",
-      dateOfBirth: "1999-03-10",
-      fatherName: "James Richards",
-      motherName: "Linda Richards"
+      
     },
     {
       id: 4,
@@ -119,10 +105,7 @@ export default function Students() {
       state: "TX",
       pincode: "77001",
       religion: "Buddhism",
-      bloodGroup: "AB+",
-      dateOfBirth: "1997-12-05",
-      fatherName: "William McKinney",
-      motherName: "Patricia McKinney"
+    
     },
     {
       id: 5,
@@ -136,10 +119,7 @@ export default function Students() {
       state: "AZ",
       pincode: "85001",
       religion: "Christianity",
-      bloodGroup: "A-",
-      dateOfBirth: "1998-09-15",
-      fatherName: "Thomas Bell",
-      motherName: "Dorothy Bell"
+    
     },
     {
       id: 6,
@@ -152,11 +132,8 @@ export default function Students() {
       city: "Philadelphia",
       state: "PA",
       pincode: "19101",
-      religion: "Islam",
-      bloodGroup: "B-",
-      dateOfBirth: "1999-01-25",
-      fatherName: "Charles Murphy",
-      motherName: "Elizabeth Murphy"
+      religion: "Islam",  
+      
     },
     {
       id: 7,
@@ -170,10 +147,7 @@ export default function Students() {
       state: "TX",
       pincode: "78201",
       religion: "Judaism",
-      bloodGroup: "O-",
-      dateOfBirth: "1997-11-30",
-      fatherName: "Michael Jones",
-      motherName: "Barbara Jones"
+     
     },
     {
       id: 8,
@@ -187,10 +161,7 @@ export default function Students() {
       state: "CA",
       pincode: "92101",
       religion: "Sikhism",
-      bloodGroup: "AB-",
-      dateOfBirth: "1998-04-20",
-      fatherName: "Daniel Watson",
-      motherName: "Jennifer Watson"
+      
     },
     {
       id: 9,
@@ -204,10 +175,7 @@ export default function Students() {
       state: "TX",
       pincode: "75201",
       religion: "Christianity",
-      bloodGroup: "A+",
-      dateOfBirth: "1999-06-15",
-      fatherName: "Christopher Watson",
-      motherName: "Margaret Watson"
+     
     },
     {
       id: 10,
@@ -221,10 +189,7 @@ export default function Students() {
       state: "CA",
       pincode: "95101",
       religion: "Hinduism",
-      bloodGroup: "B+",
-      dateOfBirth: "1998-08-10",
-      fatherName: "Kenneth Watson",
-      motherName: "Michelle Watson"
+      
     }
   ]);
 
@@ -425,7 +390,7 @@ export default function Students() {
               variant={currentPage === page ? "default" : "outline"}
               size="sm"
               onClick={() => setCurrentPage(page)}
-              className={currentPage === page ? "bg-[#576086]" : ""}
+              className={currentPage === page ? "bg-[#F7B696]" : ""}
             >
               {page}
             </Button>
