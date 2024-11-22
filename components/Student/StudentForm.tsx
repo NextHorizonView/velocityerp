@@ -210,7 +210,7 @@ const StudentForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await saveStudentData(formData); // Call the Firebase helper function
+      await saveStudentData(formData); 
       alert('Student data saved successfully!');
     } catch (error) {
       console.error('Error saving student data:', error);
