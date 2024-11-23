@@ -77,13 +77,6 @@ const StudentForm: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-
-
-
-
-
-
   const handleUpdateField = async (formFieldId: string, currentFieldName: string, updates: Partial<FormField>) => {
     if (!userId || !formFieldId || !currentFieldName) return;
   
