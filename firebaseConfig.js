@@ -9,10 +9,12 @@ const firebaseConfig = {
   projectId: 'schoolerp-a74fb',
   storageBucket: 'gs://schoolerp-a74fb.firebasestorage.app',
   messagingSenderId: '198618808281',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
+console.log("Firebase Config:", firebaseConfig);
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-export { auth, db, storage };
+export { auth, db, storage, app };

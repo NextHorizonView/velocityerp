@@ -1,7 +1,8 @@
 'use client'
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo  } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { uploadCsv, refreshStudentList } from './uploadCsv';
 import {
   Table,
   TableBody,
@@ -32,20 +33,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import Papa from 'papaparse';
 
-type Student = {
+export type Student = {
   id: number;
   name: string;
   class: string;
   phone: string;
   email: string;
   gender: "Male" | "Female";
-  // Additional fields
   address: string;
   city: string;
   state: string;
   pincode: string;
   religion: string;
+  studentId: string;
 };
 
 const ITEMS_PER_PAGE = 8;
@@ -63,7 +65,8 @@ export default function Students() {
       city: "New York",
       state: "NY",
       pincode: "10001",
-      religion: "Christianity"
+      religion: "Christianity",
+      studentId: "",
     },
     {
       id: 2,
@@ -77,6 +80,7 @@ export default function Students() {
       state: "CA",
       pincode: "90001",
       religion: "Islam",
+      studentId: "",
       
     },
     {
@@ -91,6 +95,7 @@ export default function Students() {
       state: "IL",
       pincode: "60601",
       religion: "Hinduism",
+      studentId: "",
       
     },
     {
@@ -105,6 +110,7 @@ export default function Students() {
       state: "TX",
       pincode: "77001",
       religion: "Buddhism",
+      studentId: "",
     
     },
     {
@@ -119,6 +125,7 @@ export default function Students() {
       state: "AZ",
       pincode: "85001",
       religion: "Christianity",
+      studentId: "",
     
     },
     {
@@ -133,6 +140,7 @@ export default function Students() {
       state: "PA",
       pincode: "19101",
       religion: "Islam",  
+      studentId: "",
       
     },
     {
@@ -147,6 +155,7 @@ export default function Students() {
       state: "TX",
       pincode: "78201",
       religion: "Judaism",
+      studentId: "",
      
     },
     {
@@ -161,6 +170,7 @@ export default function Students() {
       state: "CA",
       pincode: "92101",
       religion: "Sikhism",
+      studentId: "",
       
     },
     {
@@ -175,6 +185,7 @@ export default function Students() {
       state: "TX",
       pincode: "75201",
       religion: "Christianity",
+      studentId: "",
      
     },
     {
@@ -189,6 +200,7 @@ export default function Students() {
       state: "CA",
       pincode: "95101",
       religion: "Hinduism",
+      studentId: "",
       
     }
   ]);
@@ -204,6 +216,9 @@ export default function Students() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [isImportExportDialogOpen, setIsImportExportDialogOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+
   const handleEdit = (student: Student) => {
     setEditingStudent({ ...student });
     setIsEditDialogOpen(true);
@@ -244,10 +259,10 @@ export default function Students() {
     return [...students]
       .filter(
         (student) =>
-          student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.phone.includes(searchTerm) ||
-          student.email.toLowerCase().includes(searchTerm.toLowerCase())
+          student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.phone?.includes(searchTerm) ||
+          student.email?.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {
@@ -266,15 +281,55 @@ export default function Students() {
     currentPage * ITEMS_PER_PAGE
   );
 
+  const handleImportExport = () => {
+    setIsImportExportDialogOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
+  const handleUploadCsv = async () => {
+    if (file) {
+      try {
+        await uploadCsv(file);
+        alert('CSV file uploaded successfully!');
+        await refreshStudentList(setStudents);
+      } catch (error) {
+        console.error('Error uploading CSV file: ', error);
+        alert('Failed to upload CSV file.');
+      }
+    } else {
+      alert('Please select a CSV file.');
+    }
+    setIsImportExportDialogOpen(false);
+  };
+
+  const handleDownloadCsv = () => {
+    const csv = Papa.unparse(students);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'students.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setIsImportExportDialogOpen(false);
+  };
+
   return (
     <div className="container mx-auto p-6">
-    <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col space-y-2">
           <h1 className="text-2xl font-bold text-[#576086]">All Students</h1>
           <Button
             variant="ghost"
             size="lg"
-            className="w-10 h-10 p-0 bg-transparent border-none">
+            className="w-10 h-10 p-0 bg-transparent border-none"
+            onClick={handleImportExport}
+          >
             <IoIosCloudUpload className="h-10 w-10 text-black" />
           </Button>
         </div>
@@ -305,8 +360,8 @@ export default function Students() {
               className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
               onChange={(e) => handleSort(e.target.value as keyof Student)}
             >
-              <option value="name" className="bg-transparent">Newest</option>
-              <option value="class" className="bg-transparent">Oldest</option>
+              <option value="name" className="bg-transparent">Name</option>
+              <option value="class" className="bg-transparent">Class</option>
             </select>
           </div>
         </div>
@@ -329,7 +384,7 @@ export default function Students() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedStudents.map((student) => (
+            {paginatedStudents.map((student: Student) => (
               <TableRow key={student.id} className="hover:bg-gray-50 border-b">
                 <TableCell className="py-4">{student.name}</TableCell>
                 <TableCell className="py-4">{student.class}</TableCell>
@@ -371,216 +426,269 @@ export default function Students() {
           </TableBody>
         </Table>
 
-      <div className="flex items-center justify-between px-6 py-4 border-t">
-        <div className="text-sm text-gray-500">
-          Showing data {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedStudents.length)} of {filteredAndSortedStudents.length} entries
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        <div className="flex items-center justify-between px-6 py-4 border-t">
+          <div className="text-sm text-gray-500">
+            Showing data {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedStudents.length)} of {filteredAndSortedStudents.length} entries
+          </div>
+          <div className="flex items-center space-x-2">
             <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(page)}
-              className={currentPage === page ? "bg-[#F7B696]" : ""}
+              onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
             >
-              {page}
+              Previous
             </Button>
-          ))}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(page)}
+                className={currentPage === page ? "bg-[#F7B696]" : ""}
+              >
+                {page}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
 
-   
-<Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-  <DialogContent className="max-w-md">
-    <DialogHeader>
-      <DialogTitle className="text-base">Edit Student Information</DialogTitle>
-    </DialogHeader>
-    {editingStudent && (
-      <div className="grid gap-3 py-2">
-        {/* Name */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">Name</label>
-          <Input
-            className="h-6 text-sm"
-            value={editingStudent.name}
-            onChange={(e) =>
-              setEditingStudent({ ...editingStudent, name: e.target.value })
-            }
-          />
-        </div>
+      {/* Import/Export Dialog */}
+      <Dialog open={isImportExportDialogOpen} onOpenChange={setIsImportExportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Import/Export</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2">
+            <p className="text-sm text-gray-500">
+              Choose an action to import or export student data.
+            </p>
+          </div>
 
-        {/* Class */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">Class</label>
-          <Input
-            className="h-6 text-sm"
-            value={editingStudent.class}
-            onChange={(e) =>
-              setEditingStudent({ ...editingStudent, class: e.target.value })
-            }
-          />
-        </div>
+          <div className="mt-4 flex flex-col space-y-4">
+            <label
+              htmlFor="file-upload"
+              className="flex items-center justify-center w-full px-4 py-2 bg-[#576086] hover:bg-[#474d6b] text-white h-10 text-sm cursor-pointer rounded-md"
+            >
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="hidden"
+                id="file-upload"
+              />
+              Upload CSV
+            </label>
+            <Button
+              variant="default"
+              className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+              onClick={handleUploadCsv}
+              disabled={!file}
+            >
+              Upload this file
+            </Button>
+            <Button
+              variant="default"
+              className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+              onClick={handleDownloadCsv}
+            >
+              Download CSV
+            </Button>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" size="sm">
+                Cancel
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Phone */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">Phone</label>
-          <Input
-            className="h-6 text-sm"
-            value={editingStudent.phone}
-            onChange={(e) =>
-              setEditingStudent({ ...editingStudent, phone: e.target.value })
-            }
-          />
-        </div>
+          {/* Edit Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-base">Edit Student Information</DialogTitle>
+              </DialogHeader>
+              {editingStudent && (
+                <div className="grid gap-3 py-2">
+                  {/* Name */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">Name</label>
+                    <Input
+                      className="h-6 text-sm"
+                      value={editingStudent.name}
+                      onChange={(e) =>
+                        setEditingStudent({ ...editingStudent, name: e.target.value })
+                      }
+                    />
+                  </div>
 
-        {/* Email */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">Email</label>
-          <Input
-            className="h-6 text-sm"
-            value={editingStudent.email}
-            onChange={(e) =>
-              setEditingStudent({ ...editingStudent, email: e.target.value })
-            }
-          />
-        </div>
+                  {/* Class */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">Class</label>
+                    <Input
+                      className="h-6 text-sm"
+                      value={editingStudent.class}
+                      onChange={(e) =>
+                        setEditingStudent({ ...editingStudent, class: e.target.value })
+                      }
+                    />
+                  </div>
 
-        {/* Gender */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">Gender</label>
-          <select
-            className="border rounded-md px-3 h-6 text-sm"
-            value={editingStudent.gender}
-            onChange={(e) =>
-              setEditingStudent({
-                ...editingStudent,
-                gender: e.target.value as "Male" | "Female",
-              })
-            }
-          >
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-        </div>
+                  {/* Phone */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">Phone</label>
+                    <Input
+                      className="h-6 text-sm"
+                      value={editingStudent.phone}
+                      onChange={(e) =>
+                        setEditingStudent({ ...editingStudent, phone: e.target.value })
+                      }
+                    />
+                  </div>
 
-        {/* Address */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">Address</label>
-          <textarea
-            className="border rounded-md px-3 py-1 h-8 text-sm resize-none"
-            value={editingStudent.address}
-            onChange={(e) =>
-              setEditingStudent({
-                ...editingStudent,
-                address: e.target.value,
-              })
-            }
-          />
-        </div>
+                  {/* Email */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">Email</label>
+                    <Input
+                      className="h-6 text-sm"
+                      value={editingStudent.email}
+                      onChange={(e) =>
+                        setEditingStudent({ ...editingStudent, email: e.target.value })
+                      }
+                    />
+                  </div>
 
-        {/* City */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">City</label>
-          <Input
-            className="h-6 text-sm"
-            value={editingStudent.city}
-            onChange={(e) =>
-              setEditingStudent({ ...editingStudent, city: e.target.value })
-            }
-          />
-        </div>
+                  {/* Gender */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">Gender</label>
+                    <select
+                      className="border rounded-md px-3 h-6 text-sm"
+                      value={editingStudent.gender}
+                      onChange={(e) =>
+                        setEditingStudent({
+                          ...editingStudent,
+                          gender: e.target.value as "Male" | "Female",
+                        })
+                      }
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
 
-        {/* State */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">State</label>
-          <Input
-            className="h-6 text-sm"
-            value={editingStudent.state}
-            onChange={(e) =>
-              setEditingStudent({ ...editingStudent, state: e.target.value })
-            }
-          />
-        </div>
+                  {/* Address */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">Address</label>
+                    <textarea
+                      className="border rounded-md px-3 py-1 h-8 text-sm resize-none"
+                      value={editingStudent.address}
+                      onChange={(e) =>
+                        setEditingStudent({
+                          ...editingStudent,
+                          address: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
 
-        {/* Pincode */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">Pincode</label>
-          <Input
-            className="h-6 text-sm"
-            value={editingStudent.pincode}
-            onChange={(e) =>
-              setEditingStudent({
-                ...editingStudent,
-                pincode: e.target.value,
-              })
-            }
-          />
-        </div>
+                  {/* City */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">City</label>
+                    <Input
+                      className="h-6 text-sm"
+                      value={editingStudent.city}
+                      onChange={(e) =>
+                        setEditingStudent({ ...editingStudent, city: e.target.value })
+                      }
+                    />
+                  </div>
 
-        {/* Religion */}
-        <div className="grid gap-1">
-          <label className="text-sm font-medium">Religion</label>
-          <Input
-            className="h-6 text-sm"
-            value={editingStudent.religion}
-            onChange={(e) =>
-              setEditingStudent({
-                ...editingStudent,
-                religion: e.target.value,
-              })
-            }
-          />
-        </div>
-      </div>
-    )}
-    <DialogFooter>
-      <DialogClose asChild>
-        <Button variant="outline" size="sm">
-          Cancel
-        </Button>
-      </DialogClose>
-      <Button onClick={handleSaveEdit} size="sm" className="bg-[#576086]">
-        Save changes
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+                  {/* State */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">State</label>
+                    <Input
+                      className="h-6 text-sm"
+                      value={editingStudent.state}
+                      onChange={(e) =>
+                        setEditingStudent({ ...editingStudent, state: e.target.value })
+                      }
+                    />
+                  </div>
 
-      {/* Delete Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Student</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this student? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-    </div>
+                  {/* Pincode */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">Pincode</label>
+                    <Input
+                      className="h-6 text-sm"
+                      value={editingStudent.pincode}
+                      onChange={(e) =>
+                        setEditingStudent({
+                          ...editingStudent,
+                          pincode: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* Religion */}
+                  <div className="grid gap-1">
+                    <label className="text-sm font-medium">Religion</label>
+                    <Input
+                      className="h-6 text-sm"
+                      value={editingStudent.religion}
+                      onChange={(e) =>
+                        setEditingStudent({
+                          ...editingStudent,
+                          religion: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" size="sm">
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button onClick={handleSaveEdit} size="sm" className="bg-[#576086]">
+                  Save changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Dialog */}
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Student</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this student? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600">
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+  
   );
 }
