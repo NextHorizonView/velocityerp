@@ -19,12 +19,12 @@ export const uploadCsv = (file: File) => {
       parse(text, {
         header: true,
         complete: (results) => {
-          const students = results.data as Array<{ email: string; [key: string]: any }>;
+          const students = results.data as Array<{ email: string; [key: string]: string }>;
 
           students.forEach(async (student) => {
             try {
               const querySnapshot = await getDocs(collection(db, 'students'));
-              let existingStudent = querySnapshot.docs.find((doc) => doc.data().email === student.email);
+              const existingStudent = querySnapshot.docs.find((doc) => doc.data().email === student.email);
 
               if (existingStudent) {
                 console.log(`Student with email ${student.email} already exists. Skipping...`);
