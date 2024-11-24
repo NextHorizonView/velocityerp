@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where, getFirestore, addDoc, doc,updateDoc,getDoc, setDoc, deleteDoc, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc, doc,updateDoc,getDoc, setDoc} from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 
 export enum FieldType {
