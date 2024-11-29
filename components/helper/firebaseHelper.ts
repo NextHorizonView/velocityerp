@@ -11,6 +11,7 @@ export type FormData = {
   [key: string]: string;
 };
 export interface FormField {
+  CanChange: boolean;
   FormFields?: any;
   FormFieldID?: string;
   FormFieldSchoolId?:string;       
