@@ -11,7 +11,7 @@ export type FormData = {
   [key: string]: string;
 };
 export interface FormField {
-  FormFields?: any;
+  FormFields?: Array<FormField>;
   FormFieldID?: string;
   FormFieldSchoolId?:string;       
   FieldName: string;          
@@ -19,7 +19,8 @@ export interface FormField {
   IsRequired: boolean;       
   Sequence: number;          
   DefaultValue?: string;     
-  Options?: string[];        
+  Options?: string[]; 
+  CanChange?: true;       
 }
 
 export type Status = "connected" | "new" | "declined" | "pending" | "enrolled";
@@ -136,6 +137,7 @@ export const addFormField = async (userId: string, formField: FormField): Promis
             FieldName: formField.FieldName,
             FieldType: formField.FieldType,
             IsRequired: formField.IsRequired,
+            CanChange: true,
             Options: formField.Options || null,
             Sequence: 1, 
           },
@@ -166,7 +168,7 @@ export const deleteFormField = async (formFieldId: string, fieldName: string): P
     const data = docSnapshot.data();
     const formFields = data.FormFields || [];
 
-    const updatedFormFields = formFields.filter((field: any) => field.FieldName !== fieldName);
+    const updatedFormFields = formFields.filter((field: FormField) => field.FieldName !== fieldName);
 
     await updateDoc(fieldDocRef, { FormFields: updatedFormFields });
 
@@ -221,7 +223,7 @@ export const updateFormField = async (
     const data = docSnapshot.data();
     const formFields = data.FormFields || [];
 
-    const updatedFormFields = formFields.map((field: any) => {
+    const updatedFormFields = formFields.map((field: FormField) => {
       if (field.FieldName === currentFieldName) {
         return {
           ...field,
