@@ -1,13 +1,14 @@
 "use client";
 import React, { useState, ChangeEvent, useEffect } from "react";
-import { FaTrash, FaEdit } from "react-icons/fa";
+import { Edit as FaEdit, Trash2 as FaTrash } from "lucide-react";
+
 import useSWR, { mutate } from "swr";
 import {
   addFormField,
   fetchFormFields,
   deleteFormField,
   updateFormField,
-  // saveStudentData,
+  saveStudentData,
 } from "@/components/helper/firebaseHelper";
 import {
   FormField,
@@ -145,44 +146,12 @@ const StudentForm: React.FC = () => {
       switch (type) {
         case FieldType.RADIO:
           return (
-            <div key={fieldKey} className="border p-4 rounded-md mb-4">
-              <label>{FieldName}</label>
-              <FaTrash
-                onClick={() =>
-                  handleDeleteField(field.FormFieldID || "", FieldName)
-                }
-              />
-              <FaEdit
-                onClick={() =>
-                  handleEditClick(field.FormFieldID || "", FieldName)
-                }
-                className="cursor-pointer text-blue-500"
-              />
-              {Options?.map((option: string) => (
-                <label key={option} className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name={FieldName}
-                    value={option}
-                    checked={formData[FieldName] === option}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-0"
-                  />
-                  <span className="text-sm text-gray-600">{option}</span>
-                </label>
-              ))}
-            </div>
-          );
-        case FieldType.SELECT:
-          return (
-            <div key={fieldKey} className="border p-4 rounded-md mb-4">
-              <label>{FieldName}</label>
-
-              {FieldName === "City" || FieldName === "State" ? (
-                <></>
-              ) : (
-                <>
+            <div key={fieldKey} className=" p-4 rounded-md mb-4">
+              <div className="flex  justify-between">
+                <label className="text-xl text-gray-800">{FieldName}</label>
+                <div className="flex space-x-4">
                   <FaTrash
+                    className="cursor-pointer text-gray-800"
                     onClick={() =>
                       handleDeleteField(field.FormFieldID || "", FieldName)
                     }
@@ -191,10 +160,55 @@ const StudentForm: React.FC = () => {
                     onClick={() =>
                       handleEditClick(field.FormFieldID || "", FieldName)
                     }
-                    className="cursor-pointer text-blue-500"
+                    className="cursor-pointer text-gray-800"
                   />
-                </>
-              )}
+                </div>
+              </div>
+
+              {Options?.map((option: string) => (
+                <label key={option} className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name={FieldName}
+                    value={option}
+                    checked={formData[FieldName] === option}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-gray-600 bg-white border-gray-300 rounded-full focus:ring-0 focus:ring-gray-500 focus:outline-none"
+                  />
+                  <span className="text-sm text-gray-600 select-none">
+                    {option}
+                  </span>
+                </label>
+              ))}
+            </div>
+          );
+        case FieldType.SELECT:
+          return (
+            <div key={fieldKey} className="p-4 rounded-md mb-4">
+              <div className="flex justify-between">
+                <label className="text-xl">{FieldName}</label>
+                <div className="flex space-x-4">
+                  {FieldName === "City" || FieldName === "State" ? (
+                    <></>
+                  ) : (
+                    <>
+                      <FaTrash
+                        className="cursor-pointer text-gray-800"
+                        onClick={() =>
+                          handleDeleteField(field.FormFieldID || "", FieldName)
+                        }
+                      />
+                      <FaEdit
+                        onClick={() =>
+                          handleEditClick(field.FormFieldID || "", FieldName)
+                        }
+                        className="cursor-pointer text-gray-800"
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
+
               <select
                 name={FieldName}
                 value={formData[FieldName]}
@@ -213,12 +227,15 @@ const StudentForm: React.FC = () => {
         case FieldType.DATE:
           return (
             <div key={fieldKey} className=" p-4 rounded-md mb-4">
-              <label>{FieldName}</label>
-              <FaTrash
-                onClick={() =>
-                  handleDeleteField(field.FormFieldID || "", FieldName)
-                }
-              />
+              <div className="flex justify-between">
+                <label className="text-xl">{FieldName}</label>
+                <FaTrash
+                  className="cursor-pointer text-gray-800"
+                  onClick={() =>
+                    handleDeleteField(field.FormFieldID || "", FieldName)
+                  }
+                />
+              </div>
               <input
                 type="date"
                 name={FieldName}
@@ -229,34 +246,37 @@ const StudentForm: React.FC = () => {
           );
         default:
           return (
-            <div key={fieldKey} className="border p-4 rounded-md mb-4">
-              <label>{FieldName}</label>
+            <div key={fieldKey} className="p-4 rounded-md mb-4">
+              <div className="flex justify-between">
+                <label className="text-xl">{FieldName}</label>
 
-              {FieldName === "pincode" ||
-              FieldName === "First Name" ||
-              FieldName === "Last Name" ? (
-                <></>
-              ) : (
-                <>
-                  <FaTrash
-                    onClick={() =>
-                      handleDeleteField(field.FormFieldID || "", FieldName)
-                    }
-                  />
-                  <FaEdit
-                    onClick={() =>
-                      handleEditClick(field.FormFieldID || "", FieldName)
-                    }
-                    className="cursor-pointer text-blue-500"
-                  />
-                </>
-              )}
+                {FieldName === "pincode" ||
+                FieldName === "First Name" ||
+                FieldName === "Last Name" ? (
+                  <></>
+                ) : (
+                  <div className="flex space-x-4">
+                    <FaTrash
+                      className="cursor-pointer text-gray-800"
+                      onClick={() =>
+                        handleDeleteField(field.FormFieldID || "", FieldName)
+                      }
+                    />
+                    <FaEdit
+                      onClick={() =>
+                        handleEditClick(field.FormFieldID || "", FieldName)
+                      }
+                      className="cursor-pointer text-gray-800"
+                    />
+                  </div>
+                )}
+              </div>
 
               <input
                 name={FieldName}
                 value={formData[FieldName] || ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 mt-2 border border-gray-900 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 mt-2 border border-gray-900 rounded-md focus:ring-2 focus:ring-gray-700"
               />
             </div>
           );
@@ -264,16 +284,16 @@ const StudentForm: React.FC = () => {
     });
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   try {
-  //     await saveStudentData(formData);
-  //     alert("Student data saved successfully!");
-  //   } catch (error) {
-  //     console.error("Error saving student data:", error);
-  //     alert("Failed to save student data.");
-  //   }
-  // };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await saveStudentData(formData);
+      alert("Student data saved successfully!");
+    } catch (error) {
+      console.error("Error saving student data:", error);
+      alert("Failed to save student data.");
+    }
+  };
 
   const handleEditFormToggle = () => {
     if (isEditMode) {
@@ -293,7 +313,7 @@ const StudentForm: React.FC = () => {
   if (error) return <p>Error loading fields</p>;
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 bg-white shadow-sm rounded-lg">
+    <div className="w-full max-w-3xl mx-auto p-4  bg-white shadow-sm rounded-lg">
       <div className="rounded-3xl bg-slate-700">
         <h2 className="text-3xl w-full flex items-center justify-center m-2 font-medium text-white py-4">
           Please enter Student Details
@@ -302,7 +322,10 @@ const StudentForm: React.FC = () => {
 
       <form>
         {fields?.map((field) => (
-          <div key={field.FormFieldID} className="bg-gray-200">
+          <div
+            key={field.FormFieldID}
+            className="bg-gray-100 px-16 py-2 rounded-3xl my-2"
+          >
             {renderField(field)}
           </div>
         ))}
@@ -361,8 +384,18 @@ const StudentForm: React.FC = () => {
       <div className="mt-6 flex justify-between">
         <button
           type="button"
+          onClick={handleSubmit}
+          className="bg-gray-500 text-white px-4 py-2 rounded"
+        >
+          Submit
+        </button>
+      </div>
+
+      <div className="mt-6 flex justify-between">
+        <button
+          type="button"
           onClick={handleEditFormToggle}
-          className="bg-yellow-500 text-white px-4 py-2 rounded"
+          className="bg-gray-500 text-white px-4 py-2 rounded"
         >
           {isEditMode ? "Save Changes" : "Edit Form"}
         </button>
