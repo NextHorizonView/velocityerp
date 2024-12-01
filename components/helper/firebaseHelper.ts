@@ -182,14 +182,10 @@ export const deleteFormField = async (formFieldId: string, fieldName: string): P
 export const saveStudentData = async (studentData: Record<string, string>) => {
   try {
     const { ...additionalData } = studentData;
-
-
-
     const studentRef = doc(db, 'students');
     await setDoc(studentRef, {
       ...additionalData, 
     });
-
   } catch (error) {
     console.error('Error saving student data:', error);
     throw error;
