@@ -50,11 +50,17 @@ const StudentForm: React.FC = () => {
         },
         {}
       );
-      setFormData(initialFormData);
+
+      if (JSON.stringify(formData) !== JSON.stringify(initialFormData)) {
+        setFormData(initialFormData);
+      }
     } else {
-      setFormData({});
+      if (Object.keys(formData).length > 0) {
+        setFormData({});
+      }
     }
   }, [fields]);
+
   if (!userId) {
     return <div>User not authenticated. Please log in.</div>;
   }
@@ -250,7 +256,8 @@ const StudentForm: React.FC = () => {
               <div className="flex justify-between">
                 <label className="text-xl">{FieldName}</label>
 
-                {FieldName === "pincode" ||
+                {FieldName === "Email" ||
+                FieldName === "Pincode" ||
                 FieldName === "First Name" ||
                 FieldName === "Last Name" ? (
                   <></>
@@ -288,6 +295,7 @@ const StudentForm: React.FC = () => {
     e.preventDefault();
     try {
       await saveStudentData(formData);
+      console.log(formData);
       alert("Student data saved successfully!");
     } catch (error) {
       console.error("Error saving student data:", error);
