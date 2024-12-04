@@ -251,23 +251,24 @@ export const saveStudentData = async (studentData: Record<string, string>) => {
     const password = firstName + lastName + "123";
 
     const data = { emailForAuth, password };
+    console.log(data)
   
   
-    const response = await fetch("/api/createStudent", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+    // const response = await fetch("/api/createStudent", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify(data),
+    // });
 
-    const result = await response.json();
+    // const result = await response.json();
 
-    if (response.ok) {
-      alert(result.message); // Success message
-    } else {
-      alert(result.error); // Error message
-    }
+    // if (response.ok) {
+    //   alert(result.message); // Success message
+    // } else {
+    //   alert(result.error); // Error message
+    // }
   } catch (error) {
     console.error("Error saving student data:", error);
     alert("Error saving student data.");
