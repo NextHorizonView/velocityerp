@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { mutate } from "swr";
 import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "../../lib/firebaseConfig"; // Adjust your Firebase import
+import { db } from "../../lib/firebaseConfig";
 import {
   Table,
   TableBody,
