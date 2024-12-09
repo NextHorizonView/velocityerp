@@ -47,7 +47,6 @@ export type Student = {
 
 const fetchStudents = async () => {
   const querySnapshot = await getDocs(collection(db, "students"));
-  // console.log(querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   return querySnapshot.docs.map(
     (doc) => ({ id: doc.id, ...doc.data() } as unknown as Student)
   );
@@ -66,11 +65,7 @@ export default function Students() {
     { revalidateOnFocus: false }
   );
 
-  // console.log(students);
-
   const formFields = fields[0]?.FormFields || [];
-
-  // console.log(formFields);
 
   const [currentPage, setCurrentPage] = useState(1);
 
