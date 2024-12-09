@@ -1,20 +1,12 @@
-'use client'
-import React, { useState, useMemo  } from 'react';
+"use client";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { uploadCsv, refreshStudentList } from './uploadCsv';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Edit, Trash2 } from "lucide-react";
+import { uploadCsv, refreshStudentList } from "./uploadCsv";
+
 import { IoIosCloudUpload } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
-import Link from 'next/link';
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -23,240 +15,97 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+
+import Papa from "papaparse";
+import useSWR from "swr";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import Papa from 'papaparse';
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+} from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig";
+import { fetchFormFields, FormField } from "../helper/firebaseHelper";
+import { mutate } from "swr";
+import StudentsTable from "./StudentTable";
 
 export type Student = {
   id: number;
-  name: string;
-  class: string;
-  phone: string;
-  email: string;
-  gender: "Male" | "Female";
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  religion: string;
-  studentId: string;
+  name?: string;
+  class?: string;
+  phone?: string;
+  email?: string;
+  gender?: "Male" | "Female";
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  religion?: string;
+  studentId?: string;
 };
 
+const fetchStudents = async () => {
+  const querySnapshot = await getDocs(collection(db, "students"));
+  // console.log(querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  return querySnapshot.docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as unknown as Student)
+  );
+};
 const ITEMS_PER_PAGE = 8;
 
 export default function Students() {
-  const [students, setStudents] = useState<Student[]>([
-    {
-      id: 1,
-      name: "Jane Cooper",
-      class: "VII A",
-      phone: "(225) 555-0118",
-      email: "jane@microsoft.com",
-      gender: "Male",
-      address: "123 Main St",
-      city: "New York",
-      state: "NY",
-      pincode: "10001",
-      religion: "Christianity",
-      studentId: "",
-    },
-    {
-      id: 2,
-      name: "Floyd Miles",
-      class: "VIII B",
-      phone: "(205) 555-0100",
-      email: "floyd@yahoo.com",
-      gender: "Female",
-      address: "456 Oak St",
-      city: "Los Angeles",
-      state: "CA",
-      pincode: "90001",
-      religion: "Islam",
-      studentId: "",
-      
-    },
-    {
-      id: 3,
-      name: "Ronald Richards",
-      class: "IX A",
-      phone: "(302) 555-0107",
-      email: "ronald@adobe.com",
-      gender: "Female",
-      address: "789 Pine St",
-      city: "Chicago",
-      state: "IL",
-      pincode: "60601",
-      religion: "Hinduism",
-      studentId: "",
-      
-    },
-    {
-      id: 4,
-      name: "Marvin McKinney",
-      class: "X A",
-      phone: "(252) 555-0126",
-      email: "marvin@tesla.com",
-      gender: "Male",
-      address: "321 Elm St",
-      city: "Houston",
-      state: "TX",
-      pincode: "77001",
-      religion: "Buddhism",
-      studentId: "",
-    
-    },
-    {
-      id: 5,
-      name: "Jerome Bell",
-      class: "VII A",
-      phone: "(629) 555-0129",
-      email: "jerome@google.com",
-      gender: "Male",
-      address: "654 Maple St",
-      city: "Phoenix",
-      state: "AZ",
-      pincode: "85001",
-      religion: "Christianity",
-      studentId: "",
-    
-    },
-    {
-      id: 6,
-      name: "Kathryn Murphy",
-      class: "VIII B",
-      phone: "(406) 555-0120",
-      email: "kathryn@microsoft.com",
-      gender: "Male",
-      address: "987 Cedar St",
-      city: "Philadelphia",
-      state: "PA",
-      pincode: "19101",
-      religion: "Islam",  
-      studentId: "",
-      
-    },
-    {
-      id: 7,
-      name: "Jacob Jones",
-      class: "IX A",
-      phone: "(208) 555-0112",
-      email: "jacob@yahoo.com",
-      gender: "Male",
-      address: "741 Birch St",
-      city: "San Antonio",
-      state: "TX",
-      pincode: "78201",
-      religion: "Judaism",
-      studentId: "",
-     
-    },
-    {
-      id: 8,
-      name: "Kristin Watson",
-      class: "X A",
-      phone: "(704) 555-0127",
-      email: "kristin@facebook.com",
-      gender: "Female",
-      address: "852 Walnut St",
-      city: "San Diego",
-      state: "CA",
-      pincode: "92101",
-      religion: "Sikhism",
-      studentId: "",
-      
-    },
-    {
-      id: 9,
-      name: "Kristin Watson",
-      class: "VII A",
-      phone: "(704) 555-0127",
-      email: "kristin@facebook.com",
-      gender: "Female",
-      address: "963 Oak St",
-      city: "Dallas",
-      state: "TX",
-      pincode: "75201",
-      religion: "Christianity",
-      studentId: "",
-     
-    },
-    {
-      id: 10,
-      name: "Kristin Watson",
-      class: "VIII B",
-      phone: "(704) 555-0127",
-      email: "kristin@facebook.com",
-      gender: "Female",
-      address: "159 Pine St",
-      city: "San Jose",
-      state: "CA",
-      pincode: "95101",
-      religion: "Hinduism",
-      studentId: "",
-      
-    }
-  ]);
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
+  const { data: students, error } = useSWR("students", fetchStudents);
+
+  const { data: fields = [], error: fieldsError } = useSWR<FormField[]>(
+    userId ? `formFields-${userId}` : null,
+    userId ? () => fetchFormFields(userId) : null,
+    { revalidateOnFocus: false }
+  );
+
+  // console.log(students);
+
+  const formFields = fields[0]?.FormFields || [];
+
+  // console.log(formFields);
 
   const [currentPage, setCurrentPage] = useState(1);
+
   const [searchTerm, setSearchTerm] = useState("");
+
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Student;
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
 
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
-  const [isImportExportDialogOpen, setIsImportExportDialogOpen] = useState(false);
+  const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
+    useState(false);
   const [file, setFile] = useState<File | null>(null);
 
-  const handleEdit = (student: Student) => {
-    setEditingStudent({ ...student });
-    setIsEditDialogOpen(true);
-  };
+  const handleDelete = async (student: Student) => {
+    try {
+      const studentDocRef = doc(db, "students", student.id.toString());
 
-  const handleDelete = (student: Student) => {
-    setStudentToDelete(student);
-    setIsDeleteDialogOpen(true);
-  };
+      // Check if the document exists
+      const studentDocSnap = await getDoc(studentDocRef);
+      if (!studentDocSnap.exists()) {
+        throw new Error(`Student with ID ${student.id} does not exist`);
+      }
 
-  const handleSaveEdit = () => {
-    if (editingStudent) {
-      setStudents(students.map(student =>
-        student.id === editingStudent.id ? editingStudent : student
-      ));
-      setIsEditDialogOpen(false);
-      setEditingStudent(null);
+      // Delete the document
+      await deleteDoc(studentDocRef);
+      mutate("students");
+      console.log(`Student with ID ${student.id} deleted successfully!`);
+    } catch (error) {
+      console.error("Error deleting document:", error);
     }
-  };
-
-  const handleConfirmDelete = () => {
-    if (studentToDelete) {
-      setStudents(students.filter(student => student.id !== studentToDelete.id));
-      setIsDeleteDialogOpen(false);
-      setStudentToDelete(null);
-    }
-  };
-
-  const handleSort = (key: keyof Student) => {
-    setSortConfig({
-      key,
-      direction:
-        sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc",
-    });
   };
 
   const filteredAndSortedStudents = useMemo(() => {
-    return [...students]
+    return [...(students || [])]
       .filter(
         (student) =>
           student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -265,21 +114,50 @@ export default function Students() {
           student.email?.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        if ((a[sortConfig.key] ?? "") < (b[sortConfig.key] ?? "")) {
           return sortConfig.direction === "asc" ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if ((a[sortConfig.key] ?? "") > (b[sortConfig.key] ?? "")) {
           return sortConfig.direction === "asc" ? 1 : -1;
         }
         return 0;
       });
-  }, [students, searchTerm, sortConfig]);
+  }, [students, searchTerm, sortConfig, handleDelete]);
 
-  const totalPages = Math.ceil(filteredAndSortedStudents.length / ITEMS_PER_PAGE);
-  const paginatedStudents = filteredAndSortedStudents.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+  // const paginatedStudents = useMemo(
+  //   () =>
+  //     filteredAndSortedStudents.slice(
+  //       (currentPage - 1) * ITEMS_PER_PAGE,
+  //       currentPage * ITEMS_PER_PAGE
+  //     ),
+  //   [filteredAndSortedStudents, currentPage]
+  // );
+
+  if (error) return <div>Error loading students</div>;
+  if (!students) return <div>Loading...</div>;
+  if (fieldsError) {
+    console.error("Error fetching fields:", fieldsError);
+    return <div>Error loading form fields</div>;
+  }
+
+  const handleSort = (key: keyof Student) => {
+    setSortConfig({
+      key,
+      direction:
+        sortConfig.key === key && sortConfig.direction === "asc"
+          ? "desc"
+          : "asc",
+    });
+  };
+
+  const totalPages = Math.ceil(
+    filteredAndSortedStudents.length / ITEMS_PER_PAGE
   );
+
+  // const paginatedStudents = filteredAndSortedStudents.slice(
+  //   (currentPage - 1) * ITEMS_PER_PAGE,
+  //   currentPage * ITEMS_PER_PAGE
+  // );
 
   const handleImportExport = () => {
     setIsImportExportDialogOpen(true);
@@ -294,25 +172,25 @@ export default function Students() {
     if (file) {
       try {
         await uploadCsv(file);
-        alert('CSV file uploaded successfully!');
-        await refreshStudentList(setStudents);
+        alert("CSV file uploaded successfully!");
+        await refreshStudentList(() => students);
       } catch (error) {
-        console.error('Error uploading CSV file: ', error);
-        alert('Failed to upload CSV file.');
+        console.error("Error uploading CSV file: ", error);
+        alert("Failed to upload CSV file.");
       }
     } else {
-      alert('Please select a CSV file.');
+      alert("Please select a CSV file.");
     }
     setIsImportExportDialogOpen(false);
   };
 
   const handleDownloadCsv = () => {
     const csv = Papa.unparse(students);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'students.csv');
+    link.setAttribute("href", url);
+    link.setAttribute("download", "students.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -334,7 +212,7 @@ export default function Students() {
           </Button>
         </div>
         <div className="flex items-center space-x-4">
-          <Link href='/studentform'>
+          <Link href="/studentform">
             <Button
               variant="default"
               className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
@@ -360,81 +238,35 @@ export default function Students() {
               className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
               onChange={(e) => handleSort(e.target.value as keyof Student)}
             >
-              <option value="name" className="bg-transparent">Name</option>
-              <option value="class" className="bg-transparent">Class</option>
+              <option value="name" className="bg-transparent">
+                Name
+              </option>
+              <option value="class" className="bg-transparent">
+                Class
+              </option>
             </select>
           </div>
         </div>
       </div>
 
       <div className="bg-[#FAFAF8] rounded-lg shadow-sm">
-        <Table className="border-b">
-          <TableHeader>
-            <TableRow className="bg-gray-50 border-b">
-              <TableHead className="cursor-pointer py-4 text-sm font-medium">
-                Student Name
-              </TableHead>
-              <TableHead className="cursor-pointer py-4 text-sm font-medium">
-                Class/Div
-              </TableHead>
-              <TableHead className="py-4 text-sm font-medium">Phone Number</TableHead>
-              <TableHead className="py-4 text-sm font-medium">Email</TableHead>
-              <TableHead className="py-4 text-sm font-medium">Gender</TableHead>
-              <TableHead className="py-4 text-sm font-medium">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedStudents.map((student: Student) => (
-              <TableRow key={student.id} className="hover:bg-gray-50 border-b">
-                <TableCell className="py-4">{student.name}</TableCell>
-                <TableCell className="py-4">{student.class}</TableCell>
-                <TableCell className="py-4">{student.phone}</TableCell>
-                <TableCell className="py-4">{student.email}</TableCell>
-                <TableCell className="py-4">
-                  <div
-                    className={`w-20 h-8 flex items-center justify-center rounded-md text-xs font-medium ${
-                      student.gender === "Male"
-                        ? "bg-transparent text-black"
-                        : "bg-transparent text-black"
-                    }`}
-                  >
-                    {student.gender}
-                  </div>
-                </TableCell>
-                <TableCell className="py-4">
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="w-9 h-9 p-0"
-                      onClick={() => handleEdit(student)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="w-9 h-9 p-0"
-                      onClick={() => handleDelete(student)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <StudentsTable students={students} formFields={formFields} />
 
+        {/* table footer  */}
         <div className="flex items-center justify-between px-6 py-4 border-t">
           <div className="text-sm text-gray-500">
-            Showing data {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedStudents.length)} of {filteredAndSortedStudents.length} entries
+            Showing data {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
+            {Math.min(
+              currentPage * ITEMS_PER_PAGE,
+              filteredAndSortedStudents.length
+            )}{" "}
+            of {filteredAndSortedStudents.length} entries
           </div>
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
               disabled={currentPage === 1}
             >
               Previous
@@ -453,7 +285,9 @@ export default function Students() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+              onClick={() =>
+                setCurrentPage((page) => Math.min(totalPages, page + 1))
+              }
               disabled={currentPage === totalPages}
             >
               Next
@@ -463,7 +297,11 @@ export default function Students() {
       </div>
 
       {/* Import/Export Dialog */}
-      <Dialog open={isImportExportDialogOpen} onOpenChange={setIsImportExportDialogOpen}>
+      {/* upload csv */}
+      <Dialog
+        open={isImportExportDialogOpen}
+        onOpenChange={setIsImportExportDialogOpen}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base">Import/Export</DialogTitle>
@@ -513,182 +351,6 @@ export default function Students() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-          {/* Edit Dialog */}
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-base">Edit Student Information</DialogTitle>
-              </DialogHeader>
-              {editingStudent && (
-                <div className="grid gap-3 py-2">
-                  {/* Name */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">Name</label>
-                    <Input
-                      className="h-6 text-sm"
-                      value={editingStudent.name}
-                      onChange={(e) =>
-                        setEditingStudent({ ...editingStudent, name: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  {/* Class */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">Class</label>
-                    <Input
-                      className="h-6 text-sm"
-                      value={editingStudent.class}
-                      onChange={(e) =>
-                        setEditingStudent({ ...editingStudent, class: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  {/* Phone */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">Phone</label>
-                    <Input
-                      className="h-6 text-sm"
-                      value={editingStudent.phone}
-                      onChange={(e) =>
-                        setEditingStudent({ ...editingStudent, phone: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">Email</label>
-                    <Input
-                      className="h-6 text-sm"
-                      value={editingStudent.email}
-                      onChange={(e) =>
-                        setEditingStudent({ ...editingStudent, email: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  {/* Gender */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">Gender</label>
-                    <select
-                      className="border rounded-md px-3 h-6 text-sm"
-                      value={editingStudent.gender}
-                      onChange={(e) =>
-                        setEditingStudent({
-                          ...editingStudent,
-                          gender: e.target.value as "Male" | "Female",
-                        })
-                      }
-                    >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                    </select>
-                  </div>
-
-                  {/* Address */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">Address</label>
-                    <textarea
-                      className="border rounded-md px-3 py-1 h-8 text-sm resize-none"
-                      value={editingStudent.address}
-                      onChange={(e) =>
-                        setEditingStudent({
-                          ...editingStudent,
-                          address: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-
-                  {/* City */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">City</label>
-                    <Input
-                      className="h-6 text-sm"
-                      value={editingStudent.city}
-                      onChange={(e) =>
-                        setEditingStudent({ ...editingStudent, city: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  {/* State */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">State</label>
-                    <Input
-                      className="h-6 text-sm"
-                      value={editingStudent.state}
-                      onChange={(e) =>
-                        setEditingStudent({ ...editingStudent, state: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  {/* Pincode */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">Pincode</label>
-                    <Input
-                      className="h-6 text-sm"
-                      value={editingStudent.pincode}
-                      onChange={(e) =>
-                        setEditingStudent({
-                          ...editingStudent,
-                          pincode: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-
-                  {/* Religion */}
-                  <div className="grid gap-1">
-                    <label className="text-sm font-medium">Religion</label>
-                    <Input
-                      className="h-6 text-sm"
-                      value={editingStudent.religion}
-                      onChange={(e) =>
-                        setEditingStudent({
-                          ...editingStudent,
-                          religion: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-              )}
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" size="sm">
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <Button onClick={handleSaveEdit} size="sm" className="bg-[#576086]">
-                  Save changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* Delete Dialog */}
-          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Student</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this student? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600">
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-  
+    </div>
   );
 }
