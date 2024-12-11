@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <>
       <div className="bg-white">
-        <Login />
+        <Login authUser={null}  />
       </div>
     </>
   );

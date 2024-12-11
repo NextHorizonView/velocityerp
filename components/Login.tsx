@@ -11,8 +11,13 @@ import { FaGooglePlay } from 'react-icons/fa';
 import { AiOutlineApple } from "react-icons/ai";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
 import { auth } from '@/lib/firebaseConfig';
+import withAuthentication from '@/lib/withAuthentication';
 
-const Login = () => {
+interface LoginProps {
+  authUser: { uid: string; email: string; role: string; domain: string } | null;
+}
+
+const Login: React.FC<LoginProps> = ({ authUser }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -20,25 +25,10 @@ const Login = () => {
 
   // Auto-login if credentials exist in localStorage
   useEffect(() => {
-    const storedEmail = localStorage.getItem('email');
-    const storedPassword = localStorage.getItem('password');
-    const storedRole = localStorage.getItem('userRole');
-    const storedDomain = localStorage.getItem('domain');
-
-    if (storedEmail && storedPassword && storedRole && storedDomain) {
-      handleAutoLogin(storedEmail, storedPassword, storedRole, storedDomain);
-    }
-  }, []);
-
-  const handleAutoLogin = async (email: string, password: string, role: string, domain: string) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      console.log(`Auto-login successful for role: ${role} on domain: ${domain}`);
+    if (authUser) {
       router.push('/dashboard');
-    } catch (error) {
-      console.error('Auto-login failed:', error);
     }
-  };
+  }, [authUser, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +36,9 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
+      // Get the domain (website name) dynamically
+      const domain = window.location.hostname; // e.g., "example.com"
+        
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
@@ -53,9 +46,8 @@ const Login = () => {
         if (rememberMe) {
           // Save credentials in localStorage only if "Remember Me" is checked
           localStorage.setItem('email', username);
-          localStorage.setItem('password', password);
           localStorage.setItem('userRole', role);
-          localStorage.setItem('domain', window.location.hostname);
+          localStorage.setItem('userDomain', domain); // Store domain
         }
 
         router.push('/dashboard');
@@ -76,11 +68,14 @@ const Login = () => {
       const userCredential = await signInWithPopup(auth, provider);
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
+            // Get the domain (website name) dynamically
+      const domain = window.location.hostname; // e.g., "example.com"
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
         localStorage.setItem('userId', userCredential.user.uid);
         localStorage.setItem('userRole', role);
+        localStorage.setItem('userDomain', domain); // Store domain
         router.push('/dashboard');
       } else {
         console.error('User does not have admin role');
@@ -205,39 +200,30 @@ const Login = () => {
 
             {/* Login and Google Sign-In Buttons */}
             <div className="space-y-4">
-              <Button type="submit" className="w-full bg-orange-400 hover:bg-orange-500 text-white py-3 rounded-lg transition-colors duration-200 text-base font-semibold">
-                Login
+              <Button type="submit" className="w-full bg-orange-400 hover:bg-orange-500 text-white">
+                Sign In
               </Button>
-
               <Button
-                variant="outline"
                 onClick={handleGoogleSignIn}
-                className="w-full py-3 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center space-x-3 text-base"
+                type="button"
+                className="w-full bg-white border border-gray-300 text-gray-800 flex items-center justify-center space-x-2"
               >
-                <FcGoogle className="w-5 h-5" />
-                <span className="text-gray-900">Sign in with Google</span>
+                <FcGoogle />
+                <span>Sign in with Google</span>
               </Button>
             </div>
           </form>
 
-          {/* App Store Buttons Styled as in Image */}
-          <div className="flex space-x-4 mt-8">
-            <a
-              href="#"
-              className="flex items-center justify-center px-4 py-2 bg-black text-white rounded-lg shadow-md transition-transform transform hover:scale-105"
-              style={{ width: '140px', height: '60px' }}
-            >
-              <FaGooglePlay className="mr-2 text-xl" />
-              <span className="text-sm">GET IT ON<br />Google Play</span>
-            </a>
-            <a
-              href="#"
-              className="flex items-center justify-center px-4 py-2 bg-black text-white rounded-lg shadow-md transition-transform transform hover:scale-105"
-              style={{ width: '140px', height: '60px' }}
-            >
-              <AiOutlineApple className='mr-2 text-5xl' />
-              <span className="text-sm">Download on the<br />App Store</span>
-            </a>
+          {/* Download Links */}
+          <div className="flex justify-between mt-8">
+            <Button type="button" className="flex items-center space-x-2 text-sm text-gray-500">
+              <FaGooglePlay />
+              <span>Google Play</span>
+            </Button>
+            <Button type="button" className="flex items-center space-x-2 text-sm text-gray-500">
+              <AiOutlineApple />
+              <span>App Store</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -245,4 +231,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default withAuthentication(Login);
