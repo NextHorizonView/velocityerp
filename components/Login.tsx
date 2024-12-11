@@ -1,21 +1,44 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation'; // Import useRouter from next/navigation
+import { useRouter } from 'next/navigation';
 import LoginImage from '@/public/LoginImage.jpg';
 import CastEducation from '@/public/castEducation.jpg';
-import { FcGoogle } from 'react-icons/fc'; 
-import { FaGooglePlay } from 'react-icons/fa'; 
+import { FcGoogle } from 'react-icons/fc';
+import { FaGooglePlay } from 'react-icons/fa';
 import { AiOutlineApple } from "react-icons/ai";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
-import { auth } from '@/lib/firebaseConfig'; // Import Firebase auth
+import { auth } from '@/lib/firebaseConfig';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter(); // Initialize the router
+  const [rememberMe, setRememberMe] = useState(false);
+  const router = useRouter();
+
+  // Auto-login if credentials exist in localStorage
+  useEffect(() => {
+    const storedEmail = localStorage.getItem('email');
+    const storedPassword = localStorage.getItem('password');
+    const storedRole = localStorage.getItem('userRole');
+    const storedDomain = localStorage.getItem('domain');
+
+    if (storedEmail && storedPassword && storedRole && storedDomain) {
+      handleAutoLogin(storedEmail, storedPassword, storedRole, storedDomain);
+    }
+  }, []);
+
+  const handleAutoLogin = async (email: string, password: string, role: string, domain: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      console.log(`Auto-login successful for role: ${role} on domain: ${domain}`);
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Auto-login failed:', error);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,9 +49,15 @@ const Login = () => {
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
-        // Store user information in local storage
-        localStorage.setItem('userId', userCredential.user.uid);
-        localStorage.setItem('userRole', role);
+
+        if (rememberMe) {
+          // Save credentials in localStorage only if "Remember Me" is checked
+          localStorage.setItem('email', username);
+          localStorage.setItem('password', password);
+          localStorage.setItem('userRole', role);
+          localStorage.setItem('domain', window.location.hostname);
+        }
+
         router.push('/dashboard');
       } else {
         console.error('User does not have admin role');
@@ -50,7 +79,6 @@ const Login = () => {
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
-        // Store user information in local storage
         localStorage.setItem('userId', userCredential.user.uid);
         localStorage.setItem('userRole', role);
         router.push('/dashboard');
@@ -67,7 +95,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Section with Illustration */}
+      {/* Left Section */}
       <div className="hidden md:flex md:w-1/3 relative">
         <div className="absolute inset-0">
           <Image
@@ -80,7 +108,7 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Right Section with Login Form */}
+      {/* Right Section */}
       <div className="w-full md:w-2/3 min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-12 xl:px-16">
         <div className="max-w-md space-y-8">
           {/* Logo */}
@@ -88,8 +116,8 @@ const Login = () => {
             <Image
               src={CastEducation}
               alt="CastEducation Logo"
-              width={100}  
-              height={100} 
+              width={100}
+              height={100}
               className="w-24 h-24 object-contain"
             />
           </div>
@@ -147,6 +175,8 @@ const Login = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
