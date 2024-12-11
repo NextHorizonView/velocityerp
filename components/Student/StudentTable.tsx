@@ -110,47 +110,53 @@ const StudentsTable = ({
   };
 
   return (
-    <Table>
+    <Table className="border-b">
       <TableHeader>
-        <TableRow className="bg-gray-50 border-b flex justify-between flex-1">
+        <TableRow className="bg-gray-50">
           {formFields.map((field: FormField, index: number) => (
-            <TableHead key={index} className=" py-4 text-sm font-medium ">
+            <TableHead key={index} className=" py-4  text-sm font-medium ">
               {field.FieldName}
             </TableHead>
           ))}
           <TableHead className="py-4 text-sm font-medium">Action</TableHead>
         </TableRow>
       </TableHeader>
+
       <TableBody>
         {students.map((student) => (
           <TableRow
             key={student.id}
-            className="hover:bg-gray-50 border-b flex justify-between flex-1"
+            className="hover:bg-gray-50 transition-colors duration-200"
           >
             {formFields.map((field, index) => (
-              <TableCell key={index} className="py-4 ">
+              <TableCell
+                key={index}
+                className=" py-4 whitespace-nowrap text-sm text-gray-900"
+              >
                 {student[field.FieldName as keyof Student] || "N/A"}
               </TableCell>
             ))}
-            <TableCell className="py-4">
+            <TableCell className=" py-4 whitespace-nowrap text-sm text-gray-900">
               <div className="flex space-x-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-9 h-9 p-0"
+                  className="w-8 h-8 p-0"
                   onClick={() => handleEdit(student)}
                 >
+                  <span className="sr-only">Edit</span>
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-9 h-9 p-0"
+                  className="w-8 h-8 p-0"
                   onClick={() => {
                     setSelectedStudent(student);
                     setIsDeleteDialogOpen(true);
                   }}
                 >
+                  <span className="sr-only">Delete</span>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
