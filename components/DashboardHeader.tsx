@@ -46,6 +46,26 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
       return "Students";
     } else if (pathname === "/teacher") {
       return "Teachers";
+    } else if (pathname === "/parents") {
+      return "Parents";
+    }
+    else if (pathname === "/notice") {
+      return "Notice";
+    }
+    else if (pathname === "/events") {
+      return "Events";
+    }
+    else if (pathname === "/class") {
+      return "Class";
+    }
+    else if (pathname === "/exam") {
+      return "Exams";
+    }
+    else if (pathname === "/subjects") {
+      return "Subjects";
+    }
+    else if (pathname === "/account") {
+      return "Account";
     }
     return "Dashboard";
   };

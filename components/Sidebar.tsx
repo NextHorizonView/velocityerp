@@ -14,7 +14,8 @@ import {
   RiArrowRightDoubleFill,
   RiUserAddLine,
 } from "react-icons/ri";
-import { MdClass } from "react-icons/md";
+
+import { MdClass,MdOutlineSubject } from "react-icons/md";
 import Image from "next/image";
 import castEducation from "@/public/castEducation.jpg";
 import { AiOutlineQuestionCircle } from "react-icons/ai";
@@ -39,6 +40,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     { icon: <RiUserLine size={20} />, label: "Students", path: "/students" },
     { icon: <RiTeamLine size={20} />, label: "Teacher", path: "/teacher" },
     { icon: <RiParentLine size={20} />, label: "Parents", path: "/parents" },
+    { icon: <MdOutlineSubject size={20} />, label: "Subject", path: "/subjects" },
     {
       icon: <RiAccountCircleLine size={20} />,
       label: "Account",
