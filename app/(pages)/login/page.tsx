@@ -3,7 +3,7 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div><Login/></div>
+    <div><Login authUser={null}/></div>
   )
 }
 
