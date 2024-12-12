@@ -26,10 +26,10 @@ const withAuthentication = <P extends object>(Component: React.ComponentType<P>)
 
           // Save user information including role and domain
           const userInfo: AuthUser = { uid: user.uid, email: user.email || '', role, domain };
-          localStorage.setItem('authUser', JSON.stringify(userInfo));
+          localStorage.setItem('userId', JSON.stringify(userInfo));
           setAuthUser(userInfo);
         } else {
-          localStorage.removeItem('authUser');
+          localStorage.removeItem('userId');
           setAuthUser(null);
         }
       });
