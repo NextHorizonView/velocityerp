@@ -12,16 +12,16 @@ const AddSubject: React.FC = () => {
     ]);
     const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
     const [newTeacherName, setNewTeacherName] = useState('');
-    const [newTeacherPosition, setNewTeacherPosition] = useState('');
+    // const [newTeacherPosition, setNewTeacherPosition] = useState('');
 
-    const handleAddTeacher = () => {
-        if (newTeacherName && newTeacherPosition) {
-            setTeachers([...teachers, { name: newTeacherName, position: newTeacherPosition }]);
-            setNewTeacherName('');
-            setNewTeacherPosition('');
-            setIsAddTeacherModalOpen(false);
-        }
-    };
+    // const handleAddTeacher = () => {
+    //     if (newTeacherName && newTeacherPosition) {
+    //         setTeachers([...teachers, { name: newTeacherName, position: newTeacherPosition }]);
+    //         setNewTeacherName('');
+    //         setNewTeacherPosition('');
+    //         setIsAddTeacherModalOpen(false);
+    //     }
+    // };
 
     return (
         <div className="p-6 rounded-md">
