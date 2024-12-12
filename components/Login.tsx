@@ -48,6 +48,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
           localStorage.setItem('email', username);
           localStorage.setItem('userRole', role);
           localStorage.setItem('userDomain', domain); // Store domain
+          localStorage.setItem('userId', userCredential.user.uid);
         }
 
         router.push('/dashboard');
