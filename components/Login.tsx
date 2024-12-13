@@ -22,10 +22,18 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
+  
 
   // Auto-login if credentials exist in localStorage
   useEffect(() => {
-    if (authUser) {
+    console.log("AuthUser:", authUser);
+    if (
+      authUser &&
+      authUser.uid &&
+      authUser.email &&
+      authUser.role &&
+      authUser.domain 
+    ) {
       router.push('/dashboard');
     }
   }, [authUser, router]);
@@ -42,6 +50,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
+        localStorage.setItem('userId', userCredential.user.uid);
 
         if (rememberMe) {
           // Save credentials in localStorage only if "Remember Me" is checked
