@@ -235,12 +235,18 @@ const StudentForm: React.FC = () => {
             <div key={fieldKey} className=" p-4 rounded-md mb-4">
               <div className="flex justify-between">
                 <label className="text-xl">{FieldName}</label>
-                <FaTrash
-                  className="cursor-pointer text-gray-800"
-                  onClick={() =>
-                    handleDeleteField(field.FormFieldID || "", FieldName)
-                  }
-                />
+                {isEditMode ? (
+                  <>
+                    <FaTrash
+                      className="cursor-pointer text-gray-800"
+                      onClick={() =>
+                        handleDeleteField(field.FormFieldID || "", FieldName)
+                      }
+                    />
+                  </>
+                ) : (
+                  <></>
+                )}
               </div>
               <input
                 type="date"
@@ -261,21 +267,25 @@ const StudentForm: React.FC = () => {
                 FieldName === "First Name" ||
                 FieldName === "Last Name" ? (
                   <></>
+                ) : isEditMode ? (
+                  <>
+                    <div className="flex space-x-4">
+                      <FaTrash
+                        className="cursor-pointer text-gray-800"
+                        onClick={() =>
+                          handleDeleteField(field.FormFieldID || "", FieldName)
+                        }
+                      />
+                      <FaEdit
+                        onClick={() =>
+                          handleEditClick(field.FormFieldID || "", FieldName)
+                        }
+                        className="cursor-pointer text-gray-800"
+                      />
+                    </div>
+                  </>
                 ) : (
-                  <div className="flex space-x-4">
-                    <FaTrash
-                      className="cursor-pointer text-gray-800"
-                      onClick={() =>
-                        handleDeleteField(field.FormFieldID || "", FieldName)
-                      }
-                    />
-                    <FaEdit
-                      onClick={() =>
-                        handleEditClick(field.FormFieldID || "", FieldName)
-                      }
-                      className="cursor-pointer text-gray-800"
-                    />
-                  </div>
+                  <></>
                 )}
               </div>
 
@@ -296,7 +306,9 @@ const StudentForm: React.FC = () => {
     try {
       await saveStudentData(formData);
       console.log(formData);
+
       alert("Student data saved successfully!");
+      setFormData({});
     } catch (error) {
       console.error("Error saving student data:", error);
       alert("Failed to save student data.");
@@ -388,26 +400,26 @@ const StudentForm: React.FC = () => {
           </button>
         </div>
       )}
-
-      <div className="mt-6 flex justify-between">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="bg-gray-500 text-white px-4 py-2 rounded"
-          disabled={isEditMode}
-        >
-          Submit
-        </button>
-      </div>
-
-      <div className="mt-6 flex justify-between">
-        <button
-          type="button"
-          onClick={handleEditFormToggle}
-          className="bg-gray-500 text-white px-4 py-2 rounded"
-        >
-          {isEditMode ? "Save Changes" : "Edit Form"}
-        </button>
+      <div className="flex justify-between">
+        <div className="mt-6 flex justify-between">
+          <button
+            type="button"
+            onClick={handleEditFormToggle}
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+          >
+            {isEditMode ? "Save Changes" : "Edit Form"}
+          </button>
+        </div>
+        <div className="mt-6 flex justify-between">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+            disabled={isEditMode}
+          >
+            Submit
+          </button>
+        </div>
       </div>
     </div>
   );
