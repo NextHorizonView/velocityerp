@@ -38,32 +38,44 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
     }
   }, [authUser, router]);
 
+  useEffect(() => {
+    // Check and clear expired user data on page load
+    const storedExpiryTime = localStorage.getItem('userExpiry');
+    if (storedExpiryTime && Date.now() > parseInt(storedExpiryTime)) {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userExpiry');
+      localStorage.removeItem('authId');
+      console.log('userId cleared from localStorage after expiry time.');
+    }
+  }, []);
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
-      // Get the domain (website name) dynamically
-      const domain = window.location.hostname; // e.g., "example.com"
-        
-
+      const domain = window.location.hostname;
+  
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
-        localStorage.setItem('userId', userCredential.user.uid);
-
+        const userId = userCredential.user.uid;
+        localStorage.setItem('userId', userId);
+  
         if (rememberMe) {
-          // Save credentials in localStorage only if "Remember Me" is checked
           localStorage.setItem('email', username);
           localStorage.setItem('userRole', role);
-          localStorage.setItem('userDomain', domain); // Store domain
-          localStorage.setItem('userId', userCredential.user.uid);
+          localStorage.setItem('userDomain', domain);
+          localStorage.removeItem('userExpiry'); // Ensure expiry is cleared if Remember Me is active
+        } else {
+          const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 60 seconds for testing
+          localStorage.setItem('userExpiry', expiryTime.toString());
         }
-
+  
         router.push('/dashboard');
       } else {
-        console.error('User does not have admin role');
-        alert('You do not have admin privileges');
+        console.error('User does not have the required role');
+        alert('You do not have admin privileges.');
       }
     } catch (error: unknown) {
       const authError = error as AuthError;
@@ -71,6 +83,18 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       alert('Error logging in: ' + authError.message);
     }
   };
+  
+  // Auto-clear expired session on app load or refresh
+  useEffect(() => {
+    const storedExpiryTime = localStorage.getItem('userExpiry');
+    if (storedExpiryTime && Date.now() > parseInt(storedExpiryTime)) {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('authId');
+      localStorage.removeItem('userExpiry');
+      console.log('userId cleared after expiry time');
+    }
+  }, []);
+  
 
   const handleGoogleSignIn = async () => {
     try {
