@@ -1,3 +1,4 @@
+'use client'
 import React, { useState, useEffect } from "react";
 import { mutate } from "swr";
 import { deleteDoc, doc, getDoc } from "firebase/firestore";
@@ -37,12 +38,12 @@ const StudentsTable: React.FC<StudentsTableProps> = ({
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); // Track mounting state
   const router = useRouter();
 
-  // Use useEffect to delay the use of the router until after the component mounts
+  // Ensure router is only used client-side
   useEffect(() => {
-    setIsMounted(true);
+    setIsMounted(true); // Mark component as mounted
   }, []);
 
   const handleDelete = async (student: Student) => {
@@ -70,7 +71,7 @@ const StudentsTable: React.FC<StudentsTableProps> = ({
     }
   };
 
-  if (!isMounted) return null; // You can return a loading spinner or similar here
+  if (!isMounted) return null; // Ensure rendering happens only after mounting
 
   return (
     <Table className="border-b">

@@ -1,3 +1,4 @@
+'use client';
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { fetchFormFields, updateFormField } from "@/components/helper/firebaseHelper";
