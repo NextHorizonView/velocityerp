@@ -5,7 +5,6 @@ import {
   fetchFormFields,
   FieldType,
   FormField,
-  saveStudentData,
   fetchStudentDataById,
 } from "../helper/firebaseHelper";
 import { useRouter } from "next/navigation";
@@ -24,7 +23,7 @@ const EditStudentForm: React.FC<EditStudentFormProps> = ({ studentid }) => {
 
   console.log(userId);
 
-  const { data: fields = [], error } = useSWR<FormField[]>(
+  const { data: fields = [] } = useSWR<FormField[]>(
     userId ? `formFields-${userId}` : null,
     userId ? () => fetchFormFields(userId) : null,
     { revalidateOnFocus: false }
@@ -60,7 +59,6 @@ const EditStudentForm: React.FC<EditStudentFormProps> = ({ studentid }) => {
 
   const renderField = (field: FormField) => {
     const { FormFields } = field;
-    const router = useRouter();
 
     if (!FormFields || FormFields.length === 0) return null;
 
@@ -173,7 +171,7 @@ const EditStudentForm: React.FC<EditStudentFormProps> = ({ studentid }) => {
         </h2>
       </div>
 
-      <div>editng the information of student: {formData.Email} </div>
+      {/* <div>editng the information of student: {formData.Email} </div> */}
 
       <form>
         {fields?.map((field) => (
