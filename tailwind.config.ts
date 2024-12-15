@@ -9,6 +9,21 @@ export default {
   ],
   theme: {
   	extend: {
+		animation: {
+			fade: "fadeInOut 4s ease-in-out infinite",
+		  },
+		  keyframes: {
+			fadeInOut: {
+			  "0%, 100%": { opacity: '0' },
+			  "25%, 75%": { opacity: '1' },
+			},
+		  },
+		  animationDelay: {
+			"100ms": "100ms",
+			"200ms": "200ms",
+			"500ms": "500ms",
+			"1s": "1s",
+		  },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

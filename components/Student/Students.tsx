@@ -28,6 +28,7 @@ import { db } from "@/lib/firebaseConfig";
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
 import { mutate } from "swr";
 import StudentsTable from "./StudentTable";
+import FadeLoader from "../Loader";
 
 export type Student = {
   id: number;
@@ -137,7 +138,7 @@ export default function Students() {
   // );
 
   if (error) return <div>Error loading students</div>;
-  if (!students) return <div>Loading...</div>;
+  if (!students) return <div><FadeLoader/></div>;
   if (fieldsError) {
     console.error("Error fetching fields:", fieldsError);
     return <div>Error loading form fields</div>;
