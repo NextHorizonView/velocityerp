@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import React, { useState, useEffect } from "react";
 import { mutate } from "swr";
 import { deleteDoc, doc, getDoc } from "firebase/firestore";
@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface StudentsTableProps {
   students: Student[];
@@ -38,13 +39,6 @@ const StudentsTable: React.FC<StudentsTableProps> = ({
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [isMounted, setIsMounted] = useState(false); // Track mounting state
-  const router = useRouter();
-
-  // Ensure router is only used client-side
-  useEffect(() => {
-    setIsMounted(true); // Mark component as mounted
-  }, []);
 
   const handleDelete = async (student: Student) => {
     try {
@@ -64,14 +58,6 @@ const StudentsTable: React.FC<StudentsTableProps> = ({
       console.error("Error deleting document:", error);
     }
   };
-
-  const handleEdit = (fieldId: string) => {
-    if (isMounted) {
-      router.push(`/edit-field/${fieldId}`);
-    }
-  };
-
-  if (!isMounted) return null; // Ensure rendering happens only after mounting
 
   return (
     <Table className="border-b">
@@ -102,15 +88,18 @@ const StudentsTable: React.FC<StudentsTableProps> = ({
             ))}
             <TableCell className="py-4 whitespace-nowrap text-sm text-gray-900">
               <div className="flex space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-8 h-8 p-0"
-                  onClick={() => handleEdit(student.id.toString())} // Safely call handleEdit
-                >
-                  <span className="sr-only">Edit Field</span>
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <Link href={`/editstudent/${student.id}`} passHref>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-8 h-8 p-0"
+                    // onClick={() => handleEdit(student.id.toString())} // Safely call handleEdit
+                  >
+                    <span className="sr-only">Edit Field</span>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </Link>
+
                 <Button
                   variant="ghost"
                   size="sm"
