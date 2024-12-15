@@ -63,6 +63,24 @@ export const fetchEnquiryDetails = async (enquiryType: string, userId: string): 
 };
 
 
+export const fetchStudentDataById = async (studentId: string) => {
+  try {
+    // Reference to the student document in the Firestore "students" collection
+    const studentDocRef = doc(db, "students", studentId);  // Adjust collection name if needed
+    const studentDocSnap = await getDoc(studentDocRef);
+
+    if (studentDocSnap.exists()) {
+      // Return student data as a plain object
+      return studentDocSnap.data();
+    } else {
+      throw new Error("Student not found");
+    }
+  } catch (error) {
+    console.error("Error fetching student data:", error);
+    throw new Error("Failed to fetch student data");
+  }
+};
+
 
 
 
