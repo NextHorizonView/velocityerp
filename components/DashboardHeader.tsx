@@ -12,6 +12,7 @@ import {
 import { IoIosNotifications } from "react-icons/io";
 import { GoogleTranslate } from "@/components/Translation/GoogleTranslate"; // Import your component
 import { getAuth, signOut } from "firebase/auth";
+import e from "express";
 interface DashboardHeaderProps {
   isCollapsed: boolean;
 }
@@ -66,6 +67,15 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
     }
     else if (pathname === "/account") {
       return "Account";
+    }
+    else if (pathname === "/settings") {
+      return "Settings";
+    }
+    else if (pathname === "/noticeboard") { 
+      return "Notice Board";
+    }
+    else if (pathname === "/editstudents") {
+      return "Update Student";
     }
     return "Dashboard";
   };
