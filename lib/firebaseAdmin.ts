@@ -1,14 +1,14 @@
-import * as admin from "firebase-admin";
+import admin from 'firebase-admin';
+
+// Use environment variables for Firebase Admin credentials
+const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_CREDENTIALS || '{}');
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
   });
 }
 
 export const adminAuth = admin.auth();
-export const db = admin.firestore();
+export const adminFirestore = admin.firestore();
