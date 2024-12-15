@@ -12,7 +12,6 @@ import {
 import { IoIosNotifications } from "react-icons/io";
 import { GoogleTranslate } from "@/components/Translation/GoogleTranslate"; // Import your component
 import { getAuth, signOut } from "firebase/auth";
-import e from "express";
 interface DashboardHeaderProps {
   isCollapsed: boolean;
 }
@@ -49,32 +48,23 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
       return "Teachers";
     } else if (pathname === "/parents") {
       return "Parents";
-    }
-    else if (pathname === "/notice") {
+    } else if (pathname === "/notice") {
       return "Notice";
-    }
-    else if (pathname === "/events") {
+    } else if (pathname === "/events") {
       return "Events";
-    }
-    else if (pathname === "/class") {
+    } else if (pathname === "/class") {
       return "Class";
-    }
-    else if (pathname === "/exam") {
+    } else if (pathname === "/exam") {
       return "Exams";
-    }
-    else if (pathname === "/subjects") {
+    } else if (pathname === "/subjects") {
       return "Subjects";
-    }
-    else if (pathname === "/account") {
+    } else if (pathname === "/account") {
       return "Account";
-    }
-    else if (pathname === "/settings") {
+    } else if (pathname === "/settings") {
       return "Settings";
-    }
-    else if (pathname === "/noticeboard") { 
+    } else if (pathname === "/noticeboard") {
       return "Notice Board";
-    }
-    else if (pathname === "/editstudents") {
+    } else if (pathname === "/editstudents") {
       return "Update Student";
     }
     return "Dashboard";
@@ -140,7 +130,7 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
           </button>
         </div>
 
-      {/* Logout Button */}
+        {/* Logout Button */}
         <button
           className="bg-red-500 text-white px-3 py-1.5 rounded-md hover:bg-gray-600 transition"
           onClick={handleLogout}
@@ -184,7 +174,7 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
             </span>
           </div>
 
-            {/* Profile */}
+          {/* Profile */}
           <div className="flex items-center gap-2 cursor-pointer">
             <img
               src="https://images.unsplash.com/photo-1533636721434-0e2d61030955?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D"
