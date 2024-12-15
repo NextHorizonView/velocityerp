@@ -1,119 +1,145 @@
-import React, { useState, useEffect } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import useSWR from "swr";
-import {
-  addFormField,
-  updateFormField,
-  deleteFormField,
-  fetchFormFields,
-  saveStudentData,
-} from "@/components/helper/firebaseHelper";
+"use client";
+import React, { ChangeEvent, useState } from "react";
 
-const EditStudentForm = () => {
-  const [formData, setFormData] = useState({});
-  const [editingField, setEditingField] = useState(null); // Track the field being edited
-  const [editedFieldName, setEditedFieldName] = useState(""); // Track the new name for the field
-  const userId = localStorage.getItem("userId");
+const EditStudentForm: React.FC = () => {
+  const [formData, setFormData] = useState<Record<string, string>>({});
 
-  const { data: fields = [], mutate } = useSWR(userId, fetchFormFields);
+  const fields = [
+    {
+      FieldName: "First Name",
+      FieldType: "text",
+      Options: [],
+    },
+    {
+      FieldName: "City",
+      FieldType: "select",
+      Options: ["New York", "Los Angeles", "Chicago"],
+    },
+    {
+      FieldName: "Gender",
+      FieldType: "radio",
+      Options: ["Male", "Female", "Other"],
+    },
+  ];
 
-  useEffect(() => {
-    const initialData = fields.reduce((acc, field) => {
-      acc[field.FieldName] = "";
-      return acc;
-    }, {});
-    setFormData(initialData);
-  }, [fields]);
-
-  const handleEditClick = (field) => {
-    setEditingField(field.FormFieldID);
-    setEditedFieldName(field.FieldName);
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEditSave = async (fieldId) => {
-    if (!editedFieldName.trim()) {
-      alert("Field name cannot be empty.");
-      return;
-    }
+  const renderField = (field: { FieldName: string; FieldType: string; Options: string[] }) => {
+    const { FieldName, FieldType: type, Options } = field;
 
-    try {
-      await updateFormField(userId, fieldId, { FieldName: editedFieldName });
-      setEditingField(null);
-      mutate(); // Refresh the fields after updating
-    } catch (error) {
-      console.error("Error updating field:", error);
+    switch (type) {
+      case "radio":
+        return (
+          <div className="p-4 rounded-md mb-4" key={FieldName}>
+            <div className="flex justify-between">
+              <label className="text-xl text-gray-800">{FieldName}</label>
+              <div className="flex space-x-4">
+               
+              </div>
+            </div>
+            {Options.map((option: string) => (
+              <label key={option} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name={FieldName}
+                  value={option}
+                  checked={formData[FieldName] === option}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-gray-600 bg-white border-gray-300 rounded-full focus:ring-0 focus:ring-gray-500 focus:outline-none"
+                />
+                <span className="text-sm text-gray-600 select-none">{option}</span>
+              </label>
+            ))}
+          </div>
+        );
+      case "select":
+        return (
+          <div className="p-4 rounded-md mb-4" key={FieldName}>
+            <div className="flex justify-between">
+              <label className="text-xl">{FieldName}</label>
+              <div className="flex space-x-4">
+                
+              </div>
+            </div>
+            <select
+              name={FieldName}
+              value={formData[FieldName] || ""}
+              onChange={handleChange}
+              className="w-full px-3 py-2 mt-2 border border-gray-900 rounded-md focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select...</option>
+              {Options.map((option: string) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      case "date":
+        return (
+          <div className="p-4 rounded-md mb-4" key={FieldName}>
+            <div className="flex justify-between">
+              <label className="text-xl">{FieldName}</label>
+              
+            </div>
+            <input
+              type="date"
+              name={FieldName}
+              onChange={handleChange}
+              className="w-full px-3 py-2 mt-2 border border-gray-900 rounded-md focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        );
+      default:
+        return (
+          <div className="p-4 rounded-md mb-4" key={FieldName}>
+            <div className="flex justify-between">
+              <label className="text-xl">{FieldName}</label>
+              <div className="flex space-x-4">
+                
+              </div>
+            </div>
+            <input
+              name={FieldName}
+              value={formData[FieldName] || ""}
+              onChange={handleChange}
+              className="w-full px-3 py-2 mt-2 border border-gray-900 rounded-md focus:ring-2 focus:ring-gray-700"
+            />
+          </div>
+        );
     }
   };
 
-  const handleDeleteField = async (fieldId) => {
-    if (window.confirm("Are you sure you want to delete this field?")) {
-      try {
-        await deleteFormField(userId, fieldId);
-        mutate(); // Refresh the fields after deletion
-      } catch (error) {
-        console.error("Error deleting field:", error);
-      }
-    }
-  };
-
-  const renderField = (field) => {
-    if (editingField === field.FormFieldID) {
-      return (
-        <div className="flex items-center space-x-4" key={field.FormFieldID}>
-          <input
-            type="text"
-            value={editedFieldName}
-            onChange={(e) => setEditedFieldName(e.target.value)}
-            className="border rounded p-2"
-          />
-          <button
-            onClick={() => handleEditSave(field.FormFieldID)}
-            className="bg-blue-500 text-white px-3 py-1 rounded"
-          >
-            Save
-          </button>
-          <button
-            onClick={() => setEditingField(null)}
-            className="bg-gray-500 text-white px-3 py-1 rounded"
-          >
-            Cancel
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex items-center justify-between" key={field.FormFieldID}>
-        <div>
-          <label className="font-semibold">{field.FieldName}</label>
-          {/* Render field based on its type (RADIO, SELECT, etc.) */}
-        </div>
-        <div className="flex space-x-4">
-          <FaEdit
-            onClick={() => handleEditClick(field)}
-            className="cursor-pointer text-gray-800"
-          />
-          <FaTrash
-            onClick={() => handleDeleteField(field.FormFieldID)}
-            className="cursor-pointer text-gray-800"
-          />
-        </div>
-      </div>
-    );
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Form submitted with data:", formData);
+    alert("Form submitted!");
   };
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Edit Student Form</h1>
-      <div className="space-y-4">
-        {fields.map((field) => renderField(field))}
+    <div className="w-full max-w-3xl mx-auto p-4 bg-white shadow-sm rounded-lg">
+      <div className="rounded-3xl bg-slate-700">
+        <h2 className="text-3xl w-full flex items-center justify-center m-2 font-medium text-white py-4">
+          Edit Student Details
+        </h2>
       </div>
-      <button
-        onClick={() => saveStudentData(userId, formData)}
-        className="mt-6 bg-green-500 text-white px-4 py-2 rounded"
-      >
-        Save Data
-      </button>
+
+      <form onSubmit={handleSubmit}>
+        {fields.map((field) => renderField(field))}
+      </form>
+
+      <div className="flex justify-between mt-6">
+        <button
+          type="submit"
+          className="bg-slate-700 text-white px-4 py-2 rounded mt-4"
+        >
+          Submit
+        </button>
+      </div>
     </div>
   );
 };

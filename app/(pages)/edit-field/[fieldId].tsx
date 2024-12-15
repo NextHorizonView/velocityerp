@@ -7,7 +7,7 @@ const EditFieldPage: React.FC = () => {
   const router = useRouter();
   const { fieldId } = router.query; // Get fieldId from the URL
   const [field, setField] = useState<any>(null);
-  const [isClient, setIsClient] = useState(false); // Track if we are on the client-side
+  const [isClient, setIsClient] = useState(false); 
 
   useEffect(() => {
     // Ensure this only runs on the client-side
