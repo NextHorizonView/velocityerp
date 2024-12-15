@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo , useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
@@ -29,6 +29,7 @@ import { db } from "@/lib/firebaseConfig";
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
 import { mutate } from "swr";
 import StudentsTable from "./StudentTable";
+import { useRouter } from "next/router";
 
 export type Student = {
   id: number;
@@ -79,6 +80,15 @@ export default function Students() {
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
     useState(false);
   const [file, setFile] = useState<File | null>(null);
+
+  const router = useRouter(); // Initialize router inside component
+
+  useEffect(() => {
+    // Ensuring that router is used only after the component is mounted on the client side
+    if (typeof window !== "undefined") {
+      // Router-dependent logic can go here
+    }
+  }, []);
 
   const handleDelete = async (student: Student) => {
     try {
