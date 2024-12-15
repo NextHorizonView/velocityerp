@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo , useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
@@ -28,7 +28,13 @@ import { db } from "@/lib/firebaseConfig";
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
 import { mutate } from "swr";
 import StudentsTable from "./StudentTable";
+
+        
+       
+import { useRouter } from "next/navigation";
+
 import FadeLoader from "../Loader";
+
 
 export type Student = {
   id: number;
@@ -79,6 +85,8 @@ export default function Students() {
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
     useState(false);
   const [file, setFile] = useState<File | null>(null);
+
+
   const handleDelete = async (student: Student) => {
     try {
       const studentDocRef = doc(db, "students", student.id.toString());
