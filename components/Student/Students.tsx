@@ -20,7 +20,6 @@ import Papa from "papaparse";
 import useSWR from "swr";
 import {
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -79,23 +78,32 @@ export default function Students() {
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
     useState(false);
   const [file, setFile] = useState<File | null>(null);
-
   const handleDelete = async (student: Student) => {
     try {
       const studentDocRef = doc(db, "students", student.id.toString());
-
+  
       // Check if the document exists
       const studentDocSnap = await getDoc(studentDocRef);
       if (!studentDocSnap.exists()) {
         throw new Error(`Student with ID ${student.id} does not exist`);
       }
-
-      // Delete the document
-      await deleteDoc(studentDocRef);
-      mutate("students");
+  
+      // Call the API to delete the document and auth account
+      const response = await fetch("/api/deleteStudent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: student.id }), // Pass the student's uid
+      });
+  
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete student.");
+      }
+  
       console.log(`Student with ID ${student.id} deleted successfully!`);
+      mutate("students"); // Refresh the student list
     } catch (error) {
-      console.error("Error deleting document:", error);
+      console.error("Error deleting student:", error);
     }
   };
 
