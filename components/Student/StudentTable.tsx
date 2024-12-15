@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import { mutate } from "swr";
-import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc } from "firebase/firestore";
 import { db } from "../../lib/firebaseConfig";
 import {
   Table,
@@ -15,15 +16,6 @@ import { Edit, Trash2 } from "lucide-react";
 import { Student } from "./Students";
 import { FormField } from "../helper/firebaseHelper";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -33,58 +25,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-interface FormData {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  [key: string]: string | number | boolean | undefined;
-}
-const StudentsTable = ({
-  students,
-  formFields,
-}: {
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+interface StudentsTableProps {
   students: Student[];
   formFields: FormField[];
+}
+
+const StudentsTable: React.FC<StudentsTableProps> = ({
+  students,
+  formFields,
 }) => {
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  //   const [formData, setFormData] = useState<{ [key: string]: any }>({});
-  const [formData, setFormData] = useState<FormData>({});
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const handleEdit = (student: Student) => {
-    setEditingStudent(student);
-    setFormData(student);
-  };
 
-  //   const handleInputChange = (
-  //     fieldName: string,
-  //     value: string | number | boolean | undefined
-  //   ) => {
-  //     setFormData((prev) => ({ ...prev, [fieldName]: value }));
-  //   };
-  const handleInputChange = (fieldName: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [fieldName]: value }));
-  };
-
-  const handleSave = async () => {
-    if (!editingStudent) return;
-
-    try {
-      const studentDocRef = doc(db, "students", editingStudent.id.toString());
-      await updateDoc(studentDocRef, formData);
-
-      console.log("Student updated successfully!");
-
-      // Re-fetch the data
-      mutate("students");
-
-      // Close the modal
-      setEditingStudent(null);
-      setFormData({});
-    } catch (error) {
-      console.error("Error updating student:", error);
-    }
-  };
   const handleDelete = async (student: Student) => {
     try {
       const studentDocRef = doc(db, "students", student.id.toString());
@@ -104,17 +59,12 @@ const StudentsTable = ({
     }
   };
 
-  const handleCancel = () => {
-    setEditingStudent(null);
-    setFormData({});
-  };
-
   return (
     <Table className="border-b">
       <TableHeader>
         <TableRow className="bg-gray-50">
           {formFields.map((field: FormField, index: number) => (
-            <TableHead key={index} className=" py-4  text-sm font-medium ">
+            <TableHead key={index} className="py-4 text-sm font-medium">
               {field.FieldName}
             </TableHead>
           ))}
@@ -131,22 +81,25 @@ const StudentsTable = ({
             {formFields.map((field, index) => (
               <TableCell
                 key={index}
-                className=" py-4 whitespace-nowrap text-sm text-gray-900"
+                className="py-4 whitespace-nowrap text-sm text-gray-900"
               >
                 {student[field.FieldName as keyof Student] || "N/A"}
               </TableCell>
             ))}
-            <TableCell className=" py-4 whitespace-nowrap text-sm text-gray-900">
+            <TableCell className="py-4 whitespace-nowrap text-sm text-gray-900">
               <div className="flex space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-8 h-8 p-0"
-                  onClick={() => handleEdit(student)}
-                >
-                  <span className="sr-only">Edit</span>
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <Link href={`/editstudent/${student.id}`} passHref>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-8 h-8 p-0"
+                    // onClick={() => handleEdit(student.id.toString())} // Safely call handleEdit
+                  >
+                    <span className="sr-only">Edit Field</span>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </Link>
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -196,60 +149,6 @@ const StudentsTable = ({
           </AlertDialogContent>
         </AlertDialog>
       )}
-      {/* Edit Modal */}
-
-      <Dialog
-        open={!!editingStudent}
-        onOpenChange={(open) => !open && handleCancel()}
-      >
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Student</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSave();
-            }}
-          >
-            <div className="grid gap-4 py-4">
-              {formFields.map((field) => (
-                <div
-                  key={field.FieldName}
-                  className="grid grid-cols-4 items-center gap-4"
-                >
-                  <Label htmlFor={field.FieldName} className="text-right">
-                    {field.FieldName}
-                  </Label>
-                  <Input
-                    id={field.FieldName}
-                    className="col-span-3"
-                    value={
-                      typeof formData[field.FieldName] === "boolean"
-                        ? formData[field.FieldName]
-                          ? "true"
-                          : "false"
-                        : (formData[field.FieldName] as
-                            | string
-                            | number
-                            | undefined) || ""
-                    }
-                    onChange={(e) =>
-                      handleInputChange(field.FieldName, e.target.value)
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button type="submit">Save changes</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </Table>
   );
 };
