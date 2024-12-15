@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 interface StudentsTableProps {
   students: Student[];
