@@ -29,7 +29,7 @@ import { db } from "@/lib/firebaseConfig";
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
 import { mutate } from "swr";
 import StudentsTable from "./StudentTable";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export type Student = {
   id: number;
