@@ -20,7 +20,6 @@ import Papa from "papaparse";
 import useSWR from "swr";
 import {
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -29,7 +28,13 @@ import { db } from "@/lib/firebaseConfig";
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
 import { mutate } from "swr";
 import StudentsTable from "./StudentTable";
+
+        
+       
 import { useRouter } from "next/navigation";
+
+import FadeLoader from "../Loader";
+
 
 export type Student = {
   id: number;
@@ -81,31 +86,33 @@ export default function Students() {
     useState(false);
   const [file, setFile] = useState<File | null>(null);
 
-  const router = useRouter(); // Initialize router inside component
-
-  useEffect(() => {
-    // Ensuring that router is used only after the component is mounted on the client side
-    if (typeof window !== "undefined") {
-      // Router-dependent logic can go here
-    }
-  }, []);
 
   const handleDelete = async (student: Student) => {
     try {
       const studentDocRef = doc(db, "students", student.id.toString());
-
+  
       // Check if the document exists
       const studentDocSnap = await getDoc(studentDocRef);
       if (!studentDocSnap.exists()) {
         throw new Error(`Student with ID ${student.id} does not exist`);
       }
-
-      // Delete the document
-      await deleteDoc(studentDocRef);
-      mutate("students");
+  
+      // Call the API to delete the document and auth account
+      const response = await fetch("/api/deleteStudent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: student.id }), // Pass the student's uid
+      });
+  
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete student.");
+      }
+  
       console.log(`Student with ID ${student.id} deleted successfully!`);
+      mutate("students"); // Refresh the student list
     } catch (error) {
-      console.error("Error deleting document:", error);
+      console.error("Error deleting student:", error);
     }
   };
 
@@ -139,7 +146,7 @@ export default function Students() {
   // );
 
   if (error) return <div>Error loading students</div>;
-  if (!students) return <div>Loading...</div>;
+  if (!students) return <div><FadeLoader/></div>;
   if (fieldsError) {
     console.error("Error fetching fields:", fieldsError);
     return <div>Error loading form fields</div>;
