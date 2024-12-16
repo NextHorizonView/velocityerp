@@ -15,6 +15,7 @@ import {
   FieldType,
   FormData,
 } from "@/components/helper/firebaseHelper";
+import FadeLoader from "../Loader";
 
 const StudentForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({});
@@ -24,6 +25,31 @@ const StudentForm: React.FC = () => {
   const [newFieldOptions, setNewFieldOptions] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false); // Track if we're in edit mode
+
+  // Define a type for allowed field names
+  type FieldNameType =
+    | "Email"
+    | "Pincode"
+    | "First Name"
+    | "Last Name"
+    | "Address"
+    | "Phone"
+    | string; // Add `string` if there are dynamic field names
+
+  // Function to get placeholder text
+  const getPlaceholder = (fieldName: FieldNameType): string => {
+    const placeholders: Record<FieldNameType, string> = {
+      Email: "Enter your email address",
+      Pincode: "Enter your area pincode",
+      "First Name": "Enter your first name",
+      "Last Name": "Enter your last name",
+      Address: "Enter your address",
+      Phone: "Enter your phone number",
+    };
+
+    // Return the placeholder for the given fieldName or a default value
+    return placeholders[fieldName] || "Enter your input";
+  };
 
   const handleEditClick = (formFieldId: string, fieldName: string) => {
     const updatedLabel = prompt("Enter new label:", fieldName);
@@ -154,7 +180,7 @@ const StudentForm: React.FC = () => {
           return (
             <div key={fieldKey} className=" p-4 rounded-md mb-4">
               <div className="flex  justify-between">
-                <label className="text-xl text-gray-800">{FieldName}</label>
+                <label className="block text-m font-medium text-[#576086] mb-2">{FieldName}</label>
                 <div className="flex space-x-4">
                   <FaTrash
                     className="cursor-pointer text-gray-800"
@@ -192,7 +218,7 @@ const StudentForm: React.FC = () => {
           return (
             <div key={fieldKey} className="p-4 rounded-md mb-4">
               <div className="flex justify-between">
-                <label className="text-xl">{FieldName}</label>
+                <label className="text-m text-[#576086]">{FieldName}</label>
                 <div className="flex space-x-4">
                   {FieldName === "City" || FieldName === "State" ? (
                     <></>
@@ -219,7 +245,7 @@ const StudentForm: React.FC = () => {
                 name={FieldName}
                 value={formData[FieldName]}
                 onChange={handleChange}
-                className="w-full px-3 py-2 mt-2 border border-gray-900 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 mt-2 border border-[#CCCCCC] rounded-md focus:ring-[#576086] focus:outline-none"
               >
                 <option value="">Select...</option>
                 {Options?.map((option: string) => (
@@ -234,7 +260,7 @@ const StudentForm: React.FC = () => {
           return (
             <div key={fieldKey} className=" p-4 rounded-md mb-4">
               <div className="flex justify-between">
-                <label className="text-xl">{FieldName}</label>
+                <label className="text-m text-[#576086]">{FieldName}</label>
                 {isEditMode ? (
                   <>
                     <FaTrash
@@ -252,50 +278,52 @@ const StudentForm: React.FC = () => {
                 type="date"
                 name={FieldName}
                 onChange={handleChange}
-                className="w-full px-3 py-2 mt-2 border border-gray-900 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 mt-2 border border-[#CCCCCC] rounded-md focus:ring-2 focus:ring-blue-500"
               />
             </div>
           );
         default:
           return (
             <div key={fieldKey} className="p-4 rounded-md mb-4">
-              <div className="flex justify-between">
-                <label className="text-xl">{FieldName}</label>
+  <div className="flex justify-between">
+    <label className="text-m text-[#576086]">{FieldName}</label>
 
-                {FieldName === "Email" ||
-                FieldName === "Pincode" ||
-                FieldName === "First Name" ||
-                FieldName === "Last Name" ? (
-                  <></>
-                ) : isEditMode ? (
-                  <>
-                    <div className="flex space-x-4">
-                      <FaTrash
-                        className="cursor-pointer text-gray-800"
-                        onClick={() =>
-                          handleDeleteField(field.FormFieldID || "", FieldName)
-                        }
-                      />
-                      <FaEdit
-                        onClick={() =>
-                          handleEditClick(field.FormFieldID || "", FieldName)
-                        }
-                        className="cursor-pointer text-gray-800"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <></>
-                )}
-              </div>
+    {FieldName === "Email" ||
+    FieldName === "Pincode" ||
+    FieldName === "First Name" ||
+    FieldName === "Last Name" ? (
+      <></>
+    ) : isEditMode ? (
+      <>
+        <div className="flex space-x-4">
+          <FaTrash
+            className="cursor-pointer text-gray-800"
+            onClick={() =>
+              handleDeleteField(field.FormFieldID || "", FieldName)
+            }
+          />
+          <FaEdit
+            onClick={() =>
+              handleEditClick(field.FormFieldID || "", FieldName)
+            }
+            className="cursor-pointer text-gray-800"
+          />
+        </div>
+      </>
+    ) : (
+      <></>
+    )}
+  </div>
 
-              <input
-                name={FieldName}
-                value={formData[FieldName] || ""}
-                onChange={handleChange}
-                className="w-full px-3 py-2 mt-2 border border-gray-900 rounded-md focus:ring-2 focus:ring-gray-700"
-              />
-            </div>
+  <input
+    name={FieldName}
+    placeholder={getPlaceholder(FieldName)}
+    value={formData[FieldName] || ""}
+    onChange={handleChange}
+    className="w-full px-3 py-2 mt-2 border border-[#CCCCCC] rounded-md focus:ring-2 focus:ring-gray-700"
+  />
+</div>
+
           );
       }
     });
@@ -329,13 +357,13 @@ const StudentForm: React.FC = () => {
   //   setIsEditMode(false); // Exit edit mode after saving
   // };
 
-  if (!fields && !error) return <p>Loading...</p>;
+  if (!fields && !error) return <p><FadeLoader /></p>;
   if (error) return <p>Error loading fields</p>;
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4  bg-white shadow-sm rounded-lg">
-      <div className="rounded-3xl bg-slate-700">
-        <h2 className="text-3xl w-full flex items-center justify-center m-2 font-medium text-white py-4">
+    <div className="w-full max-w-3xl mx-auto p-4 bg-[#FAFAF8] shadow-sm rounded-lg">
+      <div className="rounded-3xl">
+        <h2 className="text-3xl w-full flex items-center  justify-center m-2 font-semibold text-[#576086] py-4">
           Please enter Student Details
         </h2>
       </div>
@@ -344,7 +372,7 @@ const StudentForm: React.FC = () => {
         {fields?.map((field) => (
           <div
             key={field.FormFieldID}
-            className="bg-gray-100 px-16 py-2 rounded-3xl my-2"
+            className="bg-[#FAFAF8] px-16 py-2 rounded-3xl my-2"
           >
             {renderField(field)}
           </div>
@@ -379,7 +407,7 @@ const StudentForm: React.FC = () => {
 
           <div className="mb-4">
             {newFieldType === FieldType.SELECT ||
-            newFieldType === FieldType.RADIO ? (
+              newFieldType === FieldType.RADIO ? (
               <input
                 value={newFieldOptions}
                 onChange={(e) => setNewFieldOptions(e.target.value)}
@@ -400,12 +428,12 @@ const StudentForm: React.FC = () => {
           </button>
         </div>
       )}
-      <div className="flex justify-between">
-        <div className="mt-6 flex justify-between">
+      <div className="flex justify-between mx-20">
+        <div className="mt-6 flex">
           <button
             type="button"
             onClick={handleEditFormToggle}
-            className="bg-gray-500 text-white px-4 py-2 rounded"
+            className="bg-[#576086] text-white px-4 py-2 rounded"
           >
             {isEditMode ? "Save Changes" : "Edit Form"}
           </button>
@@ -414,7 +442,7 @@ const StudentForm: React.FC = () => {
           <button
             type="button"
             onClick={handleSubmit}
-            className="bg-gray-500 text-white px-4 py-2 rounded"
+            className="bg-[#576086] text-white px-4 py-2 rounded"
             disabled={isEditMode}
           >
             Submit
