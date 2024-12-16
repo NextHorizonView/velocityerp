@@ -1,11 +1,5 @@
 import { collection, getDocs, query, where, addDoc, doc,updateDoc,getDoc, setDoc} from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
-
-// import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-// import { adminAuth } from "@/lib/firebaseAdmin";
-// import { admin } from "@/lib/firebaseAdmin"; // Ensure you have Firebase Admin initialized
-
-
 export enum FieldType {
   TEXT = 'Text',
   RADIO = 'Radio',
@@ -202,100 +196,51 @@ export const deleteFormField = async (formFieldId: string, fieldName: string): P
   }
 };
 
-
-
-
-
-// export const saveStudentData = async (studentData: Record<string, string>) => {
-//   try {
-//     const studentCollectionRef = collection(db, 'students');
-
-//     await addDoc(studentCollectionRef, {
-//       ...studentData,
-//     });
-
-//     console.log("Student data saved successfully!");
-//     // console.log(studentData)
-//     const emailForAuth=studentData.Email;
-//     const firstName = studentData["First Name"];
-//     const lastName = studentData["Last Name"];
-//     const password = firstName + lastName+123;
-//     console.log(emailForAuth,firstName,lastName,password)
-
-//     // const auth = getAuth();
-//     console.log("Creating Auth for:", emailForAuth, password);
-//     // createAuth(emailForAuth, password);
-//     // const currentUser = auth.currentUser;
-
-//     // Create a new user in Firebase Authentication
-//     // await createUserWithEmailAndPassword(auth, emailForAuth, password)
-//       // .then(async (userCredential) => {
-//         // console.log("User created successfully!", userCredential.user);
-
-//         // Immediately sign out the new user to preserve the current session
-//         // await signOut(auth);
-
-//         // Re-sign-in the previous user (if applicable)
-//         // if (currentUser) {
-//         //   await auth.updateCurrentUser(currentUser);
-//         // }
-//       // })
-//       // .catch((error) => {
-//       //   console.error("Error creating user:", error);
-//       // });
-
-
-//   } catch (error) {
-//     console.error("Error saving student data:", error);
-//     throw error;
-//   }
-// };
-
-
-export const saveStudentData = async (studentData: Record<string, string>) => {
+export const saveStudentData = async (studentData: Record<string, string>, role: string) => {
   try {
-    const studentCollectionRef = collection(db, "students");
+    const emailForAuth = studentData.Email;
+    const password = '12345678';
+    const data = { 
+      email: emailForAuth, 
+      password, 
+      role 
+    };
 
-    // Add student data to Firestore
-    await addDoc(studentCollectionRef, {
+    // First create the auth user to get the UID
+    const response = await fetch("/api/createStudent", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error);
+    }
+
+    // Get the UID from the API response
+    const uid = result.uid;
+
+    // Use setDoc instead of addDoc to specify the document ID
+    const studentDocRef = doc(db, "students", uid);
+    await setDoc(studentDocRef, {
       ...studentData,
+      uid: uid, // Optionally store the UID in the document data as well
+      role: role
     });
 
     console.log("Student data saved successfully!");
+    alert(result.message);
 
-    const emailForAuth = studentData.Email;
-    const firstName = studentData["First Name"];
-    const lastName = studentData["Last Name"];
-    const password = firstName + lastName + "123";
-
-    const data = { emailForAuth, password };
-    console.log(data)
-  
-  
-    // const response = await fetch("/api/createStudent", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(data),
-    // });
-
-    // const result = await response.json();
-
-    // if (response.ok) {
-    //   alert(result.message); // Success message
-    // } else {
-    //   alert(result.error); // Error message
-    // }
   } catch (error) {
     console.error("Error saving student data:", error);
     alert("Error saving student data.");
     throw error;
   }
 };
-
-
-
 
 
 export interface FormFieldUpdate {

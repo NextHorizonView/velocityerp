@@ -14,6 +14,7 @@ import {
   FormField,
   FieldType,
   FormData,
+  
 } from "@/components/helper/firebaseHelper";
 import FadeLoader from "../Loader";
 
@@ -332,10 +333,10 @@ const StudentForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await saveStudentData(formData);
+      // Add the role parameter here (you can pass the role value based on your requirements)
+      const role = "student"; // You can set this dynamically based on your form data
+      await saveStudentData(formData, role ); // Pass both formData and role
       console.log(formData);
-
-      alert("Student data saved successfully!");
       setFormData({});
     } catch (error) {
       console.error("Error saving student data:", error);
@@ -343,6 +344,7 @@ const StudentForm: React.FC = () => {
     }
   };
 
+  
   const handleEditFormToggle = () => {
     if (isEditMode) {
       setIsEditMode(false); // Save changes and stop editing
@@ -350,12 +352,6 @@ const StudentForm: React.FC = () => {
       setIsEditMode(true); // Allow adding new fields
     }
   };
-
-  // const handleSaveChanges = () => {
-  //   // Save any modifications to the existing fields
-  //   // Call save or update methods for fields if necessary
-  //   setIsEditMode(false); // Exit edit mode after saving
-  // };
 
   if (!fields && !error) return <p><FadeLoader /></p>;
   if (error) return <p>Error loading fields</p>;
