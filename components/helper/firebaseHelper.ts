@@ -61,11 +61,11 @@ export const fetchStudentDataById = async (studentId: string) => {
   try {
     // Reference to the student document in the Firestore "students" collection
     const studentDocRef = doc(db, "students", studentId);  // Adjust collection name if needed
-    const studentDocSnap = await getDoc(studentDocRef);
+    const teacherDocSnap = await getDoc(studentDocRef);
 
-    if (studentDocSnap.exists()) {
+    if (teacherDocSnap.exists()) {
       // Return student data as a plain object
-      return studentDocSnap.data();
+      return teacherDocSnap.data();
     } else {
       throw new Error("Student not found");
     }
@@ -75,10 +75,23 @@ export const fetchStudentDataById = async (studentId: string) => {
   }
 };
 
+export const fetchTeacherDataById = async (teacherId: string) => {
+  try {
+    // Reference to the student document in the Firestore "students" collection
+    const teacherDocRef = doc(db, "teachers", teacherId);  // Adjust collection name if needed
+    const teacherDocSnap = await getDoc(teacherDocRef);
 
-
-
-
+    if (teacherDocSnap.exists()) {
+      // Return student data as a plain object
+      return teacherDocSnap.data();
+    } else {
+      throw new Error("teacher not found");
+    }
+  } catch (error) {
+    console.error("Error fetching teacher data:", error);
+    throw new Error("Failed to fetch teacher data");
+  }
+};
 
 
 export const fetchFormFields = async (userId: string): Promise<FormField[]> => {
@@ -89,6 +102,36 @@ export const fetchFormFields = async (userId: string): Promise<FormField[]> => {
 
     const q = query(
       collection(db, 'StudentFormField'),
+      where('FormFieldSchoolId', '==', userId),
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.log('No form fields found for this user.');
+      return [];
+    }
+
+    const formFields = querySnapshot.docs.map(doc => ({
+      ...doc.data(),
+      FormFieldID: doc.id,
+    })) as FormField[];
+
+    return formFields;
+  } catch (error) {
+    console.error('Error fetching form fields:', error);
+    throw error;
+  }
+};
+
+export const fetchFormFieldsTeacher = async (userId: string): Promise<FormField[]> => {
+  try {
+    if (!userId) {
+      throw new Error('User ID is required.');
+    }
+
+    const q = query(
+      collection(db, 'TeacherFormField'),
       where('FormFieldSchoolId', '==', userId),
     );
 
@@ -170,6 +213,64 @@ export const addFormField = async (userId: string, formField: FormField): Promis
   }
 };
 
+export const addFormFieldTeacher = async (userId: string, formField: FormField): Promise<string> => {
+  try {
+    if (!userId) {
+      throw new Error('User ID is required to add a form field.');
+    }
+
+    const formFieldsRef = collection(db, 'TeacherFormField');
+
+    const querySnapshot = await getDocs(
+      query(formFieldsRef, where('FormFieldSchoolId', '==', userId))
+    );
+
+    if (!querySnapshot.empty) {
+      const docRef = querySnapshot.docs[0].ref; // Get the reference of the first matching document
+      const existingData = querySnapshot.docs[0].data(); // Get the existing data
+
+      const currentFields = existingData.FormFields || [];
+
+      const updatedFields = [
+        ...currentFields,
+        {
+          DefaultValue: formField.DefaultValue || '',
+          FieldName: formField.FieldName,
+          FieldType: formField.FieldType,
+          IsRequired: formField.IsRequired,
+          Options: formField.Options || null,
+          Sequence: currentFields.length + 1, 
+        },
+      ];
+
+      await setDoc(docRef, { ...existingData, FormFields: updatedFields }, { merge: true });
+
+      return docRef.id; 
+    } else {
+      const newDoc = {
+        FormFieldSchoolId: userId,
+        FormFields: [
+          {
+            DefaultValue: formField.DefaultValue || '',
+            FieldName: formField.FieldName,
+            FieldType: formField.FieldType,
+            IsRequired: formField.IsRequired,
+            CanChange: true,
+            Options: formField.Options || null,
+            Sequence: 1, 
+          },
+        ],
+      };
+
+      const newDocRef = await addDoc(formFieldsRef, newDoc);
+      return newDocRef.id; 
+    }
+  } catch (error) {
+    console.error(`Error adding form field for user ID ${userId}:`, error);
+    throw error; 
+  }
+};
+
 
 
 export const deleteFormField = async (formFieldId: string, fieldName: string): Promise<void> => {
@@ -195,6 +296,31 @@ export const deleteFormField = async (formFieldId: string, fieldName: string): P
     throw error;
   }
 };
+
+export const deleteFormFieldTeacher = async (formFieldId: string, fieldName: string): Promise<void> => {
+  try {
+    const fieldDocRef = doc(db, 'TeacherFormField', formFieldId);
+
+    const docSnapshot = await getDoc(fieldDocRef);
+
+    if (!docSnapshot.exists()) {
+      throw new Error(`Document with ID ${formFieldId} does not exist`);
+    }
+
+    const data = docSnapshot.data();
+    const formFields = data.FormFields || [];
+
+    const updatedFormFields = formFields.filter((field: FormField) => field.FieldName !== fieldName);
+
+    await updateDoc(fieldDocRef, { FormFields: updatedFormFields });
+
+    console.log(`Form fields with FieldName "${fieldName}" have been deleted.`);
+  } catch (error) {
+    console.error('Error deleting form fields:', error);
+    throw error;
+  }
+};
+
 
 export const saveStudentData = async (studentData: Record<string, string>, role: string) => {
   try {
@@ -242,6 +368,26 @@ export const saveStudentData = async (studentData: Record<string, string>, role:
   }
 };
 
+export const saveTeacherData = async (teacherData: Record<string, string>) => {
+  try {
+    const teacherCollectionRef = collection(db, "teachers");
+
+    await addDoc(teacherCollectionRef, {
+      ...teacherData,
+    });
+
+    console.log("teacher data saved successfully!");
+
+  
+  alert("Teacher data saved successfully!");
+  } catch (error) {
+    console.error("Error saving teacher data:", error);
+    alert("Error saving teacher data.");
+    throw error;
+  }
+};
+
+
 
 export interface FormFieldUpdate {
   FieldName?: string; 
@@ -256,6 +402,44 @@ export const updateFormField = async (
   try {
     // Reference to the Firestore document
     const fieldDocRef = doc(db, 'StudentFormField', formFieldId);
+
+    // Retrieve the document data
+    const docSnapshot = await getDoc(fieldDocRef);
+
+    if (!docSnapshot.exists()) {
+      throw new Error(`Document with ID ${formFieldId} does not exist`);
+    }
+
+    const data = docSnapshot.data();
+    const formFields = data.FormFields || [];
+
+    const updatedFormFields = formFields.map((field: FormField) => {
+      if (field.FieldName === currentFieldName) {
+        return {
+          ...field,
+          ...updates, // Apply updates (e.g., FieldName or FieldType)
+        };
+      }
+      return field;
+    });
+
+    await updateDoc(fieldDocRef, { FormFields: updatedFormFields });
+
+    console.log(`Form field "${currentFieldName}" has been updated.`);
+  } catch (error) {
+    console.error('Error updating form field:', error);
+    throw error;
+  }
+};
+
+export const updateFormFieldTeacher = async (
+  formFieldId: string,
+  currentFieldName: string,
+  updates: FormFieldUpdate
+): Promise<void> => {
+  try {
+    // Reference to the Firestore document
+    const fieldDocRef = doc(db, 'TeacherFormField', formFieldId);
 
     // Retrieve the document data
     const docSnapshot = await getDoc(fieldDocRef);
