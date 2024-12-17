@@ -70,7 +70,14 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
       else if (pathname === '/studentform'){
         return "Update Student";
     }
-    return "Dashboard";
+    else if (pathname === '/addsubject'){
+      return "Add Subject";
+    }
+    else if (pathname === '/editsubject'){
+      return "Edit Subject";
+    }
+    return 'Dashboard'
+    
   };
 
   const handleLogout = () => {

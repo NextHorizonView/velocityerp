@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { AiOutlineClose, AiOutlineSearch, AiOutlineUser } from 'react-icons/ai';
+import { AiOutlineClose, AiOutlineFileText, AiOutlineSearch, AiOutlineUser } from 'react-icons/ai';
 import { MdEdit } from 'react-icons/md';
 import { TbGridDots } from "react-icons/tb";
 
@@ -12,16 +12,13 @@ const AddSubject: React.FC = () => {
     ]);
     const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
     const [newTeacherName, setNewTeacherName] = useState('');
-    // const [newTeacherPosition, setNewTeacherPosition] = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-    // const handleAddTeacher = () => {
-    //     if (newTeacherName && newTeacherPosition) {
-    //         setTeachers([...teachers, { name: newTeacherName, position: newTeacherPosition }]);
-    //         setNewTeacherName('');
-    //         setNewTeacherPosition('');
-    //         setIsAddTeacherModalOpen(false);
-    //     }
-    // };
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
 
     return (
         <div className="p-6 rounded-md">
@@ -56,6 +53,37 @@ const AddSubject: React.FC = () => {
                 />
             </div>
 
+            {/* File Upload Section */}
+            <div className="mb-6 px-6">
+    <label htmlFor="fileUpload" className="block font-medium mb-2 text-gray-700">
+        Upload Subject File
+    </label>
+    <input
+        type="file"
+        id="fileUpload"
+        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+        onChange={handleFileChange}
+    />
+    {selectedFile && (
+        <div className="mt-2">
+            {/* Display file preview if it's an image */}
+            {selectedFile.type.startsWith('image/') ? (
+                <img
+                    src={URL.createObjectURL(selectedFile)}
+                    alt="File Preview"
+                    className="w-32 h-32 object-cover rounded-md"
+                />
+            ) : (
+                <div className="flex items-center space-x-2">
+                    <AiOutlineFileText size={24} className="text-gray-500" />
+                    <span className="text-sm text-gray-500">Selected File:</span>
+                    <span className="font-semibold">{selectedFile.name}</span>
+                </div>
+            )}
+        </div>
+    )}
+</div>
+
             {/* Subject teachers section */}
             <div className="mb-6 px-6 pt-11 ">
                 <div className="flex items-center space-x-3 mb-4">
@@ -69,15 +97,10 @@ const AddSubject: React.FC = () => {
                 </div>
 
                 <table className="w-full text-left border-collapse">
-                    <thead>
-
-                    </thead>
+                    <thead></thead>
                     <tbody>
                         {teachers.map((teacher, index) => (
-                            <tr
-                                key={index}
-                                className="border-b hover:bg-gray-100"
-                            >
+                            <tr key={index} className="border-b hover:bg-gray-100">
                                 <td className="p-3">
                                     <div className="flex items-center text-gray-500">
                                         <TbGridDots size={20} />
@@ -91,9 +114,7 @@ const AddSubject: React.FC = () => {
                                 <td className="p-3">
                                     <button
                                         className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                                        onClick={() => {
-                                            setTeachers(teachers.filter((_, i) => i !== index));
-                                        }}
+                                        onClick={() => setTeachers(teachers.filter((_, i) => i !== index))}
                                     >
                                         <AiOutlineClose size={20} />
                                     </button>
@@ -103,7 +124,6 @@ const AddSubject: React.FC = () => {
                     </tbody>
                 </table>
             </div>
-
 
             {/* Add Teacher Modal */}
             {isAddTeacherModalOpen && (
@@ -132,7 +152,7 @@ const AddSubject: React.FC = () => {
                             />
                         </div>
 
-                        {/* Teacher Information Cards */}
+                        {/* Teacher Cards */}
                         <div className="space-y-4">
                             {teachers.map((teacher, index) => (
                                 <div
@@ -143,21 +163,12 @@ const AddSubject: React.FC = () => {
                                         <AiOutlineUser size={28} className="text-gray-500" />
                                         <div>
                                             <p className="font-medium text-gray-700">{teacher.name}</p>
-                                            <p className="text-sm text-gray-500 font-semibold">
-                                                {teacher.position}
-                                            </p>
-                                            <p className="text-sm text-gray-400">
-                                                Other subjects the teacher is teaching
-                                            </p>
+                                            <p className="text-sm text-gray-500 font-semibold">{teacher.position}</p>
                                         </div>
                                     </div>
                                     <button
                                         className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                                        onClick={() =>
-                                            setTeachers((prev) =>
-                                                prev.filter((_, teacherIndex) => teacherIndex !== index)
-                                            )
-                                        }
+                                        onClick={() => setTeachers((prev) => prev.filter((_, i) => i !== index))}
                                     >
                                         <AiOutlineClose size={20} />
                                     </button>
@@ -168,9 +179,8 @@ const AddSubject: React.FC = () => {
                 </div>
             )}
 
-
             {/* Footer Section */}
-            <div className="flex justify-between  space-x-4 mt-20">
+            <div className="flex justify-between space-x-4 mt-20">
                 <button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 focus:outline-none">
                     Cancel
                 </button>

@@ -147,7 +147,10 @@ const SubjectTable = () => {
                 <td className="px-4 py-2">{subject.classDiv}</td>
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
+                    <Link href="/editsubject">
                     <FaPen className="text-black" />
+                    </Link>
+                    
                   </button>
                   <button className="p-2" onClick={() => handleDelete(subject.id)}>
                     <FaTrash className="text-black" />
