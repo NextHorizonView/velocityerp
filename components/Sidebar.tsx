@@ -15,7 +15,7 @@ import {
   RiUserAddLine,
 } from "react-icons/ri";
 
-import { MdClass,MdOutlineSubject } from "react-icons/md";
+import { MdClass, MdOutlineSubject } from "react-icons/md";
 import Image from "next/image";
 import castEducation from "@/public/castEducation.jpg";
 import { AiOutlineQuestionCircle } from "react-icons/ai";
@@ -28,7 +28,7 @@ interface SidebarProps {
 }
 
 const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
-  const pathname = usePathname();
+  const pathname = usePathname() || ""; 
   const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(false);
 
   const menuItems = [
@@ -78,34 +78,51 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
 
       {/* Menu Items */}
       <nav className="mt-4">
-        {menuItems.map((item, index) => {
-          const isActive = pathname === item.path;
+       
 
-          return (
-            <Link
-              key={index}
-              href={item.path}
-              className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200
-                ${
-                  isActive
-                    ? "bg-gray-100 border-r-4 border-red-500"
-                    : "hover:bg-gray-50"
-                }
-              `}
-            >
-              <div className={`${isActive ? "text-red-500" : "text-gray-600"}`}>
-                {item.icon}
-              </div>
-              <span
-                className={`ml-4 ${
-                  isActive ? "text-red-500 font-medium" : "text-gray-700"
-                }`}
-              >
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
+      {menuItems.map((item, index) => {
+  // Check active condition
+  let isActive = false;
+
+  // Custom logic for "Subjects" and "Add Subject"
+  if (item.label === "Subject") {
+    isActive = pathname === "/subjects" || pathname === "/addsubject" || pathname === '/editsubject';
+  } else {
+    isActive = pathname === item.path;
+  }
+// // Custom logic for students , add students and edit forms
+//   if (item.label === "Students") {
+//     isActive = pathname === "/students" || pathname === "/studentform";
+//   } else {
+//     isActive = pathname === item.path;
+//   }
+  return (
+    <Link
+      key={index}
+      href={item.path}
+      className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200
+        ${
+          isActive
+            ? "bg-gray-100 border-r-4 border-red-500"
+            : "hover:bg-gray-50"
+        }
+      `}
+    >
+      <div className={`${isActive ? "text-red-500" : "text-gray-600"}`}>
+        {item.icon}
+      </div>
+      <span
+        className={`ml-4 ${
+          isActive ? "text-red-500 font-medium" : "text-gray-700"
+        }`}
+      >
+        {item.label}
+      </span>
+    </Link>
+  );
+})}
+
+
 
         {/* Enquiry Section */}
         <div
@@ -115,9 +132,8 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
           onClick={() => setIsEnquiryExpanded((prev) => !prev)}
         >
           <div
-            className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 ${
-              isEnquiryExpanded ? "bg-gray-100 border-r-4 border-red-500" : "hover:bg-gray-50"
-            }`}
+            className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 ${isEnquiryExpanded ? "bg-gray-100 border-r-4 border-red-500" : "hover:bg-gray-50"
+              }`}
           >
             <AiOutlineQuestionCircle size={20} className="text-gray-700" />
             <span className="ml-4 text-gray-700">Enquiry</span>
@@ -128,22 +144,20 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             <div className="flex flex-col bg-[#FAFAF8] pl-8 pr-4 py-2">
               <Link
                 href="/enquiry/admission"
-                className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${
-                  pathname === "/enquiry/admission"
-                    ? "text-red-500 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${pathname === "/enquiry/admission"
+                  ? "text-red-500 font-medium"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 <RiUserAddLine size={20} />
                 <span className="ml-4">Admission</span>
               </Link>
               <Link
                 href="/enquiry/business"
-                className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${
-                  pathname === "/enquiry/business"
-                    ? "text-red-500 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${pathname === "/enquiry/business"
+                  ? "text-red-500 font-medium"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 <FaUserGraduate size={20} />
                 <span className="ml-4">Business</span>
