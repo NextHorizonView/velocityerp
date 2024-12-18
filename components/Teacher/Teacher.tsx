@@ -3,125 +3,130 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Edit, Trash2 } from "lucide-react";
 import { IoIosCloudUpload } from "react-icons/io";
 import Link from "next/link";
+import TeachersTable from "./TeachersTable";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+} from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig";
+import { fetchFormFieldsTeacher, FormField } from "../helper/firebaseHelper";
+import useSWR, { mutate } from "swr";
+import FadeLoader from "../Loader";
 
-type Teacher = {
+export type Teacher = {
   id: number;
-  name: string;
-  class: string;
-  phone: string;
-  grNumber: string;
-  gender: "male" | "female";
+  name?: string;
+  class?: string;
+  phone?: string;
+  email?: string;
+  gender?: "Male" | "Female";
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  religion?: string;
+  studentId?: string;
 };
-// const fetchTeacher = async () => {
-//   const querySnapshot = await getDocs(collection(db, "teachers"));
-//   return querySnapshot.docs.map(
-//     (doc) => ({ id: doc.id, ...doc.data() } as unknown as Teacher)
-//   );
-// };
+const fetchTeacher = async () => {
+  const querySnapshot = await getDocs(collection(db, "teachers"));
+  return querySnapshot.docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as unknown as Teacher)
+  );
+};
 
 const ITEMS_PER_PAGE = 8;
 
 export default function Teachers() {
-  const [teachers] = useState<Teacher[]>([
-    {
-      id: 1,
-      name: "John Doe",
-      class: "10A",
-      phone: "1234567890",
-      grNumber: "GR001",
-      gender: "male",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      class: "9B",
-      phone: "2345678901",
-      grNumber: "GR002",
-      gender: "female",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      class: "11C",
-      phone: "3456789012",
-      grNumber: "GR003",
-      gender: "male",
-    },
-    {
-      id: 4,
-      name: "Emily Brown",
-      class: "8A",
-      phone: "4567890123",
-      grNumber: "GR004",
-      gender: "female",
-    },
-    {
-      id: 5,
-      name: "David Lee",
-      class: "12B",
-      phone: "5678901234",
-      grNumber: "GR005",
-      gender: "male",
-    },
-    {
-      id: 6,
-      name: "Sarah Wilson",
-      class: "10C",
-      phone: "6789012345",
-      grNumber: "GR006",
-      gender: "female",
-    },
-    {
-      id: 7,
-      name: "Tom Taylor",
-      class: "9A",
-      phone: "7890123456",
-      grNumber: "GR007",
-      gender: "male",
-    },
-    {
-      id: 8,
-      name: "Lisa Anderson",
-      class: "11B",
-      phone: "8901234567",
-      grNumber: "GR008",
-      gender: "female",
-    },
-    {
-      id: 9,
-      name: "Chris Martin",
-      class: "8C",
-      phone: "9012345678",
-      grNumber: "GR009",
-      gender: "male",
-    },
-    {
-      id: 10,
-      name: "Emma Davis",
-      class: "12A",
-      phone: "0123456789",
-      grNumber: "GR010",
-      gender: "female",
-    },
-  ]);
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
+  const { data: teachers, error } = useSWR("teachers", fetchTeacher);
+
+  const { data: fields = [], error: fieldsError } = useSWR<FormField[]>(
+    userId ? `formFields-${userId}` : null,
+    userId ? () => fetchFormFieldsTeacher(userId) : null,
+    { revalidateOnFocus: false }
+  );
+
+  const formFields = fields[0]?.FormFields || [];
 
   const [currentPage, setCurrentPage] = useState(1);
+
   const [searchTerm, setSearchTerm] = useState("");
+
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Teacher;
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
+
+  const handleDelete = async (teacher: Teacher) => {
+    try {
+      const teacherDocRef = doc(db, "teachres", teacher.id.toString());
+
+      // Check if the document exists
+      const teacherDocSnap = await getDoc(teacherDocRef);
+      if (!teacherDocSnap.exists()) {
+        throw new Error(`Student with ID ${teacher.id} does not exist`);
+      }
+      await deleteDoc(teacherDocRef);
+      mutate("teachers");
+      console.log(`teacher with ID ${teacher.id} deleted successfully!`);
+
+      // Call the API to delete the document and auth account
+      // const response = await fetch("/api/deleteStudent", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ uid: teacher.id }), // Pass the teacher's uid
+      // });
+
+      // if (!response.ok) {
+      //   const error = await response.json();
+      //   throw new Error(error.message || "Failed to delete student.");
+      // }
+
+      // console.log(`teacher with ID ${teacher.id} deleted successfully!`);
+      // mutate("teacher"); // Refresh the student list
+    } catch (error) {
+      console.error("Error deleting teacher:", error);
+    }
+  };
+
+  const filteredAndSortedTeachers = useMemo(() => {
+    return [...(teachers || [])]
+      .filter(
+        (teacher) =>
+          teacher.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          teacher.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          teacher.phone?.includes(searchTerm) ||
+          teacher.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => {
+        if ((a[sortConfig.key] ?? "") < (b[sortConfig.key] ?? "")) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if ((a[sortConfig.key] ?? "") > (b[sortConfig.key] ?? "")) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+  }, [teachers, searchTerm, sortConfig, handleDelete]);
+
+  if (error) return <div>Error loading students</div>;
+  if (!teachers)
+    return (
+      <div>
+        <FadeLoader />
+      </div>
+    );
+  if (fieldsError) {
+    console.error("Error fetching fields:", fieldsError);
+    return <div>Error loading form fields</div>;
+  }
 
   const handleSort = (key: keyof Teacher) => {
     setSortConfig({
@@ -133,33 +138,13 @@ export default function Teachers() {
     });
   };
 
-  const filteredAndSortedTeachers = useMemo(() => {
-    return [...teachers]
-      .filter(
-        (teacher) =>
-          teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          teacher.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          teacher.phone.includes(searchTerm) ||
-          teacher.grNumber.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-  }, [teachers, searchTerm, sortConfig]);
-
   const totalPages = Math.ceil(
     filteredAndSortedTeachers.length / ITEMS_PER_PAGE
   );
-  const paginatedTeachers = filteredAndSortedTeachers.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // const paginatedTeachers = filteredAndSortedTeachers.slice(
+  //   (currentPage - 1) * ITEMS_PER_PAGE,
+  //   currentPage * ITEMS_PER_PAGE
+  // );
 
   return (
     <div className="container mx-auto p-6">
@@ -203,7 +188,7 @@ export default function Teachers() {
       </div>
 
       <div className="bg-[#FAFAF8] rounded-lg shadow-sm">
-        <Table className="border-b  ">
+        {/* <Table className="border-b  ">
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="cursor-pointer py-4 text-sm font-medium">
@@ -253,7 +238,8 @@ export default function Teachers() {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+        </Table> */}
+        <TeachersTable teachers={teachers} formFields={formFields} />
 
         <div className="flex items-center justify-between px-6 py-4 border-t">
           <div className="text-sm text-gray-500">
