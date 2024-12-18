@@ -105,7 +105,7 @@ const TeachersTable: React.FC<TeachersTableProps> = ({
                     variant="ghost"
                     size="sm"
                     className="w-8 h-8 p-0"
-                    // onClick={() => handleEdit(student.id.toString())} // Safely call handleEdit
+                    // onClick={() => handleEdit(teacher.id.toString())} // Safely call handleEdit
                   >
                     <span className="sr-only">Edit Field</span>
                     <Edit className="h-4 w-4" />
