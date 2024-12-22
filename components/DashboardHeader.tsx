@@ -76,7 +76,12 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
     else if (pathname === '/editsubject'){
       return "Edit Subject";
     }
-    return 'Dashboard'
+    else if (pathname === '/class'){
+      return 'Class'
+    }
+    else if (pathname === '/addclass'){
+      return 'Add Class'
+    }
     
   };
 
