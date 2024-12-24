@@ -1,5 +1,6 @@
 import { collection, getDocs, query, where, addDoc, doc,updateDoc,getDoc, setDoc} from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
+
 export enum FieldType {
   TEXT = 'Text',
   RADIO = 'Radio',
@@ -20,6 +21,10 @@ export interface FormField {
   DefaultValue?: string;     
   Options?: string[]; 
   CanChange?: true;       
+}
+export interface FormFieldUpdate {
+  FieldName?: string; 
+  FieldType?: string; 
 }
 
 export type Status = "connected" | "new" | "declined" | "pending" | "enrolled";
@@ -389,10 +394,7 @@ export const saveTeacherData = async (teacherData: Record<string, string>) => {
 
 
 
-export interface FormFieldUpdate {
-  FieldName?: string; 
-  FieldType?: string; 
-}
+
 
 export const updateFormField = async (
   formFieldId: string,

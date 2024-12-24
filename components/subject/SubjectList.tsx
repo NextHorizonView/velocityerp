@@ -1,11 +1,18 @@
-'use client';
+"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
 import { IoIosCloudUpload, IoIosSearch } from "react-icons/io";
 import { FaTrash, FaPen } from "react-icons/fa";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"; // Adjust path as per your setup
-import { Button } from "@/components/ui/button"; 
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"; // Adjust path as per your setup
+import { Button } from "@/components/ui/button";
 
 export type Subject = {
   id: number;
@@ -28,7 +35,9 @@ const ITEMS_PER_PAGE = 8;
 
 const SubjectTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<keyof Subject | "newest">("newest");
+  const [sortField, setSortField] = useState<keyof Subject | "newest">(
+    "newest"
+  );
   const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -96,6 +105,11 @@ const SubjectTable = () => {
           </Dialog>
         </div>
         <div className="flex items-center space-x-4">
+          <Link href="/addsubject-exp">
+            <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
+              +
+            </button>
+          </Link>
           <Link href="/addsubject">
             <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
               + Add New Subject
@@ -115,9 +129,11 @@ const SubjectTable = () => {
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">Sort by:</span>
             <select
-              value={sortField} 
+              value={sortField}
               className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
-              onChange={(e) => handleSort(e.target.value as keyof Subject | "newest")}
+              onChange={(e) =>
+                handleSort(e.target.value as keyof Subject | "newest")
+              }
             >
               <option value="newest" className="bg-transparent">
                 Newest
@@ -148,11 +164,13 @@ const SubjectTable = () => {
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
                     <Link href="/editsubject">
-                    <FaPen className="text-black" />
+                      <FaPen className="text-black" />
                     </Link>
-                    
                   </button>
-                  <button className="p-2" onClick={() => handleDelete(subject.id)}>
+                  <button
+                    className="p-2"
+                    onClick={() => handleDelete(subject.id)}
+                  >
                     <FaTrash className="text-black" />
                   </button>
                 </td>
@@ -165,8 +183,13 @@ const SubjectTable = () => {
       {/* Pagination Section */}
       <div className="flex justify-between items-center mt-4">
         <span className="text-sm text-gray-600">
-          Showing data {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredSubjects.length)} to{" "}
-          {Math.min(currentPage * ITEMS_PER_PAGE, filteredSubjects.length)} of {filteredSubjects.length} entries
+          Showing data{" "}
+          {Math.min(
+            (currentPage - 1) * ITEMS_PER_PAGE + 1,
+            filteredSubjects.length
+          )}{" "}
+          to {Math.min(currentPage * ITEMS_PER_PAGE, filteredSubjects.length)}{" "}
+          of {filteredSubjects.length} entries
         </span>
         <div className="flex items-center space-x-2">
           <button
@@ -180,7 +203,9 @@ const SubjectTable = () => {
             <button
               key={index}
               className={`px-3 py-1 rounded ${
-                currentPage === index + 1 ? "bg-[#F7B696] text-white" : "bg-gray-200 text-gray-600"
+                currentPage === index + 1
+                  ? "bg-[#F7B696] text-white"
+                  : "bg-gray-200 text-gray-600"
               } hover:bg-[#F7B696] hover:text-white`}
               onClick={() => handlePageChange(index + 1)}
             >
