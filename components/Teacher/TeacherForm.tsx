@@ -224,7 +224,7 @@ const TeacherForm: React.FC = () => {
                 <div className="flex space-x-4">
                   {FieldName === "City" || FieldName === "State" ? (
                     <></>
-                  ) : (
+                  ) : isEditMode ? (
                     <>
                       <FaTrash
                         className="cursor-pointer text-gray-800"
@@ -239,6 +239,8 @@ const TeacherForm: React.FC = () => {
                         className="cursor-pointer text-gray-800"
                       />
                     </>
+                  ) : (
+                    <></>
                   )}
                 </div>
               </div>
