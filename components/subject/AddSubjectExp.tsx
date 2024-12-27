@@ -11,31 +11,32 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
 
-interface T {
+interface Teacher {
   id: string;
-  [key: string]: string;
+  name: string;
+  position: string;
 }
 
 function AddSubjectExp() {
   const [subjectName, setSubjectName] = useState("");
-  const [teachers, setTeachers] = useState<T[]>([]);
-  const [selectedTeachers, setSelectedTeachers] = useState<
-    { id: string; name: string }[]
-  >([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [selectedTeachers, setSelectedTeachers] = useState<Teacher[]>([]);
 
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const teachersSnapshot = await getDocs(collection(db, "teachers"));
-        const teachersList = teachersSnapshot.docs.map((doc) => ({
+        const querySnapshot = await getDocs(collection(db, "teachers"));
+        const fetchedTeachers = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data(),
+          name: doc.data()["First Name"],
+          position: doc.data().Position,
         }));
-        setTeachers(teachersList);
-        console.log("Teachers: ", teachersList);
+
+        setTeachers(fetchedTeachers);
       } catch (error) {
-        console.error("Error fetching teachers: ", error);
+        console.error("Error fetching teachers:", error);
       }
     };
     fetchTeachers();
@@ -44,12 +45,13 @@ function AddSubjectExp() {
   const handleTeacherChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value;
     const selectedName = e.target.options[e.target.selectedIndex].text;
+    const selectedPosition =
+      e.target.options[e.target.selectedIndex].dataset.position || "";
 
     if (!selectedTeachers.find((teacher) => teacher.id === selectedId)) {
-      console.log({ id: selectedId, name: selectedName });
       setSelectedTeachers([
         ...selectedTeachers,
-        { id: selectedId, name: selectedName },
+        { id: selectedId, name: selectedName, position: selectedPosition },
       ]);
     }
   };
@@ -58,9 +60,8 @@ function AddSubjectExp() {
     const subjectData = {
       subjectName,
       assignedTeachers: selectedTeachers,
+      subjectId: uuidv4(),
     };
-
-    console.log("Submitting Subject Data: ", subjectData);
 
     try {
       const subjectsRef = collection(db, "subjects");
@@ -69,7 +70,6 @@ function AddSubjectExp() {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        // const docId = querySnapshot.docs[0].id;
         const existingTeachers =
           querySnapshot.docs[0].data().assignedTeachers || [];
 
@@ -85,13 +85,13 @@ function AddSubjectExp() {
 
         await updateDoc(querySnapshot.docs[0].ref, {
           assignedTeachers: updatedTeachers,
+          subjectId: querySnapshot.docs[0].data().subjectId,
         });
 
         alert("Subject updated successfully!");
       } else {
         await addDoc(subjectsRef, {
-          subject: subjectName,
-          assignedTeachers: selectedTeachers,
+          ...subjectData,
         });
 
         alert("Subject added successfully!");
@@ -106,86 +106,88 @@ function AddSubjectExp() {
   };
 
   return (
-    <>
-      <div className="p-6 rounded-md">
-        {/* Header Section */}
-        <div className="flex justify-between items-center mb-6">
-          <button className="flex items-center space-x-2 text-black hover:text-[#414d6b]">
-            <MdEdit size={18} />
-            <span className="text-sm font-bold">Add Student</span>
-          </button>
-          <button className="flex items-center space-x-2 text-black hover:text-[#414d6b]">
-            <MdEdit size={18} />
-            <span className="text-sm font-bold">Edit Student Form</span>
-          </button>
-        </div>
-
-        {/* Title Section */}
-        <h2 className="text-xl font-medium mb-4 text-[#414d6b] p-6">
-          Please enter Subject Details
-        </h2>
-
-        {/* Input Section */}
-        <div className="mb-6 px-6">
-          <label
-            htmlFor="subjectName"
-            className="block font-medium mb-2 text-gray-700"
-          >
-            Subject Name
-          </label>
-          <input
-            type="text"
-            id="firstName"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-            placeholder="Enter First Name"
-            value={subjectName}
-            onChange={(e) => setSubjectName(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* assign teacher */}
-        <div className="mb-6 px-6">
-          <label
-            htmlFor="teachers"
-            className="block font-medium mb-2 text-gray-700"
-          >
-            Assign Teachers
-          </label>
-          <select
-            id="teachers"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-            onChange={handleTeacherChange}
-          >
-            <option value="">Select a teacher</option>
-            {teachers.map((teacher) => (
-              <option key={teacher.id} value={teacher.id}>
-                {teacher ? teacher["First Name"] : "Unknown Teacher"}
-              </option>
-            ))}
-          </select>
-
-          {/* Display Selected Teachers */}
-          <ul className="mt-4 space-y-2">
-            {selectedTeachers.map((teacher) => (
-              <li key={teacher.id} className="text-gray-700">
-                {teacher.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Button Section */}
-        <div className="flex justify-end">
-          <button
-            className="px-6 py-2 bg-[#576086] text-white rounded-md hover:bg-[#414d6b]"
-            onClick={handleSubmit}
-          >
-            Add Subject
-          </button>
-        </div>
+    <div className="p-6 rounded-md">
+      {/* Header Section */}
+      <div className="flex justify-between items-center mb-6">
+        <button className="flex items-center space-x-2 text-black hover:text-[#414d6b]">
+          <MdEdit size={18} />
+          <span className="text-sm font-bold">Add Student</span>
+        </button>
+        <button className="flex items-center space-x-2 text-black hover:text-[#414d6b]">
+          <MdEdit size={18} />
+          <span className="text-sm font-bold">Edit Student Form</span>
+        </button>
       </div>
-    </>
+
+      {/* Title Section */}
+      <h2 className="text-xl font-medium mb-4 text-[#414d6b] p-6">
+        Please enter Subject Details
+      </h2>
+
+      {/* Input Section */}
+      <div className="mb-6 px-6">
+        <label
+          htmlFor="subjectName"
+          className="block font-medium mb-2 text-gray-700"
+        >
+          Subject Name
+        </label>
+        <input
+          type="text"
+          id="firstName"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+          placeholder="Enter Subject Name"
+          value={subjectName}
+          onChange={(e) => setSubjectName(e.target.value)}
+          required
+        />
+      </div>
+
+      {/* Assign Teacher */}
+      <div className="mb-6 px-6">
+        <label
+          htmlFor="teachers"
+          className="block font-medium mb-2 text-gray-700"
+        >
+          Assign Teachers
+        </label>
+        <select
+          id="teachers"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+          onChange={handleTeacherChange}
+        >
+          <option value="">Select a teacher</option>
+          {teachers.map((teacher) => (
+            <option
+              key={teacher.id}
+              value={teacher.id}
+              data-position={teacher.position}
+            >
+              {teacher.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Display Selected Teachers */}
+        <ul className="mt-4 space-y-2">
+          {selectedTeachers.map((teacher) => (
+            <li key={teacher.id} className="text-gray-700">
+              {teacher.name} - {teacher.position}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Button Section */}
+      <div className="flex justify-end">
+        <button
+          className="px-6 py-2 bg-[#576086] text-white rounded-md hover:bg-[#414d6b]"
+          onClick={handleSubmit}
+        >
+          Add Subject
+        </button>
+      </div>
+    </div>
   );
 }
 
