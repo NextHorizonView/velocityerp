@@ -37,6 +37,7 @@ const EditTeacherForm: React.FC<EditTeacherFormProps> = ({ teacherid }) => {
           console.log(teacherData, "Fetched Teacher Data");
 
           setFormData(teacherData);
+          mutate("teachers");
         } catch (error) {
           console.error("Error fetching Teacher data:", error);
         }
@@ -59,7 +60,7 @@ const EditTeacherForm: React.FC<EditTeacherFormProps> = ({ teacherid }) => {
 
   const renderField = (field: FormField) => {
     const { FormFields } = field;
-
+    mutate("teachers");
     if (!FormFields || FormFields.length === 0) return null;
 
     return FormFields.map((f: FormField) => {
