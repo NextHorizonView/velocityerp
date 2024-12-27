@@ -1,44 +1,94 @@
-"use client";
-import React, { useState } from "react";
-import { MdEdit } from "react-icons/md";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { db } from "@/lib/firebaseConfig"; // Update with your Firebase configuration path
-import { addDoc, collection } from "firebase/firestore";
 
-const AddSubject: React.FC = () => {
+"use client";
+import React, { useState, useEffect } from "react";
+import { MdEdit } from "react-icons/md";
+import { Button } from "@/components/ui/button";
+import { db } from "@/lib/firebaseConfig";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
+
+interface Teacher {
+  id: string;
+  name: string;
+  position: string;
+}
+
+interface Subject {
+  subjectId: string;
+  subjectName: string;
+  assignedTeachers: { id: string }[];
+}
+
+const AddClass: React.FC = () => {
   const [className, setClassName] = useState<string>("");
-  // const [searchTerm, setSearchTerm] = useState<string>("");
   const [divisions, setDivisions] = useState<string[]>(["A", "B"]);
   const [newDivision, setNewDivision] = useState<string>("");
   const [selectedDivision, setSelectedDivision] = useState<string>("A");
-  const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([
-    { id: "T001", name: "John Doe" },
-    { id: "T002", name: "Jane Smith" },
-  ]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedClassteacher, setSelectedClassteacher] =
-    useState<string>("T001");
+    useState<string>("");
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "teachers"));
+        const fetchedTeachers = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data()["First Name"],
+          position: doc.data().Position,
+        }));
+        setTeachers(fetchedTeachers);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      }
+    };
+
+    const fetchSubjects = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "subjects"));
+        const fetchedSubjects = querySnapshot.docs.map((doc) => ({
+          subjectId: doc.id,
+          subjectName: doc.data().subjectName,
+          assignedTeachers: doc.data().assignedTeachers,
+        }));
+        setSubjects(fetchedSubjects);
+      } catch (error) {
+        console.error("Error fetching subjects:", error);
+      }
+    };
+
+    fetchTeachers();
+    fetchSubjects();
+  }, []);
 
   const handleAddDivision = () => {
     if (newDivision.trim() && !divisions.includes(newDivision)) {
       setDivisions([...divisions, newDivision]);
-      setNewDivision(""); // Clear input after adding
+      setNewDivision(""); 
     }
   };
 
   const handleSubmit = async () => {
+    const classId = uuidv4(); 
+    const classSubjects = subjects.map((subject) => ({
+      subjectName: subject.subjectName,
+      subjectId: subject.subjectId,
+      subjectTeacherId: subject.assignedTeachers[0]?.id || "", 
+    }));
+
     const classData = {
+      classId,
       className,
-      classDivisions: selectedDivision,
+      classDivision: selectedDivision,
       classTeacherId: selectedClassteacher,
+      classSubjects,
     };
 
     console.log("Submitting Class Data: ", classData);
@@ -46,13 +96,9 @@ const AddSubject: React.FC = () => {
     try {
       await addDoc(collection(db, "classes"), classData);
       alert("Class added successfully!");
-      setClassName("");
-      setSelectedDivision("A");
-      setSelectedClassteacher("T001");
     } catch (error) {
       console.error("Error adding class: ", error);
-      setTeachers([]);
-      alert("Failed to add class. Please try again.");
+      alert("Failed to add class.");
     }
   };
 
@@ -75,7 +121,7 @@ const AddSubject: React.FC = () => {
       <div className="mb-6 px-6">
         <label
           htmlFor="className"
-          className="block font-medium mb-2 text-gray-500"
+          className="block font-medium mb-2 text-gray-700"
         >
           Class Name
         </label>
@@ -90,110 +136,80 @@ const AddSubject: React.FC = () => {
         />
       </div>
 
-      {/* Divisions Section */}
-      <div className="p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-4">Divisions</h2>
+      {/* Division Section */}
+      <div className="mb-6 px-6">
+        <label
+          htmlFor="newDivision"
+          className="block font-medium mb-2 text-gray-700"
+        >
+          Add Division
+        </label>
+        <input
+          type="text"
+          id="newDivision"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+          placeholder="Enter Division"
+          value={newDivision}
+          onChange={(e) => setNewDivision(e.target.value)}
+        />
+        <Button onClick={handleAddDivision} className="mt-2">
+          Add Division
+        </Button>
+      </div>
 
-          {/* Dropdown for Divisions */}
-          <div className="mb-4">
-            <Label htmlFor="divisionDropdown" className="text-sm font-medium">
-              Select Division
-            </Label>
-            <select
-              id="divisionDropdown"
-              value={selectedDivision}
-              onChange={(e) => setSelectedDivision(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-            >
-              {divisions.map((division, index) => (
-                <option key={index} value={division}>
-                  {division}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Add Division Button */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="default" className="bg-[#576086] text-white">
-              Add Division
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add a New Division</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="divisionName" className="text-sm font-medium">
-                  Division Name
-                </Label>
-                <Input
-                  id="divisionName"
-                  value={newDivision}
-                  onChange={(e) => setNewDivision(e.target.value)}
-                  placeholder="Enter division name"
-                  className="mt-2"
-                />
-              </div>
-              <Button
-                onClick={handleAddDivision}
-                variant="default"
-                className="w-full bg-[#576086] text-white hover:bg-green-700"
-              >
-                Add Division
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      {/* Division Options */}
+      <div className="mb-6 px-6">
+        <label
+          htmlFor="division"
+          className="block font-medium mb-2 text-gray-700"
+        >
+          Select Division
+        </label>
+        <select
+          id="division"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+          value={selectedDivision}
+          onChange={(e) => setSelectedDivision(e.target.value)}
+        >
+          {divisions.map((division) => (
+            <option key={division} value={division}>
+              {division}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Classteacher Section */}
-      <div className="p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-4">Classteacher</h2>
-
-          {/* Dropdown for Classteacher */}
-          <div className="mb-4">
-            <Label
-              htmlFor="classteacherDropdown"
-              className="text-sm font-medium"
-            >
-              Select Classteacher
-            </Label>
-            <select
-              id="classteacherDropdown"
-              value={selectedClassteacher}
-              onChange={(e) => setSelectedClassteacher(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-            >
-              {teachers.map((teacher) => (
-                <option key={teacher.id} value={teacher.id}>
-                  {teacher.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      <div className="mb-6 px-6">
+        <label
+          htmlFor="classteacher"
+          className="block font-medium mb-2 text-gray-700"
+        >
+          Select Classteacher
+        </label>
+        <select
+          id="classteacher"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+          value={selectedClassteacher}
+          onChange={(e) => setSelectedClassteacher(e.target.value)}
+        >
+          <option value="">Select a teacher</option>
+          {teachers.map((teacher) => (
+            <option key={teacher.id} value={teacher.id}>
+              {teacher.name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Footer Section */}
-      <div className="flex justify-between space-x-4 mt-20">
-        <button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 focus:outline-none">
-          Cancel
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="bg-[#576086] text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
-        >
-          Save
-        </button>
+      {/* Button Section */}
+      <div className="flex justify-end">
+        <Button onClick={handleSubmit} className="bg-[#576086] text-white">
+          Add Class
+        </Button>
       </div>
     </div>
   );
 };
 
-export default AddSubject;
+export default AddClass;
