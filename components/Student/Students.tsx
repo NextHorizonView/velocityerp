@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
@@ -23,7 +23,7 @@ import { db } from "@/lib/firebaseConfig";
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
 import { mutate } from "swr";
 import StudentsTable from "./StudentTable";
-
+import { usePathname } from "next/navigation";
 import FadeLoader from "../Loader";
 
 export type Student = {
@@ -50,6 +50,7 @@ const fetchStudents = async () => {
 const ITEMS_PER_PAGE = 8;
 
 export default function Students() {
+  const path = usePathname();
   const userId =
     typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
@@ -60,6 +61,11 @@ export default function Students() {
     userId ? () => fetchFormFields(userId) : null,
     { revalidateOnFocus: false }
   );
+  useEffect(() => {
+    if (path === "/students") {
+      mutate("students");
+    }
+  }, [path]);
 
   const formFields = fields[0]?.FormFields || [];
 

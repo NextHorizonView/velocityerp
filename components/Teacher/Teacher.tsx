@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IoIosCloudUpload } from "react-icons/io";
@@ -17,6 +17,7 @@ import { db } from "@/lib/firebaseConfig";
 import { fetchFormFieldsTeacher, FormField } from "../helper/firebaseHelper";
 import useSWR, { mutate } from "swr";
 import FadeLoader from "../Loader";
+import { usePathname } from "next/navigation";
 
 export type Teacher = {
   id: number;
@@ -42,16 +43,22 @@ const fetchTeacher = async () => {
 const ITEMS_PER_PAGE = 8;
 
 export default function Teachers() {
+  const path = usePathname();
   const userId =
     typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
-  const { data: teachers, error } = useSWR("teachers", fetchTeacher);
+  const { data: teachers, error } = useSWR<Teacher[]>("teachers", fetchTeacher);
 
   const { data: fields = [], error: fieldsError } = useSWR<FormField[]>(
     userId ? `formFields-${userId}` : null,
     userId ? () => fetchFormFieldsTeacher(userId) : null,
     { revalidateOnFocus: false }
   );
+  useEffect(() => {
+    if (path === "/teacher") {
+      mutate("teachers");
+    }
+  }, [path]);
 
   const formFields = fields[0]?.FormFields || [];
 
