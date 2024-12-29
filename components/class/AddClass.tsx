@@ -35,7 +35,7 @@ const AddClass: React.FC = () => {
     const [newDivision, setNewDivision] = useState<string>("");
     const [selectedDivision, setSelectedDivision] = useState<string>("A");
     const [teachers, setTeachers] = useState<Teacher[]>([]);
-    const [selectedClassteacher, setSelectedClassteacher] =
+    const [selectedClassteacher] =
         useState<string>("");
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
