@@ -28,7 +28,7 @@ interface SidebarProps {
 }
 
 const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
-  const pathname = usePathname() || ""; 
+  const pathname = usePathname() || "";
   const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(false);
 
   const menuItems = [
@@ -78,49 +78,67 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
 
       {/* Menu Items */}
       <nav className="mt-4">
-       
 
-      {menuItems.map((item, index) => {
-  // Check active condition
-  let isActive = false;
 
-  // Custom logic for "Subjects" and "Add Subject"
-  if (item.label === "Subject") {
-    isActive = pathname === "/subjects" || pathname === "/addsubject" || pathname === '/editsubject';
-  } else {
-    isActive = pathname === item.path;
-  }
-// // Custom logic for students , add students and edit forms
-//   if (item.label === "Students") {
-//     isActive = pathname === "/students" || pathname === "/studentform";
-//   } else {
-//     isActive = pathname === item.path;
-//   }
-  return (
-    <Link
-      key={index}
-      href={item.path}
-      className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200
-        ${
-          isActive
-            ? "bg-gray-100 border-r-4 border-red-500"
-            : "hover:bg-gray-50"
-        }
+        {menuItems.map((item, index) => {
+          // Check active condition
+          let isActive = false;
+
+          // Custom logic for "Subjects"
+          if (item.label === "Subject") {
+            isActive =
+              pathname === "/subjects" ||
+              pathname === "/addsubject" ||
+              pathname === "/editsubject" ||
+              pathname === "addsubject-exp";
+          }
+          // Custom logic for "Students"
+          else if (item.label === "Students") {
+            isActive =
+              pathname === "/students" ||
+              pathname === "/studentform" ||
+              pathname.startsWith("/editstudent/");
+          }
+          else if (item.label === "Teacher") {
+            isActive =
+              pathname === "/teacher" ||
+              pathname === "/teacherform" ||
+              pathname.startsWith("/editteacher/");
+          }
+          else if (item.label === "Class") {
+            isActive =
+              pathname === "/class" ||
+              pathname === "/addclass" ||
+              pathname.startsWith("/editteacher/");
+          }
+          // Default logic for other menu items
+          else {
+            isActive = pathname === item.path;
+          }
+
+          return (
+            <Link
+              key={index}
+              href={item.path}
+              className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200
+        ${isActive
+                  ? "bg-gray-100 border-r-4 border-red-500"
+                  : "hover:bg-gray-50"
+                }
       `}
-    >
-      <div className={`${isActive ? "text-red-500" : "text-gray-600"}`}>
-        {item.icon}
-      </div>
-      <span
-        className={`ml-4 ${
-          isActive ? "text-red-500 font-medium" : "text-gray-700"
-        }`}
-      >
-        {item.label}
-      </span>
-    </Link>
-  );
-})}
+            >
+              <div className={`${isActive ? "text-red-500" : "text-gray-600"}`}>
+                {item.icon}
+              </div>
+              <span
+                className={`ml-4 ${isActive ? "text-red-500 font-medium" : "text-gray-700"
+                  }`}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
 
 
 
