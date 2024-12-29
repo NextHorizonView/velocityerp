@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AiOutlineClose,
   AiOutlineFileText,
@@ -8,20 +8,47 @@ import {
 } from "react-icons/ai";
 import { MdEdit } from "react-icons/md";
 import { TbGridDots } from "react-icons/tb";
+import {
+  collection,
+  // addDoc,
+  // updateDoc,
+  getDocs,
+  // query,
+  // where,
+} from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig";
+
+interface Teacher {
+  id: string;
+  name: string;
+  position: string;
+}
 
 const AddSubject: React.FC = () => {
   const [firstName, setFirstName] = useState("");
-  const [teachers, setTeachers] = useState<
-    { name: string; position: string }[]
-  >([
-    { name: "John Doe", position: "Math Teacher" },
-    { name: "Jane Smith", position: "Science Teacher" },
-  ]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherPosition, setNewTeacherPosition] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "teachers"));
+        const fetchedTeachers = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data()["First Name"],
+          position: doc.data().Position,
+        }));
+
+        setTeachers(fetchedTeachers);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      }
+    };
+    fetchTeachers();
+  }, []);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
@@ -198,14 +225,15 @@ const AddSubject: React.FC = () => {
               <button
                 className="bg-[#576086] mx-auto my-5 text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
                 onClick={() => {
-                  if (newTeacherName && newTeacherPosition) {
-                    setTeachers((prev) => [
-                      ...prev,
-                      { name: newTeacherName, position: newTeacherPosition },
-                    ]);
-                    setNewTeacherName("");
-                    setNewTeacherPosition("");
-                  }
+                  setTeachers([
+                    ...teachers,
+                    {
+                      id: String(teachers.length + 1),
+                      name: newTeacherName,
+                      position: newTeacherPosition,
+                    },
+                  ]);
+                  setIsAddTeacherModalOpen(false);
                 }}
               >
                 Add Teacher

@@ -101,6 +101,11 @@ const SubjectTable = () => {
               +
             </button>
           </Link>
+          {/* <Link href="/addclass-exp">
+        <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
+              +
+            </button>
+            </Link> */}
           <Link href="/addclass">
             <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
               + Add New Class
