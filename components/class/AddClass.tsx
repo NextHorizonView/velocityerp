@@ -40,11 +40,11 @@ const AddClass: React.FC = () => {
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [Classteachers, setClassTeachers] = useState<Teacher[]>([]);
 
-    const [selectedClassteacher,setSelectedClassteacher] =
-        useState<string>("");
+    // const [selectedClassteacher,setSelectedClassteacher] =
+    //     useState<string>("");
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchSubject, setSearchSubject] = useState('');
+    // const [searchSubject, setSearchSubject] = useState('');
 
     const [ClasssearchTerm, setClassSearchTerm] = useState('');
 // const [subjectDropdown, setSubjectDropdown] = useState<boolean>(false);
@@ -153,13 +153,13 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     };
 
     //
-    const handleSearchChange = (index:any, value:any) => {
+    const handleSearchChange = (index:number, value:string) => {
         const newSearchSubjects = [...searchSubjects];
         newSearchSubjects[index] = value;
         setSearchSubjects(newSearchSubjects);
       };
     
-      const toggleDropdown = (index:any) => {
+      const toggleDropdown = (index:number) => {
         const newSubjectDropdowns = [...subjectDropdowns];
         newSubjectDropdowns[index] = !newSubjectDropdowns[index];
         setSubjectDropdowns(newSubjectDropdowns);
