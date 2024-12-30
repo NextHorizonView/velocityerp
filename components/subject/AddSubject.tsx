@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   AiOutlineClose,
   AiOutlineFileText,
@@ -10,48 +10,102 @@ import { MdEdit } from "react-icons/md";
 import { TbGridDots } from "react-icons/tb";
 import {
   collection,
-  // addDoc,
-  // updateDoc,
+  addDoc,
+  updateDoc,
   getDocs,
-  // query,
-  // where,
+  query,
+  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 
-interface Teacher {
-  id: string;
-  name: string;
-  position: string;
-}
+// interface Teacher {
+//   id: string;
+//   name: string;
+//   position: string;
+// }
 
 const AddSubject: React.FC = () => {
-  const [firstName, setFirstName] = useState("");
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [SubjectName, setSubjectName] = useState("");
+  // const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherPosition, setNewTeacherPosition] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [teachers, setTeachers] = useState<
+    { id: string; name: string; position: string }[]
+  >([
+    { id: "1", name: "John Doe", position: "Head of Department" },
+    { id: "2", name: "Jane Smith", position: "Professor" },
+  ]);
 
-  useEffect(() => {
-    const fetchTeachers = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "teachers"));
-        const fetchedTeachers = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          name: doc.data()["First Name"],
-          position: doc.data().Position,
-        }));
+  // useEffect(() => {
+  //   const fetchTeachers = async () => {
+  //     try {
+  //       const querySnapshot = await getDocs(collection(db, "teachers"));
+  //       const fetchedTeachers = querySnapshot.docs.map((doc) => ({
+  //         id: doc.id,
+  //         name: doc.data()["First Name"],
+  //         position: doc.data().Position,
+  //       }));
 
-        setTeachers(fetchedTeachers);
-      } catch (error) {
-        console.error("Error fetching teachers:", error);
-      }
-    };
-    fetchTeachers();
-  }, []);
+  //       setTeachers(fetchedTeachers);
+  //     } catch (error) {
+  //       console.error("Error fetching teachers:", error);
+  //     }
+  //   };
+  //   fetchTeachers();
+  // }, []);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const subjectData = {
+      SubjectName,
+      teachers,
+    };
+    console.log(subjectData);
+    try {
+      const subjectsRef = collection(db, "subjects");
+      const q = query(subjectsRef, where("subject", "==", SubjectName));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // const docRef = querySnapshot.docs[0].ref;
+        const existingTeachers =
+          querySnapshot.docs[0].data().assignedTeachers || [];
+
+        const updatedTeachers = [
+          ...existingTeachers,
+          ...teachers.filter(
+            (newTeacher) =>
+              !existingTeachers.some(
+                (t: { id: string }) => t.id === newTeacher.id
+              )
+          ),
+        ];
+
+        await updateDoc(querySnapshot.docs[0].ref, {
+          assignedTeachers: updatedTeachers,
+          subjectId: querySnapshot.docs[0].data().subjectId,
+        });
+
+        alert("Subject updated successfully!");
+      } else {
+        await addDoc(subjectsRef, {
+          ...subjectData,
+        });
+
+        alert("Subject added successfully!");
+      }
+
+      setSubjectName("");
+      // setSelectedTeachers([]);
+    } catch (error) {
+      console.error("Error handling subject: ", error);
+      alert("Failed to handle subject. Please try again.");
     }
   };
 
@@ -77,18 +131,18 @@ const AddSubject: React.FC = () => {
       {/* Input Section */}
       <div className="mb-6 px-6">
         <label
-          htmlFor="firstName"
+          htmlFor="SubjectName"
           className="block font-medium mb-2 text-gray-700"
         >
-          First Name
+          Subject Name
         </label>
         <input
           type="text"
-          id="firstName"
+          id="SubjectName"
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
           placeholder="Enter First Name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
+          value={SubjectName}
+          onChange={(e) => setSubjectName(e.target.value)}
           required
         />
       </div>
@@ -218,9 +272,9 @@ const AddSubject: React.FC = () => {
                 onChange={(e) => setNewTeacherPosition(e.target.value)}
               >
                 <option value="">Select Position</option>
-                <option value="Math Teacher">Math Teacher</option>
-                <option value="Science Teacher">Science Teacher</option>
-                <option value="English Teacher">English Teacher</option>
+                <option value="Head of Department">Head of Department</option>
+                <option value="Professor">Professor</option>
+                <option value="Assistent Professor">Assistent Professor</option>
               </select>
               <button
                 className="bg-[#576086] mx-auto my-5 text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
@@ -263,9 +317,11 @@ const AddSubject: React.FC = () => {
                           setTeachers(updatedTeachers);
                         }}
                       >
-                        <option value="Math Teacher">Math Teacher</option>
-                        <option value="Science Teacher">Science Teacher</option>
-                        <option value="English Teacher">English Teacher</option>
+                        <option value="Math Teacher">Head of Department</option>
+                        <option value="Science Teacher">Professor</option>
+                        <option value="English Teacher">
+                          Assistent Professor
+                        </option>
                       </select>
                     </div>
                   </div>
@@ -291,6 +347,12 @@ const AddSubject: React.FC = () => {
         </button>
         <button className="bg-[#576086] text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none">
           Next
+        </button>
+        <button
+          onClick={handleSubmit}
+          className="bg-[#576086] text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
+        >
+          Save
         </button>
       </div>
     </div>
