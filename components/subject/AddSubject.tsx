@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AiOutlineClose,
   AiOutlineFileText,
@@ -16,45 +16,47 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { db, storage } from "@/lib/firebaseConfig";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
-// interface Teacher {
-//   id: string;
-//   name: string;
-//   position: string;
-// }
+interface Teacher {
+  id: string;
+  name: string;
+}
+interface SelectedTeacher {
+  id: string;
+  name: string;
+  position: string;
+}
 
 const AddSubject: React.FC = () => {
   const [SubjectName, setSubjectName] = useState("");
-  // const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [selectedTeachers, setSelectedTeachers] = useState<SelectedTeacher[]>(
+    []
+  );
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherPosition, setNewTeacherPosition] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [teachers, setTeachers] = useState<
-    { id: string; name: string; position: string }[]
-  >([
-    { id: "1", name: "John Doe", position: "Head of Department" },
-    { id: "2", name: "Jane Smith", position: "Professor" },
-  ]);
 
-  // useEffect(() => {
-  //   const fetchTeachers = async () => {
-  //     try {
-  //       const querySnapshot = await getDocs(collection(db, "teachers"));
-  //       const fetchedTeachers = querySnapshot.docs.map((doc) => ({
-  //         id: doc.id,
-  //         name: doc.data()["First Name"],
-  //         position: doc.data().Position,
-  //       }));
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "teachers"));
+        const fetchedTeachers = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data()["First Name"],
+        }));
 
-  //       setTeachers(fetchedTeachers);
-  //     } catch (error) {
-  //       console.error("Error fetching teachers:", error);
-  //     }
-  //   };
-  //   fetchTeachers();
-  // }, []);
+        setTeachers(fetchedTeachers);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      }
+    };
+    fetchTeachers();
+  }, []);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
@@ -64,14 +66,19 @@ const AddSubject: React.FC = () => {
   const handleSubmit = async () => {
     const subjectData = {
       SubjectName,
-      teachers,
+      teachers: selectedTeachers,
     };
     console.log(subjectData);
     try {
       const subjectsRef = collection(db, "subjects");
       const q = query(subjectsRef, where("subject", "==", SubjectName));
       const querySnapshot = await getDocs(q);
-
+      if (!selectedFile) {
+        alert("Please select a file to upload!");
+        return;
+      }
+      const storageRef = ref(storage, `subjectfile/${selectedFile.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, selectedFile);
       if (!querySnapshot.empty) {
         // const docRef = querySnapshot.docs[0].ref;
         const existingTeachers =
@@ -97,16 +104,66 @@ const AddSubject: React.FC = () => {
         await addDoc(subjectsRef, {
           ...subjectData,
         });
-
+        // Upload file to storage
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+            console.log(`Upload is ${progress}% done`);
+          },
+          (error) => {
+            console.error("Upload failed:", error);
+            alert("File upload failed. Please try again.");
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log("File available at:", downloadURL);
+            alert("File uploaded successfully!");
+          }
+        );
         alert("Subject added successfully!");
       }
 
       setSubjectName("");
-      // setSelectedTeachers([]);
+      setSelectedFile(null);
+      setSelectedTeachers([]);
     } catch (error) {
       console.error("Error handling subject: ", error);
       alert("Failed to handle subject. Please try again.");
     }
+  };
+
+  const filteredTeachers = teachers.filter((teacher) =>
+    teacher?.name?.toLowerCase().includes(newTeacherName?.toLowerCase() || "")
+  );
+
+  const handleAddTeacher = () => {
+    if (!newTeacherName || !newTeacherPosition) {
+      alert("Please select a teacher and enter a position!");
+      return;
+    }
+
+    const teacherToAdd = teachers.find(
+      (teacher) => teacher.name === newTeacherName
+    );
+
+    if (!teacherToAdd) {
+      alert("Selected teacher not found!");
+      return;
+    }
+
+    setSelectedTeachers([
+      ...selectedTeachers,
+      {
+        id: teacherToAdd.id,
+        name: teacherToAdd.name,
+        position: newTeacherPosition,
+      },
+    ]);
+    setNewTeacherName("");
+    setNewTeacherPosition("");
   };
 
   return (
@@ -198,7 +255,7 @@ const AddSubject: React.FC = () => {
         <table className="w-full text-left border-collapse">
           <thead></thead>
           <tbody>
-            {teachers.map((teacher, index) => (
+            {selectedTeachers.map((teacher, index) => (
               <tr key={index} className="border-b hover:bg-gray-100">
                 <td className="p-3">
                   <div className="flex items-center text-gray-500">
@@ -216,7 +273,9 @@ const AddSubject: React.FC = () => {
                   <button
                     className="text-gray-500 hover:text-gray-700 focus:outline-none"
                     onClick={() =>
-                      setTeachers(teachers.filter((_, i) => i !== index))
+                      setSelectedTeachers(
+                        selectedTeachers.filter((_, i) => i !== index)
+                      )
                     }
                   >
                     <AiOutlineClose size={20} />
@@ -257,46 +316,50 @@ const AddSubject: React.FC = () => {
               />
             </div>
 
+            {/* Filtered Teacher List */}
+            {filteredTeachers.length > 0 ? (
+              <>
+                <p className="font-medium text-gray-700 mb-2">
+                  Select a Teacher:
+                </p>
+                <div className="mb-4 bg-gray-50 p-1 rounded-lg shadow  max-h-52 overflow-scroll overflow-x-hidden">
+                  {filteredTeachers.map((teacher) => (
+                    <div
+                      key={teacher.id}
+                      className="cursor-pointer hover:bg-gray-200 bg-white p-2 m-2 rounded-md"
+                      onClick={() => setNewTeacherName(teacher.name)}
+                    >
+                      {teacher.name}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="font-medium text-gray-700 mb-2 bg-gray-50 p-2 rounded-full  text-center">
+                Sorry, No teacher found
+              </p>
+            )}
+
             {/* Add Teacher Form */}
             <div className="mb-6">
               <input
                 type="text"
                 className="w-full px-4 py-3 mb-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#576086]"
-                placeholder="Enter Teacher Name"
-                value={newTeacherName}
-                onChange={(e) => setNewTeacherName(e.target.value)}
-              />
-              <select
-                className="w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#576086]"
+                placeholder="Enter Position for Selected Teacher"
                 value={newTeacherPosition}
                 onChange={(e) => setNewTeacherPosition(e.target.value)}
-              >
-                <option value="">Select Position</option>
-                <option value="Head of Department">Head of Department</option>
-                <option value="Professor">Professor</option>
-                <option value="Assistent Professor">Assistent Professor</option>
-              </select>
+              />
               <button
                 className="bg-[#576086] mx-auto my-5 text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
-                onClick={() => {
-                  setTeachers([
-                    ...teachers,
-                    {
-                      id: String(teachers.length + 1),
-                      name: newTeacherName,
-                      position: newTeacherPosition,
-                    },
-                  ]);
-                  setIsAddTeacherModalOpen(false);
-                }}
+                onClick={handleAddTeacher}
               >
                 Add Teacher
               </button>
             </div>
 
-            {/* Teacher Cards */}
+            {/* Selected Teacher List */}
             <div className="space-y-4">
-              {teachers.map((teacher, index) => (
+              {selectedTeachers.map((teacher, index) => (
                 <div
                   key={index}
                   className="p-4 bg-gray-50 rounded-lg shadow-sm flex items-center justify-between"
@@ -307,30 +370,17 @@ const AddSubject: React.FC = () => {
                       <p className="font-medium text-gray-700">
                         {teacher.name}
                       </p>
-                      {/* Editable Position */}
-                      <select
-                        className="mt-2 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#576086]"
-                        value={teacher.position}
-                        onChange={(e) => {
-                          const updatedTeachers = [...teachers];
-                          updatedTeachers[index].position = e.target.value;
-                          setTeachers(updatedTeachers);
-                        }}
-                      >
-                        <option value="Head of Department">
-                          Head of Department
-                        </option>
-                        <option value="Professor">Professor</option>
-                        <option value="Assistent Professor">
-                          Assistent Professor
-                        </option>
-                      </select>
+                      <p className="text-sm text-gray-500">
+                        {teacher.position}
+                      </p>
                     </div>
                   </div>
                   <button
                     className="text-gray-500 hover:text-gray-700 focus:outline-none"
                     onClick={() =>
-                      setTeachers((prev) => prev.filter((_, i) => i !== index))
+                      setSelectedTeachers((prev) =>
+                        prev.filter((_, i) => i !== index)
+                      )
                     }
                   >
                     <AiOutlineClose size={20} />
