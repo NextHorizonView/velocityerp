@@ -317,9 +317,11 @@ const AddSubject: React.FC = () => {
                           setTeachers(updatedTeachers);
                         }}
                       >
-                        <option value="Math Teacher">Head of Department</option>
-                        <option value="Science Teacher">Professor</option>
-                        <option value="English Teacher">
+                        <option value="Head of Department">
+                          Head of Department
+                        </option>
+                        <option value="Professor">Professor</option>
+                        <option value="Assistent Professor">
                           Assistent Professor
                         </option>
                       </select>
