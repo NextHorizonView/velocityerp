@@ -24,9 +24,12 @@ interface Teacher {
 }
 
 interface Subject {
+    toLowercase(): unknown;
     subjectId: string;
-    subjectName: string;
-    assignedTeachers: { id: string }[];
+    SubjectName: string;
+    teachers: {
+        name: string; id: string 
+}[];
 }
 
 const AddClass: React.FC = () => {
@@ -35,14 +38,25 @@ const AddClass: React.FC = () => {
     const [newDivision, setNewDivision] = useState<string>("");
     const [selectedDivision, setSelectedDivision] = useState<string>("");
     const [teachers, setTeachers] = useState<Teacher[]>([]);
-    const [selectedClassteacher] =
+    const [Classteachers, setClassTeachers] = useState<Teacher[]>([]);
+
+    const [selectedClassteacher,setSelectedClassteacher] =
         useState<string>("");
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchSubject, setSearchSubject] = useState('');
+
+    const [ClasssearchTerm, setClassSearchTerm] = useState('');
+// const [subjectDropdown, setSubjectDropdown] = useState<boolean>(false);
+const [subjectDropdowns, setSubjectDropdowns] = useState<boolean[]>([]);
+const [searchSubjects, setSearchSubjects] = useState<string[]>([]);
+
+
   const [showNewDivisionInput, setShowNewDivisionInput] = useState<boolean>(false);
 
     // const [newTeacherName, setNewTeacherName] = useState('');
-
+// For pop up subject teacher 
+const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchTeachers = async () => {
@@ -54,6 +68,10 @@ const AddClass: React.FC = () => {
                     position: doc.data().Position,
                 }));
                 setTeachers(fetchedTeachers);
+                setClassTeachers(fetchedTeachers);
+                //
+                setSearchSubjects(new Array(fetchedTeachers.length).fill(''));
+                setSubjectDropdowns(new Array(fetchedTeachers.length).fill(false));
             } catch (error) {
                 console.error("Error fetching teachers:", error);
             }
@@ -64,8 +82,9 @@ const AddClass: React.FC = () => {
                 const querySnapshot = await getDocs(collection(db, "subjects"));
                 const fetchedSubjects = querySnapshot.docs.map((doc) => ({
                     subjectId: doc.id,
-                    subjectName: doc.data().subjectName,
-                    assignedTeachers: doc.data().assignedTeachers,
+                    SubjectName: doc.data().SubjectName,
+                    teachers: doc.data().teachers,
+                    toLowercase: () => doc.data().SubjectName.toLowerCase(),
                 }));
                 setSubjects(fetchedSubjects);
             } catch (error) {
@@ -83,6 +102,7 @@ const AddClass: React.FC = () => {
         if (newDivision.trim() && !divisions.includes(newDivision)) {
             setDivisions([...divisions, newDivision]);
             setNewDivision("");
+          
       setShowNewDivisionInput(false); 
 
         }
@@ -104,18 +124,20 @@ const AddClass: React.FC = () => {
     // };
 
     const handleSubmit = async () => {
+        
         const classId = uuidv4();
         const classSubjects = subjects.map((subject) => ({
-            subjectName: subject.subjectName,
+            SubjectName: subject.SubjectName,
             subjectId: subject.subjectId,
-            subjectTeacherId: subject.assignedTeachers[0]?.id || "",
+            subjectTeacherId: subject.teachers[0]?.id || "",
         }));
 
+        const classteacherId=Classteachers.map((teacher) => teacher.id);
         const classData = {
             classId,
             className,
             classDivision: selectedDivision,
-            classTeacherId: selectedClassteacher,
+            classTeacherId: classteacherId,
             classSubjects,
         };
 
@@ -129,6 +151,30 @@ const AddClass: React.FC = () => {
             alert("Failed to add class.");
         }
     };
+
+    //
+    const handleSearchChange = (index:any, value:any) => {
+        const newSearchSubjects = [...searchSubjects];
+        newSearchSubjects[index] = value;
+        setSearchSubjects(newSearchSubjects);
+      };
+    
+      const toggleDropdown = (index:any) => {
+        const newSubjectDropdowns = [...subjectDropdowns];
+        newSubjectDropdowns[index] = !newSubjectDropdowns[index];
+        setSubjectDropdowns(newSubjectDropdowns);
+      };
+
+      // selected subject 
+      const handleSubjectSelect = (teacherIndex:number, SubjectName:string) :void=> {
+        const newSelectedSubjects = [...selectedSubjects];
+        newSelectedSubjects[teacherIndex] = SubjectName;
+        setSelectedSubjects(newSelectedSubjects);
+    
+        const newSubjectDropdowns = [...subjectDropdowns];
+        newSubjectDropdowns[teacherIndex] = false;
+        setSubjectDropdowns(newSubjectDropdowns);
+      };
 
     return (
         <div className="p-6 rounded-md">
@@ -153,7 +199,7 @@ const AddClass: React.FC = () => {
             <div className="mb-6 px-6">
                 <label
                     htmlFor="className"
-                    className="block font-medium mb-2 text-gray-700"
+                    className="block font-medium mb-2 text-[#666666]"
                 >
                     Class Name
                 </label>
@@ -176,41 +222,7 @@ const AddClass: React.FC = () => {
 
                     {/* Dropdown for Divisions */}
                     <div className="mb-4">
-                        {/* <label htmlFor="divisionDropdown" className="text-sm font-medium text-gray-700">
-                            Select Division
-                        </label> */}
-                        {/* <select
-          id="division"
-          // className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-
-          // className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086] 
-          //   ${selectedDivision === "" ? "text-gray-500 bg-white" : "text-white bg-[#576086]"} 
-          //   hover:bg-[#576086] hover:text-white bg-[#576086] text-white`}
-
-
-            // className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]
-            //   ${selectedDivision === "" ? "text-gray-500 bg-white" : "text-white bg-[#576086]"} 
-            //   hover:bg-[#576086] hover:text-white`}
-          
-            className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]`}
-
-
-
-          value={selectedDivision}
-          onChange={handleDivisionChange}
-     
-        >
-          <option value="" style={{ color: "gray" }}>Select Division</option>
-
-                            {divisions.map((division, index) => (
-                                <option key={index} value={division}>
-                                    {division}
-                                </option>
-                            ))}
-          <option value="add-new" style={{ color: "black" }}>Add New Division</option>
-
-                        </select> */}
-
+                 
 
                         <select
   id="division"
@@ -274,46 +286,121 @@ const AddClass: React.FC = () => {
                 </div>
 
                 {/* Add Division Button */}
-                {/* <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="default" className="bg-[#576086] text-white">
-                            Add New Division
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add a New Division</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                            <div>
-                                <label htmlFor="divisionName" className="text-sm font-medium text-gray-700">
-                                    Division Name
-                                </label>
-                                <input
-                                    id="divisionName"
-                                    value={newDivision}
-                                    onChange={(e) => setNewDivision(e.target.value)}
-                                    placeholder="Enter division name"
-                                    className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-                                />
-                            </div>
-                            <Button
-                                onClick={handleAddDivision}
-                                variant="default"
-                                className="w-full bg-[#576086] text-white hover:bg-green-700"
-                            >
-                                Add Division
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog> */}
+  
             </div>
 
+{/* CLassTeacher Section  */}
+<div className="mb-6 px-6 pt-11">
+                <div className="flex items-center space-x-3 mb-4">
+                    <h3 className="text-lg font-medium text-[#666666]">Class Teacher</h3>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b]">
+                                Add Teacher
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add Teacher</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-6">
+                                {/* Search Input */}
+                                <div className="relative">
+                                    <Input
+                                        id="searchTeacher"
+                                        placeholder="Find Teacher"
+                                        value={ClasssearchTerm}
+                                        onChange={(e) => setClassSearchTerm(e.target.value)}
+                                        className="pl-10"
+                                    />
+                                    <AiOutlineSearch className="absolute left-3 top-3 text-gray-400" />
+                                </div>
 
-            {/* Classteacher Section */}
+                                {/* Selected Teacher Card */}
+                                {Classteachers.map((teacher, index) => (
+                                    <div
+                                        key={index}
+                                        className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between"
+                                    >
+                                        <div className="flex items-center space-x-4">
+                                            <div className="bg-gray-300 w-10 h-10 rounded-full flex items-center justify-center">
+                                                <AiOutlineUser className="text-gray-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-700">
+                                                    {teacher.name}
+                                                </p>
+                                                <select
+                                                    id="subjectDropdown"
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+                                                >
+                                                    <option value="">{teacher.position}</option>
+                                                    {Classteachers.map((teacher, index) => (
+                                                        <option
+                                                            key={index}
+                                                            value={teacher.position.toLowerCase().replace(/\s+/g, '-')}
+                                                        >
+                                                            {teacher.position}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button className="text-red-600 hover:text-red-700">
+                                            <AiOutlineClose />
+                                        </button>
+                                    </div>
+                                ))}
+
+                        
+
+                                {/* Save Button */}
+                                <Button className="w-full bg-[#576086] text-white hover:bg-[#414d6b]">
+                                    Save
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+
+
+                <table className="w-full text-left border-collapse">
+                    <thead></thead>
+                    <tbody>
+                        {Classteachers
+                            .filter((teacher) =>
+                                teacher.name.toLowerCase().includes(ClasssearchTerm.toLowerCase())
+                            )
+                            .map((teacher, index) => (
+                                <tr key={index} className="border-b hover:bg-gray-100">
+                                    <td className="p-3">
+                                        <div className="flex items-center text-gray-500">
+                                            <TbGridDots size={20} />
+                                        </div>
+                                    </td>
+                                    <td className="p-3 flex items-center space-x-2">
+                                        <AiOutlineUser size={20} className="text-gray-500" />
+                                        <span className="font-medium text-gray-700">{teacher.name}</span>
+                                    </td>
+                                    <td className="p-3 text-gray-500">{teacher.position}</td>
+                                    <td className="p-3">
+                                        <button
+                                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            onClick={() => setClassTeachers(Classteachers.filter((_, i) => i !== index))}
+                                        >
+                                            <AiOutlineClose size={20} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Subjectteacher Section */}
             <div className="mb-6 px-6 pt-11">
                 <div className="flex items-center space-x-3 mb-4">
-                    <h3 className="text-lg font-medium text-gray-700">Subject Teachers</h3>
+                    <h3 className="text-lg font-medium text-[#666666]">Subject Teachers</h3>
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b]">
@@ -337,8 +424,10 @@ const AddClass: React.FC = () => {
                                     <AiOutlineSearch className="absolute left-3 top-3 text-gray-400" />
                                 </div>
 
+
+ {/* WITHOUT SEARCH FILTER  */}
                                 {/* Selected Teacher Card */}
-                                {teachers.map((teacher, index) => (
+                                {/* {teachers.map((teacher, index) => (
                                     <div
                                         key={index}
                                         className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between"
@@ -365,13 +454,115 @@ const AddClass: React.FC = () => {
                                                         </option>
                                                     ))}
                                                 </select>
+                                                Subject
+                                                <select
+                id="subjectDropdown"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+              >
+                <option value="">Select the Subject</option>
+             
+                {subjects.map((subject, subjectIndex) =>
+                  subject.teachers.map((as, teacherIndex) =>
+                    as.name === teacher.name ? (
+                        
+                        
+                        
+                      <option key={`${subjectIndex}-${teacherIndex}`} value={teacher.name}>
+                        {subject.SubjectName}
+                      </option>
+                    ) : null
+                    // ) : null
+                  )
+             
+
+                )}
+              </select>
+
+
                                             </div>
                                         </div>
                                         <button className="text-red-600 hover:text-red-700">
                                             <AiOutlineClose />
                                         </button>
                                     </div>
-                                ))}
+                                ))} */}
+
+
+
+
+
+{/* WITH SEARCH FILTER  */}
+
+{teachers.map((teacher, index) => (
+  <div
+    key={index}
+    className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between"
+  >
+    <div className="flex items-center space-x-4">
+      <div className="bg-gray-300 w-10 h-10 rounded-full flex items-center justify-center">
+        <AiOutlineUser className="text-gray-600" />
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-700">{teacher.name}</p>
+        {/* <select
+          id="subjectDropdown"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+        >
+          <option value="">{teacher.position}</option>
+          {teachers.map((t, i) => (
+            <option
+              key={i}
+              value={t.position.toLowerCase().replace(/\s+/g, '-')}
+            >
+              {t.position}
+            </option>
+          ))}
+        </select> */}
+        <div className="relative mt-2">
+          <div
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086] cursor-pointer flex justify-between items-center"
+            onClick={() => toggleDropdown(index)}
+          >
+            <span>Select the Subject</span>
+            <span className="ml-2">&#9662;</span> {/* Triangle */}
+          </div>
+          {subjectDropdowns[index] && (
+            <div className="absolute w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto z-10">
+              <div className="px-4 py-2">
+                <Input
+                  id="searchSubject"
+                  placeholder="Search the Subject"
+                  value={searchSubjects[index]}
+                  onChange={(e) => handleSearchChange(index, e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              {subjects.map((subject, subjectIndex) =>
+                subject.teachers.map((as, teacherIndex) =>
+                  as.name === teacher.name &&
+                  subject.SubjectName.toLowerCase().includes(searchSubjects[index].toLowerCase()) ? (
+                    <div key={`${subjectIndex}-${teacherIndex}`} className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => handleSubjectSelect(index, subject.SubjectName)}
+                    >
+                      {subject.SubjectName}
+                    </div>
+                  ) : null
+                )
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+    <button className="text-red-600 hover:text-red-700">
+      <AiOutlineClose />
+    </button>
+  </div>
+))}
+
+
+
+
 
                                 {/* Subject Dropdown */}
                                 {/* <div>
