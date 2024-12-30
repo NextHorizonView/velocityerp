@@ -20,7 +20,7 @@ interface Teacher {
 }
 
 function AddSubjectExp() {
-  const [subjectName, setSubjectName] = useState("");
+  const [SubjectName, setSubjectName] = useState("");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedTeachers, setSelectedTeachers] = useState<Teacher[]>([]);
 
@@ -58,20 +58,20 @@ function AddSubjectExp() {
 
   const handleSubmit = async () => {
     const subjectData = {
-      subjectName,
-      assignedTeachers: selectedTeachers,
+      SubjectName,
+      teachers: selectedTeachers,
       subjectId: uuidv4(),
     };
 
     try {
       const subjectsRef = collection(db, "subjects");
 
-      const q = query(subjectsRef, where("subject", "==", subjectName));
+      const q = query(subjectsRef, where("subject", "==", SubjectName));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
         const existingTeachers =
-          querySnapshot.docs[0].data().assignedTeachers || [];
+          querySnapshot.docs[0].data().teachers || [];
 
         const updatedTeachers = [
           ...existingTeachers,
@@ -84,7 +84,7 @@ function AddSubjectExp() {
         ];
 
         await updateDoc(querySnapshot.docs[0].ref, {
-          assignedTeachers: updatedTeachers,
+          teachers: updatedTeachers,
           subjectId: querySnapshot.docs[0].data().subjectId,
         });
 
@@ -127,7 +127,7 @@ function AddSubjectExp() {
       {/* Input Section */}
       <div className="mb-6 px-6">
         <label
-          htmlFor="subjectName"
+          htmlFor="SubjectName"
           className="block font-medium mb-2 text-gray-700"
         >
           Subject Name
@@ -137,7 +137,7 @@ function AddSubjectExp() {
           id="firstName"
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
           placeholder="Enter Subject Name"
-          value={subjectName}
+          value={SubjectName}
           onChange={(e) => setSubjectName(e.target.value)}
           required
         />
