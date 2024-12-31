@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { IoIosCloudUpload, IoIosSearch } from "react-icons/io";
 import { FaTrash, FaPen } from "react-icons/fa";
@@ -13,23 +13,14 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"; // Adjust path as per your setup
 import { Button } from "@/components/ui/button";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig";
 
 export type Subject = {
-  id: number;
+  id: string;
   name: string;
-  classDiv: string | number;
+  // classDiv: string | number;
 };
-
-const mockSubjects: Subject[] = [
-  { id: 1, name: "Maths", classDiv: "VII A" },
-  { id: 2, name: "Science", classDiv: "VIII B" },
-  { id: 3, name: "English", classDiv: "IX C" },
-  { id: 4, name: "History", classDiv: "VII B" },
-  { id: 5, name: "Geography", classDiv: "VIII C" },
-  { id: 6, name: "Biology", classDiv: "IX A" },
-  { id: 7, name: "Physics", classDiv: "X A" },
-  { id: 8, name: "Chemistry", classDiv: "X B" },
-];
 
 const ITEMS_PER_PAGE = 8;
 
@@ -38,8 +29,25 @@ const SubjectTable = () => {
   const [sortField, setSortField] = useState<keyof Subject | "newest">(
     "newest"
   );
-  const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const fetchedSubjects = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "subjects"));
+        const fetchedSubjects = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data()["SubjectName"],
+        }));
+
+        setSubjects(fetchedSubjects);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      }
+    };
+    fetchedSubjects();
+  }, []);
 
   const handleSort = (field: keyof Subject | "newest") => {
     setSortField(field);
@@ -49,17 +57,17 @@ const SubjectTable = () => {
       );
       setSubjects(sortedSubjects);
     } else {
-      setSubjects(mockSubjects);
+      setSubjects([...subjects].sort((a, b) => Number(a.id) - Number(b.id)));
     }
   };
 
-  const handleDelete = (id: number) => {
-    const updatedSubjects = subjects.filter((subject) => subject.id !== id);
-    setSubjects(updatedSubjects);
-  };
+  // const handleDelete = (id: number) => {
+  // const updatedSubjects = subjects.filter((subject) => subject.id !== id);
+  // setSubjects(updatedSubjects);
+  // };
 
   const filteredSubjects = subjects.filter((subject) =>
-    subject.name.toLowerCase().includes(searchTerm.toLowerCase())
+    subject?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredSubjects.length / ITEMS_PER_PAGE);
@@ -105,11 +113,6 @@ const SubjectTable = () => {
           </Dialog>
         </div>
         <div className="flex items-center space-x-4">
-          <Link href="/addsubject-exp">
-            <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
-              +
-            </button>
-          </Link>
           <Link href="/addsubject">
             <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
               + Add New Subject
@@ -152,7 +155,7 @@ const SubjectTable = () => {
           <thead>
             <tr className="border-b">
               <th className="px-4 text-gray-500 py-2">Subject Name</th>
-              <th className="px-4 text-gray-500 py-2">Class/Div</th>
+              {/* <th className="px-4 text-gray-500 py-2">Class/Div</th> */}
               <th className="px-4 text-gray-500 py-2">Action</th>
             </tr>
           </thead>
@@ -160,7 +163,7 @@ const SubjectTable = () => {
             {currentSubjects.map((subject) => (
               <tr key={subject.id} className="border-b hover:bg-gray-100">
                 <td className="px-4 py-2">{subject.name}</td>
-                <td className="px-4 py-2">{subject.classDiv}</td>
+                {/* <td className="px-4 py-2">{subject.classDiv}</td> */}
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
                     <Link href="/editsubject">
@@ -169,7 +172,7 @@ const SubjectTable = () => {
                   </button>
                   <button
                     className="p-2"
-                    onClick={() => handleDelete(subject.id)}
+                    // onClick={() => handleDelete(subject.id)}
                   >
                     <FaTrash className="text-black" />
                   </button>
