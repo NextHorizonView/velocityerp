@@ -39,6 +39,7 @@ const AddSubject: React.FC = () => {
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherPosition, setNewTeacherPosition] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // const [fileLink, setFileLink] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTeachers = async () => {
@@ -64,29 +65,34 @@ const AddSubject: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    const subjectData = {
-      SubjectName,
-      teachers: selectedTeachers,
-    };
-    console.log(subjectData);
+    if (!selectedFile) {
+      alert("Please select a file to upload!");
+      return;
+    }
+
     try {
+      // Wait for file upload and get the download URL
+      const fileLink = await handleUpload();
+
+      // Construct the subject data object
+      const subjectData = {
+        SubjectName,
+        SubjectFile: fileLink,
+        teachers: selectedTeachers,
+      };
+
       const subjectsRef = collection(db, "subjects");
       const q = query(subjectsRef, where("subject", "==", SubjectName));
       const querySnapshot = await getDocs(q);
-      if (!selectedFile) {
-        alert("Please select a file to upload!");
-        return;
-      }
-      const storageRef = ref(storage, `subjectfile/${selectedFile.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+
       if (!querySnapshot.empty) {
-        // const docRef = querySnapshot.docs[0].ref;
+        // Update existing subject
         const existingTeachers =
           querySnapshot.docs[0].data().assignedTeachers || [];
 
         const updatedTeachers = [
           ...existingTeachers,
-          ...teachers.filter(
+          ...selectedTeachers.filter(
             (newTeacher) =>
               !existingTeachers.some(
                 (t: { id: string }) => t.id === newTeacher.id
@@ -101,31 +107,15 @@ const AddSubject: React.FC = () => {
 
         alert("Subject updated successfully!");
       } else {
+        // Add new subject
         await addDoc(subjectsRef, {
           ...subjectData,
         });
-        // Upload file to storage
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const progress = Math.round(
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-            );
-            console.log(`Upload is ${progress}% done`);
-          },
-          (error) => {
-            console.error("Upload failed:", error);
-            alert("File upload failed. Please try again.");
-          },
-          async () => {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            console.log("File available at:", downloadURL);
-            alert("File uploaded successfully!");
-          }
-        );
+
         alert("Subject added successfully!");
       }
 
+      // Clear form state
       setSubjectName("");
       setSelectedFile(null);
       setSelectedTeachers([]);
@@ -135,6 +125,37 @@ const AddSubject: React.FC = () => {
     }
   };
 
+  const handleUpload = async () => {
+    return new Promise((resolve, reject) => {
+      if (!selectedFile) {
+        throw new Error("No file selected");
+      }
+      const storageRef = ref(storage, `subjectfile/${selectedFile.name}`);
+
+      const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          console.log(`Upload is ${progress}% done`);
+        },
+        (error) => {
+          console.error("Upload failed:", error);
+          alert("File upload failed. Please try again.");
+          reject(error);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          console.log("File available at:", downloadURL);
+          alert("File uploaded successfully!");
+          resolve(downloadURL);
+        }
+      );
+    });
+  };
   const filteredTeachers = teachers.filter((teacher) =>
     teacher?.name?.toLowerCase().includes(newTeacherName?.toLowerCase() || "")
   );
@@ -221,17 +242,41 @@ const AddSubject: React.FC = () => {
         {selectedFile && (
           <div className="mt-2">
             {/* Display file preview if it's an image */}
+
             {selectedFile.type.startsWith("image/") ? (
               <img
                 src={URL.createObjectURL(selectedFile)}
                 alt="File Preview"
                 className="w-32 h-32 object-cover rounded-md"
               />
+            ) : selectedFile.type === "application/pdf" ? (
+              <div className="mt-4">
+                <embed
+                  src={URL.createObjectURL(selectedFile)}
+                  type="application/pdf"
+                  className="w-full h-96 border rounded"
+                />
+                <a
+                  href={URL.createObjectURL(selectedFile)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-2 text-blue-500 hover:underline text-sm"
+                >
+                  Open PDF in new tab
+                </a>
+              </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <AiOutlineFileText size={24} className="text-gray-500" />
                 <span className="text-sm text-gray-500">Selected File:</span>
-                <span className="font-semibold">{selectedFile.name}</span>
+                <a
+                  href={URL.createObjectURL(selectedFile)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-blue-500 hover:underline"
+                >
+                  {selectedFile.name}
+                </a>
               </div>
             )}
           </div>
@@ -252,7 +297,7 @@ const AddSubject: React.FC = () => {
           </button>
         </div>
 
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse max-h-52 overflow-scroll overflow-x-hidden">
           <thead></thead>
           <tbody>
             {selectedTeachers.map((teacher, index) => (
@@ -358,7 +403,7 @@ const AddSubject: React.FC = () => {
             </div>
 
             {/* Selected Teacher List */}
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-44 overflow-scroll overflow-x-hidden">
               {selectedTeachers.map((teacher, index) => (
                 <div
                   key={index}
