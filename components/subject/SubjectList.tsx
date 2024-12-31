@@ -166,7 +166,7 @@ const SubjectTable = () => {
                 {/* <td className="px-4 py-2">{subject.classDiv}</td> */}
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
-                    <Link href="/editsubject">
+                    <Link href={`/editsubject/${subject.id}`} passHref>
                       <FaPen className="text-black" />
                     </Link>
                   </button>
