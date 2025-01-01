@@ -13,7 +13,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"; // Adjust path as per your setup
 import { Button } from "@/components/ui/button";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 
 export type Subject = {
@@ -32,6 +38,24 @@ const SubjectTable = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const handleDelete = async (id: string) => {
+    try {
+      const subjectDocRef = doc(db, "subjects", id);
+
+      // Check if the document exists
+      const subjecttDocSnap = await getDoc(subjectDocRef);
+      if (!subjecttDocSnap.exists()) {
+        throw new Error(`Subject with ID ${id} does not exist`);
+      }
+
+      // Delete the document
+      await deleteDoc(subjectDocRef);
+      console.log(`Subject with ID ${id} deleted successfully!`);
+      alert(`Subject with ID ${id} deleted successfully!`);
+    } catch (error) {
+      console.error("Error deleting document:", error);
+    }
+  };
   useEffect(() => {
     const fetchedSubjects = async () => {
       try {
@@ -47,7 +71,7 @@ const SubjectTable = () => {
       }
     };
     fetchedSubjects();
-  }, []);
+  }, [handleDelete]);
 
   const handleSort = (field: keyof Subject | "newest") => {
     setSortField(field);
@@ -60,11 +84,6 @@ const SubjectTable = () => {
       setSubjects([...subjects].sort((a, b) => Number(a.id) - Number(b.id)));
     }
   };
-
-  // const handleDelete = (id: number) => {
-  // const updatedSubjects = subjects.filter((subject) => subject.id !== id);
-  // setSubjects(updatedSubjects);
-  // };
 
   const filteredSubjects = subjects.filter((subject) =>
     subject?.name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -172,7 +191,7 @@ const SubjectTable = () => {
                   </button>
                   <button
                     className="p-2"
-                    // onClick={() => handleDelete(subject.id)}
+                    onClick={() => handleDelete(subject.id)}
                   >
                     <FaTrash className="text-black" />
                   </button>
