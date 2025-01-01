@@ -38,7 +38,7 @@ const AddSubject: React.FC = () => {
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherPosition, setNewTeacherPosition] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File[]>([]);
   // const [fileLink, setFileLink] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,25 +59,25 @@ const AddSubject: React.FC = () => {
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+    if (e.target.files) {
+      setSelectedFile(Array.from(e.target.files));
     }
   };
 
   const handleSubmit = async () => {
-    if (!selectedFile) {
-      alert("Please select a file to upload!");
+    if (!selectedFile || selectedFile.length === 0) {
+      alert("Please select at least one file to upload!");
       return;
     }
 
     try {
-      // Wait for file upload and get the download URL
-      const fileLink = await handleUpload();
+      // Upload files and get their download URLs
+      const fileLinks = await handleUpload();
 
       // Construct the subject data object
       const subjectData = {
         SubjectName,
-        SubjectFile: fileLink,
+        SubjectFile: fileLinks, // Handle multiple files
         teachers: selectedTeachers,
       };
 
@@ -87,9 +87,11 @@ const AddSubject: React.FC = () => {
 
       if (!querySnapshot.empty) {
         // Update existing subject
-        const existingTeachers =
-          querySnapshot.docs[0].data().assignedTeachers || [];
+        const docRef = querySnapshot.docs[0].ref;
+        const existingData = querySnapshot.docs[0].data();
+        const existingTeachers = existingData.assignedTeachers || [];
 
+        // Merge teachers, avoiding duplicates
         const updatedTeachers = [
           ...existingTeachers,
           ...selectedTeachers.filter(
@@ -100,24 +102,22 @@ const AddSubject: React.FC = () => {
           ),
         ];
 
-        await updateDoc(querySnapshot.docs[0].ref, {
+        await updateDoc(docRef, {
           assignedTeachers: updatedTeachers,
-          subjectId: querySnapshot.docs[0].data().subjectId,
+          subjectId: existingData.subjectId || "",
         });
 
         alert("Subject updated successfully!");
       } else {
         // Add new subject
-        await addDoc(subjectsRef, {
-          ...subjectData,
-        });
+        await addDoc(subjectsRef, subjectData);
 
         alert("Subject added successfully!");
       }
 
       // Clear form state
       setSubjectName("");
-      setSelectedFile(null);
+      setSelectedFile([]); // Ensure this clears the file list
       setSelectedTeachers([]);
     } catch (error) {
       console.error("Error handling subject: ", error);
@@ -125,37 +125,51 @@ const AddSubject: React.FC = () => {
     }
   };
 
-  const handleUpload = async () => {
-    return new Promise((resolve, reject) => {
-      if (!selectedFile) {
-        throw new Error("No file selected");
-      }
-      const storageRef = ref(storage, `subjectfile/${selectedFile.name}`);
+  const handleUpload = async (): Promise<string[]> => {
+    if (!selectedFile || selectedFile.length === 0) {
+      alert("No files selected for upload!");
+      throw new Error("No files selected for upload");
+    }
 
-      const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+    const uploadPromises = selectedFile.map((file) => {
+      return new Promise<string>((resolve, reject) => {
+        const storageRef = ref(storage, `subjectfile/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = Math.round(
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          );
-          console.log(`Upload is ${progress}% done`);
-        },
-        (error) => {
-          console.error("Upload failed:", error);
-          alert("File upload failed. Please try again.");
-          reject(error);
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          console.log("File available at:", downloadURL);
-          alert("File uploaded successfully!");
-          resolve(downloadURL);
-        }
-      );
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+            console.log(`Upload for ${file.name} is ${progress}% done`);
+          },
+          (error) => {
+            console.error(`Upload failed for ${file.name}:`, error);
+            alert(`File upload failed for ${file.name}. Please try again.`);
+            reject(error);
+          },
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              console.log(`File available at ${downloadURL}`);
+              resolve(downloadURL);
+            } catch (error) {
+              console.error(
+                `Error fetching download URL for ${file.name}:`,
+                error
+              );
+              reject(error);
+            }
+          }
+        );
+      });
     });
+
+    // Wait for all uploads to complete and return their URLs
+    return Promise.all(uploadPromises);
   };
+
   const filteredTeachers = teachers.filter((teacher) =>
     teacher?.name?.toLowerCase().includes(newTeacherName?.toLowerCase() || "")
   );
@@ -238,47 +252,52 @@ const AddSubject: React.FC = () => {
           id="fileUpload"
           className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
           onChange={handleFileChange}
+          multiple
         />
-        {selectedFile && (
-          <div className="mt-2">
-            {/* Display file preview if it's an image */}
-
-            {selectedFile.type.startsWith("image/") ? (
-              <img
-                src={URL.createObjectURL(selectedFile)}
-                alt="File Preview"
-                className="w-32 h-32 object-cover rounded-md"
-              />
-            ) : selectedFile.type === "application/pdf" ? (
-              <div className="mt-4">
-                <embed
-                  src={URL.createObjectURL(selectedFile)}
-                  type="application/pdf"
-                  className="w-full h-96 border rounded"
-                />
-                <a
-                  href={URL.createObjectURL(selectedFile)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block mt-2 text-blue-500 hover:underline text-sm"
-                >
-                  Open PDF in new tab
-                </a>
+        {selectedFile.length > 0 && (
+          <div className="mt-4 space-y-4">
+            {selectedFile.map((file, index) => (
+              <div key={index}>
+                {file.type.startsWith("image/") ? (
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`File Preview ${index}`}
+                    className="w-32 h-32 object-cover rounded-md"
+                  />
+                ) : file.type === "application/pdf" ? (
+                  <div className="mt-4">
+                    <embed
+                      src={URL.createObjectURL(file)}
+                      type="application/pdf"
+                      className="w-full h-96 border rounded"
+                    />
+                    <a
+                      href={URL.createObjectURL(file)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block mt-2 text-blue-500 hover:underline text-sm"
+                    >
+                      Open PDF in new tab
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <AiOutlineFileText size={24} className="text-gray-500" />
+                    <span className="text-sm text-gray-500">
+                      Selected File:
+                    </span>
+                    <a
+                      href={URL.createObjectURL(file)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-blue-500 hover:underline"
+                    >
+                      {file.name}
+                    </a>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <AiOutlineFileText size={24} className="text-gray-500" />
-                <span className="text-sm text-gray-500">Selected File:</span>
-                <a
-                  href={URL.createObjectURL(selectedFile)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-blue-500 hover:underline"
-                >
-                  {selectedFile.name}
-                </a>
-              </div>
-            )}
+            ))}
           </div>
         )}
       </div>
@@ -362,7 +381,7 @@ const AddSubject: React.FC = () => {
             </div>
 
             {/* Filtered Teacher List */}
-            {filteredTeachers.length > 0 ? (
+            {newTeacherName.length > 0 && filteredTeachers.length > 0 ? (
               <>
                 <p className="font-medium text-gray-700 mb-2">
                   Select a Teacher:
@@ -380,8 +399,9 @@ const AddSubject: React.FC = () => {
                 </div>
               </>
             ) : (
-              <p className="font-medium text-gray-700 mb-2 bg-gray-50 p-2 rounded-full  text-center">
-                Sorry, No teacher found
+              <p className="font-medium text-gray-700 mb-2 bg-gray-50 p-2 rounded-full text-center">
+                Sorry, No teacher found Named = &quot;{`${newTeacherName}`}{" "}
+                &quot;
               </p>
             )}
 
@@ -442,9 +462,7 @@ const AddSubject: React.FC = () => {
         <button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 focus:outline-none">
           Cancel
         </button>
-        <button className="bg-[#576086] text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none">
-          Next
-        </button>
+
         <button
           onClick={handleSubmit}
           className="bg-[#576086] text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"

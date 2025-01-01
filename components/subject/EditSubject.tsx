@@ -27,22 +27,24 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
   const [selectedTeacherIndex, setSelectedTeacherIndex] = useState<
     number | null
   >(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File[]>([]);
   const [subjectData, setSubjectData] = useState<{
     name: string;
+    files: [];
     teachers: { id: string; name: string; position: string }[];
-  }>({ name: "", teachers: [] });
+  }>({ name: "", files: [], teachers: [] });
 
   useEffect(() => {
     if (subjectid) {
       const fetchSubjectData = async () => {
         try {
-          const subjectData = await fetchSubjectDataById(subjectid); // Fetch data based on studentid
+          const subjectData = await fetchSubjectDataById(subjectid);
           console.log(subjectData, "Fetched subjectData Data");
 
           setSubjectData({
             ...subjectData,
             name: subjectData.SubjectName || "",
+            files: subjectData.SubjectFile || [],
             teachers:
               subjectData.teachers.map(
                 (teacher: { id: string; name: string; position: string }) => ({
@@ -62,8 +64,8 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
   }, [subjectid]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+    if (e.target.files) {
+      setSelectedFile(Array.from(e.target.files));
     }
   };
 
@@ -92,59 +94,65 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
     setSelectedTeacherIndex(null);
   };
 
-  const handleUpload = async () => {
-    return new Promise((resolve, reject) => {
-      if (!selectedFile) {
-        throw new Error("No file selected");
-      }
-      const storageRef = ref(storage, `subjectfile/${selectedFile.name}`);
+  const handleUpload = async (): Promise<string[]> => {
+    if (!selectedFile || selectedFile.length === 0) {
+      alert("No files selected for upload!");
+      throw new Error("No files selected for upload");
+    }
 
-      const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+    const uploadPromises = selectedFile.map((file) => {
+      return new Promise<string>((resolve, reject) => {
+        const storageRef = ref(storage, `subjectfile/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = Math.round(
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          );
-          console.log(`Upload is ${progress}% done`);
-        },
-        (error) => {
-          console.error("Upload failed:", error);
-          alert("File upload failed. Please try again.");
-          reject(error);
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          console.log("File available at:", downloadURL);
-          alert("File uploaded successfully!");
-          resolve(downloadURL);
-        }
-      );
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+            console.log(`Upload for ${file.name} is ${progress}% done`);
+          },
+          (error) => {
+            console.error(`Upload failed for ${file.name}:`, error);
+            alert(`File upload failed for ${file.name}. Please try again.`);
+            reject(error);
+          },
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              console.log(`File available at ${downloadURL}`);
+              resolve(downloadURL);
+            } catch (error) {
+              console.error(
+                `Error fetching download URL for ${file.name}:`,
+                error
+              );
+              reject(error);
+            }
+          }
+        );
+      });
     });
+
+    // Wait for all uploads to complete and return their URLs
+    return Promise.all(uploadPromises);
   };
 
   const handleUpdate = async () => {
-    if (!selectedFile) {
-      alert("Please select a file to upload!");
-      return;
-    }
-
     try {
-      // Wait for file upload and get the download URL
       const fileLink = await handleUpload();
       console.log(fileLink, "File Link");
-      // Construct the subject data object
       const subjectDatas = {
         SubjectName: subjectData.name,
-        // SubjectFile: fileLink,
+        SubjectFile: fileLink,
         teachers: subjectData.teachers,
       };
 
       const subjectsRef = doc(db, "subjects", subjectid.toString());
       await updateDoc(subjectsRef, subjectDatas);
 
-      setSubjectData({ name: "", teachers: [] });
+      setSubjectData({ name: "", files: [], teachers: [] });
       router.push("/subjects");
     } catch (error) {
       console.error("Error handling subject: ", error);
@@ -202,50 +210,116 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
         <input
           type="file"
           id="fileUpload"
+          // value={subjectData.files}
           className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
           onChange={handleFileChange}
+          multiple
         />
-        {selectedFile && (
-          <div className="mt-2">
-            {/* Display file preview if it's an image */}
-
-            {selectedFile.type.startsWith("image/") ? (
-              <img
-                src={URL.createObjectURL(selectedFile)}
-                alt="File Preview"
-                className="w-32 h-32 object-cover rounded-md"
-              />
-            ) : selectedFile.type === "application/pdf" ? (
-              <div className="mt-4">
-                <embed
-                  src={URL.createObjectURL(selectedFile)}
-                  type="application/pdf"
-                  className="w-full h-96 border rounded"
-                />
-                <a
-                  href={URL.createObjectURL(selectedFile)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block mt-2 text-blue-500 hover:underline text-sm"
-                >
-                  Open PDF in new tab
-                </a>
+        {selectedFile.length > 0 && (
+          <div className="mt-4 space-y-4">
+            {selectedFile.map((file, index) => (
+              <div key={index}>
+                {file.type.startsWith("image/") ? (
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`File Preview ${index}`}
+                    className="w-32 h-32 object-cover rounded-md"
+                  />
+                ) : file.type === "application/pdf" ? (
+                  <div className="mt-4">
+                    <embed
+                      src={URL.createObjectURL(file)}
+                      type="application/pdf"
+                      className="w-full h-96 border rounded"
+                    />
+                    <a
+                      href={URL.createObjectURL(file)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block mt-2 text-blue-500 hover:underline text-sm"
+                    >
+                      Open PDF in new tab
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <AiOutlineFileText size={24} className="text-gray-500" />
+                    <span className="text-sm text-gray-500">
+                      Selected File:
+                    </span>
+                    <a
+                      href={URL.createObjectURL(file)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-blue-500 hover:underline"
+                    >
+                      {file.name}
+                    </a>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <AiOutlineFileText size={24} className="text-gray-500" />
-                <span className="text-sm text-gray-500">Selected File:</span>
-                <a
-                  href={URL.createObjectURL(selectedFile)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-blue-500 hover:underline"
-                >
-                  {selectedFile.name}
-                </a>
-              </div>
-            )}
+            ))}
           </div>
+        )}
+        {subjectData.files.length > 0 && (
+          <>
+            {subjectData.files.map((file: string, index: number) => {
+              // Check if the file URL is valid
+              if (!file) {
+                return null; // Skip if file URL is missing
+              }
+
+              const isImage =
+                file.startsWith("https://") &&
+                (file.endsWith(".jpg") ||
+                  file.endsWith(".jpeg") ||
+                  file.endsWith(".png") ||
+                  file.endsWith(".gif"));
+
+              const isPdf = file.endsWith(".pdf");
+
+              return (
+                <div key={index} className="my-4">
+                  {isImage ? (
+                    <img
+                      src={file}
+                      alt={`File Preview ${index}`}
+                      className="w-full max-w-sm object-cover rounded-md"
+                    />
+                  ) : isPdf ? (
+                    <div className="mt-4">
+                      <embed
+                        src={file}
+                        type="application/pdf"
+                        className="w-full h-96 border rounded"
+                      />
+                      <a
+                        href={file}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block mt-2 text-blue-500 hover:underline text-sm"
+                      >
+                        Open PDF in new tab
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <AiOutlineFileText size={24} className="text-gray-500" />
+                      <span className="text-sm text-gray-500">File:</span>
+                      <a
+                        href={file}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-blue-500 hover:underline"
+                      >
+                        Open File
+                      </a>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
 
