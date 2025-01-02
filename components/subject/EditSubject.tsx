@@ -10,21 +10,37 @@ import { db, storage } from "@/lib/firebaseConfig";
 import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import FadeLoader from "../Loader";
 import { Trash2 } from "lucide-react";
+import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
+import { collection, getDocs } from "firebase/firestore";
 
 interface EditSubjectFormProps {
   subjectid: string;
 }
 
+interface Teacher {
+  id: string;
+  name: string;
+  position?: string;
+}
+
+interface SelectedTeacher {
+  id: string;
+  name: string;
+  position: string;
+}
+
 const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
   console.log(subjectid);
   const router = useRouter();
-
+  const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File[]>([]);
-  interface Teacher {
-    id: string;
-    name: string;
-    position: string;
-  }
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [selectedTeachers, setSelectedTeachers] = useState<SelectedTeacher[]>(
+    []
+  );
+  const [newTeacherName, setNewTeacherName] = useState("");
+  const [newTeacherPosition, setNewTeacherPosition] = useState("");
+  // const [fileLink, setFileLink] = useState<string | null>(null);
 
   const [subjectData, setSubjectData] = useState<{
     name: string;
@@ -64,7 +80,50 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
       fetchSubjectData();
     }
   }, [subjectid]);
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "teachers"));
+        const fetchedTeachers = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data()["First Name"],
+        }));
 
+        setTeachers(fetchedTeachers);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      }
+    };
+
+    fetchTeachers();
+  }, [selectedTeachers, , isAddTeacherModalOpen]);
+
+  const handleAddTeacher = () => {
+    if (!newTeacherName || !newTeacherPosition) {
+      alert("Please select a teacher and enter a position!");
+      return;
+    }
+
+    const teacherToAdd = teachers.find(
+      (teacher) => teacher.name === newTeacherName
+    );
+
+    if (!teacherToAdd) {
+      alert("Selected teacher not found!");
+      return;
+    }
+
+    setSelectedTeachers([
+      ...selectedTeachers,
+      {
+        id: teacherToAdd.id,
+        name: teacherToAdd.name,
+        position: newTeacherPosition,
+      },
+    ]);
+    setNewTeacherName("");
+    setNewTeacherPosition("");
+  };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setSelectedFile(Array.from(e.target.files));
@@ -115,7 +174,6 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
     try {
       setLoading(true);
 
-      // Upload new files and get their metadata (name and URL)
       const newFileLinks = await handleUpload();
       console.log(newFileLinks, "New File Links");
 
@@ -129,18 +187,18 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
       const existingData = docSnapshot.data();
       const existingSubjectFile = existingData?.SubjectFile || [];
 
-      // Combine existing files with new files
       const updatedSubjectFile = [...existingSubjectFile, ...newFileLinks];
 
-      // Update subject data
       const updatedSubjectData = {
         SubjectName: subjectData.name || existingData?.SubjectName || "",
-        SubjectFile: updatedSubjectFile, // Contains both name and URL now
-        teachers: subjectData.teachers || existingData?.teachers || [],
+        SubjectFile: updatedSubjectFile,
+        teachers: [
+          ...(subjectData.teachers || existingData?.teachers || []),
+          ...selectedTeachers,
+        ],
         updatedAt: serverTimestamp(),
       };
 
-      // Update Firestore document
       await updateDoc(subjectsRef, updatedSubjectData);
 
       setSubjectData({ name: "", files: [], teachers: [] });
@@ -199,6 +257,9 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
       setLoading(false);
     }
   };
+  const filteredTeachers = teachers.filter((teacher) =>
+    teacher?.name?.toLowerCase().includes(newTeacherName?.toLowerCase() || "")
+  );
 
   return (
     <>
@@ -380,6 +441,12 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
             <h3 className="text-lg font-medium text-gray-700">
               Subject Teachers
             </h3>
+            <button
+              className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b] focus:outline-none"
+              onClick={() => setIsAddTeacherModalOpen(true)}
+            >
+              Add Teacher
+            </button>
           </div>
 
           <table className="w-full text-left border-collapse">
@@ -415,7 +482,150 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
               ))}
             </tbody>
           </table>
+          {selectedTeachers.length > 0 && (
+            <>
+              <div>new teachers</div>
+              <table className="w-full text-left border-collapse max-h-52 overflow-scroll overflow-x-hidden">
+                <thead></thead>
+                <tbody>
+                  {selectedTeachers.map((teacher, index) => (
+                    <tr key={index} className="border-b hover:bg-gray-100">
+                      <td className="p-3">
+                        <div className="flex items-center text-gray-500">
+                          <TbGridDots size={20} />
+                        </div>
+                      </td>
+                      <td className="p-3 flex items-center space-x-2">
+                        <AiOutlineUser size={20} className="text-gray-500" />
+                        <span className="font-medium text-gray-700">
+                          {teacher.name}
+                        </span>
+                      </td>
+                      <td className="p-3 text-gray-500">{teacher.position}</td>
+                      <td className="p-3">
+                        <button
+                          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                          onClick={() =>
+                            setSelectedTeachers(
+                              selectedTeachers.filter((_, i) => i !== index)
+                            )
+                          }
+                        >
+                          <AiOutlineClose size={20} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
         </div>
+        {isAddTeacherModalOpen && (
+          <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-10">
+            <div className="bg-white p-6 rounded-md w-full max-w-md">
+              {/* Modal Header */}
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-700">
+                  Add Teacher
+                </h2>
+                <button
+                  className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                  onClick={() => setIsAddTeacherModalOpen(false)}
+                >
+                  <AiOutlineClose size={20} />
+                </button>
+              </div>
+
+              {/* Search Input */}
+              <div className="relative mb-6">
+                <AiOutlineSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500" />
+                <input
+                  type="text"
+                  className="w-full px-10 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+                  placeholder="Find Teacher"
+                  value={newTeacherName}
+                  onChange={(e) => setNewTeacherName(e.target.value)}
+                />
+              </div>
+
+              {/* Filtered Teacher List */}
+              {newTeacherName.length > 0 && filteredTeachers.length > 0 ? (
+                <>
+                  <p className="font-medium text-gray-700 mb-2">
+                    Select a Teacher:
+                  </p>
+                  <div className="mb-4 bg-gray-50 p-1 rounded-lg shadow  max-h-52 overflow-scroll overflow-x-hidden">
+                    {filteredTeachers.map((teacher) => (
+                      <div
+                        key={teacher.id}
+                        className="cursor-pointer hover:bg-gray-200 bg-white p-2 m-2 rounded-md"
+                        onClick={() => setNewTeacherName(teacher.name)}
+                      >
+                        {teacher.name}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="font-medium text-gray-700 mb-2 bg-gray-50 p-2 rounded-full text-center">
+                  Sorry, No teacher found Named = &quot;{`${newTeacherName}`}{" "}
+                  &quot;
+                </p>
+              )}
+
+              {/* Add Teacher Form */}
+              <div className="mb-6">
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 mb-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#576086]"
+                  placeholder="Enter Position for Selected Teacher"
+                  value={newTeacherPosition}
+                  onChange={(e) => setNewTeacherPosition(e.target.value)}
+                />
+                <button
+                  className="bg-[#576086] mx-auto my-5 text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
+                  onClick={handleAddTeacher}
+                >
+                  Add Teacher
+                </button>
+              </div>
+
+              {/* Selected Teacher List */}
+              <div className="space-y-4 max-h-44 overflow-scroll overflow-x-hidden">
+                {selectedTeachers.map((teacher, index) => (
+                  <div
+                    key={index}
+                    className="p-4 bg-gray-50 rounded-lg shadow-sm flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <AiOutlineUser size={28} className="text-gray-500" />
+                      <div>
+                        <p className="font-medium text-gray-700">
+                          {teacher.name}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {teacher.position}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                      onClick={() => {
+                        setSelectedTeachers((prev) =>
+                          prev.filter((_, i) => i !== index)
+                        );
+                        handleDeleteTeacher(teacher.id);
+                      }}
+                    >
+                      <AiOutlineClose size={20} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div>
           <button
