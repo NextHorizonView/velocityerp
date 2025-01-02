@@ -1,18 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import {
-  AiOutlineClose,
-  AiOutlineFileText,
-  AiOutlineUser,
-} from "react-icons/ai";
+import { AiOutlineFileText, AiOutlineUser } from "react-icons/ai";
 import { MdEdit } from "react-icons/md";
 import { TbGridDots } from "react-icons/tb";
 import { useRouter } from "next/navigation";
 import { fetchSubjectDataById } from "../helper/firebaseHelper";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "@/lib/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import FadeLoader from "../Loader";
+import { Trash2 } from "lucide-react";
 
 interface EditSubjectFormProps {
   subjectid: string;
@@ -22,17 +19,17 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
   console.log(subjectid);
   const router = useRouter();
 
-  const [isEditTeacherModalOpen, setIsEditTeacherModalOpen] = useState(false);
-  const [newTeacherName, setNewTeacherName] = useState("");
-  const [newTeacherPosition, setNewTeacherPosition] = useState("");
-  const [selectedTeacherIndex, setSelectedTeacherIndex] = useState<
-    number | null
-  >(null);
   const [selectedFile, setSelectedFile] = useState<File[]>([]);
+  interface Teacher {
+    id: string;
+    name: string;
+    position: string;
+  }
+
   const [subjectData, setSubjectData] = useState<{
     name: string;
-    files: [];
-    teachers: { id: string; name: string; position: string }[];
+    files: { name: string; url: string }[];
+    teachers: Teacher[];
   }>({ name: "", files: [], teachers: [] });
   const [loading, setLoading] = useState(false);
 
@@ -74,39 +71,10 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
     }
   };
 
-  const handleEditTeacher = (index: number) => {
-    const teacher = subjectData.teachers[index];
-    setSelectedTeacherIndex(index);
-    setNewTeacherName(teacher.name);
-    setNewTeacherPosition(teacher.position);
-    setIsEditTeacherModalOpen(true); // Open modal for editing
-  };
-
-  const handleSaveTeacher = () => {
-    if (selectedTeacherIndex !== null) {
-      const updatedTeachers = subjectData.teachers.map((teacher, index) =>
-        index === selectedTeacherIndex
-          ? { ...teacher, name: newTeacherName, position: newTeacherPosition }
-          : teacher
-      );
-      setSubjectData({ ...subjectData, teachers: updatedTeachers });
-    }
-
-    // Close modal and reset fields
-    setIsEditTeacherModalOpen(false);
-    setNewTeacherName("");
-    setNewTeacherPosition("");
-    setSelectedTeacherIndex(null);
-  };
-
-  const handleUpload = async (): Promise<string[]> => {
-    // if (!selectedFile || selectedFile.length === 0) {
-    //   alert("No files selected for upload!");
-    //   throw new Error("No files selected for upload");
-    // }
+  const handleUpload = async (): Promise<{ name: string; url: string }[]> => {
     setLoading(true);
     const uploadPromises = selectedFile.map((file) => {
-      return new Promise<string>((resolve, reject) => {
+      return new Promise<{ name: string; url: string }>((resolve, reject) => {
         const storageRef = ref(storage, `subjectfile/${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -126,8 +94,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
           async () => {
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log(`File available at ${downloadURL}`);
-              resolve(downloadURL);
+              resolve({ name: file.name, url: downloadURL });
             } catch (error) {
               console.error(
                 `Error fetching download URL for ${file.name}:`,
@@ -147,6 +114,8 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
   const handleUpdate = async () => {
     try {
       setLoading(true);
+
+      // Upload new files and get their metadata (name and URL)
       const newFileLinks = await handleUpload();
       console.log(newFileLinks, "New File Links");
 
@@ -157,23 +126,75 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
         throw new Error("Subject not found!");
       }
 
-      const existingSubjectFile = docSnapshot.data()?.SubjectFile || [];
+      const existingData = docSnapshot.data();
+      const existingSubjectFile = existingData?.SubjectFile || [];
 
+      // Combine existing files with new files
       const updatedSubjectFile = [...existingSubjectFile, ...newFileLinks];
 
-      const subjectDatas = {
-        SubjectName: subjectData.name,
-        SubjectFile: updatedSubjectFile,
-        teachers: subjectData.teachers,
+      // Update subject data
+      const updatedSubjectData = {
+        SubjectName: subjectData.name || existingData?.SubjectName || "",
+        SubjectFile: updatedSubjectFile, // Contains both name and URL now
+        teachers: subjectData.teachers || existingData?.teachers || [],
+        updatedAt: serverTimestamp(),
       };
 
-      await updateDoc(subjectsRef, subjectDatas);
+      // Update Firestore document
+      await updateDoc(subjectsRef, updatedSubjectData);
 
       setSubjectData({ name: "", files: [], teachers: [] });
       router.push("/subjects");
+
+      alert("Subject updated successfully!");
     } catch (error) {
-      console.error("Error handling subject: ", error);
-      alert("Failed to handle subject. Please try again.");
+      console.error("Error updating subject: ", error);
+      alert("Failed to update subject. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleDeleteTeacher = async (teacherId: string) => {
+    try {
+      setLoading(true);
+
+      // Reference to the subject document in Firestore
+      const subjectsRef = doc(db, "subjects", subjectid.toString());
+      const docSnapshot = await getDoc(subjectsRef);
+
+      if (!docSnapshot.exists()) {
+        throw new Error("Subject not found!");
+      }
+
+      const existingData = docSnapshot.data();
+      const existingTeachers: Teacher[] = existingData?.teachers || [];
+
+      // Filter out the teacher to be deleted
+      const updatedTeachers = existingTeachers.filter(
+        (teacher) => teacher.id !== teacherId
+      );
+
+      // Prepare the updated subject data
+      const updatedSubjectData = {
+        SubjectName: subjectData.name || existingData?.SubjectName || "",
+        SubjectFile: existingData?.SubjectFile || [],
+        teachers: updatedTeachers, // Updated list of teachers after deletion
+        updatedAt: serverTimestamp(),
+      };
+
+      // Update Firestore document
+      await updateDoc(subjectsRef, updatedSubjectData);
+
+      // Update the local state after deletion
+      setSubjectData((prev) => ({
+        ...prev,
+        teachers: updatedTeachers,
+      }));
+
+      alert("Teacher deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting teacher: ", error);
+      alert("Failed to delete teacher. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -288,38 +309,40 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
           )}
           {subjectData.files.length > 0 && (
             <>
-              {subjectData.files.map((file: string, index: number) => {
-                // Check if the file URL is valid
-                if (!file) {
-                  return null; // Skip if file URL is missing
+              {subjectData.files.map((file, index) => {
+                const fileUrl = file.url;
+                const fileName = file.name;
+
+                if (!fileUrl) {
+                  return null;
                 }
 
                 const isImage =
-                  file.startsWith("https://") &&
-                  (file.endsWith(".jpg") ||
-                    file.endsWith(".jpeg") ||
-                    file.endsWith(".png") ||
-                    file.endsWith(".gif"));
+                  fileUrl.startsWith("https://") &&
+                  (fileUrl.endsWith(".jpg") ||
+                    fileUrl.endsWith(".jpeg") ||
+                    fileUrl.endsWith(".png") ||
+                    fileUrl.endsWith(".gif"));
 
-                const isPdf = file.endsWith(".pdf");
+                const isPdf = fileUrl.endsWith(".pdf");
 
                 return (
                   <div key={index} className="my-4">
                     {isImage ? (
                       <img
-                        src={file}
-                        alt={`File Preview ${index}`}
+                        src={fileUrl}
+                        alt={`File Preview ${fileName}`}
                         className="w-full max-w-sm object-cover rounded-md"
                       />
                     ) : isPdf ? (
                       <div className="mt-4">
                         <embed
-                          src={file}
+                          src={fileUrl}
                           type="application/pdf"
                           className="w-full h-96 border rounded"
                         />
                         <a
-                          href={file}
+                          href={fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block mt-2 text-blue-500 hover:underline text-sm"
@@ -335,12 +358,12 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
                         />
                         <span className="text-sm text-gray-500">File:</span>
                         <a
-                          href={file}
+                          href={fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-semibold text-blue-500 hover:underline"
                         >
-                          Open File
+                          {fileName}
                         </a>
                       </div>
                     )}
@@ -382,10 +405,10 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
                   </td>
                   <td className="p-3">
                     <button
-                      className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                      onClick={() => handleEditTeacher(index)} // Edit teacher action
+                      className="text-gray-500 hover:text-gray-700 focus:outline-none m-2"
+                      onClick={() => handleDeleteTeacher(teacher.id)} // Edit teacher action
                     >
-                      <MdEdit size={20} />
+                      <Trash2 size={20} />
                     </button>
                   </td>
                 </tr>
@@ -394,61 +417,10 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
           </table>
         </div>
 
-        {/* Edit Teacher Modal */}
-        {isEditTeacherModalOpen && (
-          <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-10">
-            <div className="bg-white p-6 rounded-md w-full max-w-md">
-              {/* Modal Header */}
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-gray-700">
-                  Edit Teacher
-                </h2>
-                <button
-                  className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                  onClick={() => setIsEditTeacherModalOpen(false)}
-                >
-                  <AiOutlineClose size={20} />
-                </button>
-              </div>
-
-              {/* Teacher Form */}
-              <div className="mb-4">
-                <label className="block font-medium text-gray-700 mb-2">
-                  Teacher Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-                  placeholder="Teacher Name"
-                  value={newTeacherName}
-                  onChange={(e) => setNewTeacherName(e.target.value)}
-                />
-              </div>
-              <div className="mb-6">
-                <label className="block font-medium text-gray-700 mb-2">
-                  Position
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-                  placeholder="Position"
-                  value={newTeacherPosition}
-                  onChange={(e) => setNewTeacherPosition(e.target.value)}
-                />
-              </div>
-              <button
-                className="w-full bg-[#576086] text-white py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
-                onClick={handleSaveTeacher} // Save changes
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        )}
         <div>
           <button
-            className="bg-gray-400 p-2 rounded-2xl"
             onClick={handleUpdate}
+            className="bg-[#576086] text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
           >
             save
           </button>

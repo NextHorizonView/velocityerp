@@ -19,6 +19,7 @@ import {
 import { db, storage } from "@/lib/firebaseConfig";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import FadeLoader from "../Loader";
+import { serverTimestamp } from "firebase/firestore"; // Import the serverTimestamp
 
 interface Teacher {
   id: string;
@@ -67,29 +68,17 @@ const AddSubject: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    // if (!selectedFile || selectedFile.length === 0) {
-    //   alert("Please select at least one file to upload!");
-    //   return;
-    // }
-
     setLoading(true);
 
     try {
-      // Upload files and get their download URLs
       const fileLinks = await handleUpload();
-
-      // Construct the subject data object
-      const subjectData = {
-        SubjectName,
-        SubjectFile: fileLinks,
-        teachers: selectedTeachers,
-      };
 
       const subjectsRef = collection(db, "subjects");
       const q = query(subjectsRef, where("subject", "==", SubjectName));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
+        // Update existing subject
         const docRef = querySnapshot.docs[0].ref;
         const existingData = querySnapshot.docs[0].data();
         const existingTeachers = existingData.assignedTeachers || [];
@@ -106,12 +95,26 @@ const AddSubject: React.FC = () => {
 
         await updateDoc(docRef, {
           assignedTeachers: updatedTeachers,
-          subjectId: existingData.subjectId || "",
+          subjectId: existingData.subjectId || querySnapshot.docs[0].id, // Ensure subjectId is updated
+          SubjectFile: fileLinks,
+          updatedAt: serverTimestamp(), // Add the timestamp for updates
         });
 
         alert("Subject updated successfully!");
       } else {
-        await addDoc(subjectsRef, subjectData);
+        // Add a new subject with a timestamp
+        const newSubjectRef = await addDoc(subjectsRef, {
+          SubjectName,
+          SubjectFile: fileLinks,
+          teachers: selectedTeachers,
+          createdAt: serverTimestamp(), // Add creation timestamp
+        });
+
+        // Update with the generated SubjectID and timestamp
+        await updateDoc(newSubjectRef, {
+          subjectId: newSubjectRef.id, // Assign Firestore ID as SubjectID
+          updatedAt: serverTimestamp(), // Add updatedAt timestamp for consistency
+        });
 
         alert("Subject added successfully!");
       }
@@ -127,16 +130,11 @@ const AddSubject: React.FC = () => {
     }
   };
 
-  const handleUpload = async (): Promise<string[]> => {
-    // if (!selectedFile || selectedFile.length === 0) {
-    //   alert("No files selected for upload!");
-    //   throw new Error("No files selected for upload");
-    // }
-
+  const handleUpload = async (): Promise<{ name: string; url: string }[]> => {
     setLoading(true);
 
     const uploadPromises = selectedFile.map((file) => {
-      return new Promise<string>((resolve, reject) => {
+      return new Promise<{ name: string; url: string }>((resolve, reject) => {
         const storageRef = ref(storage, `subjectfile/${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -157,7 +155,7 @@ const AddSubject: React.FC = () => {
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               console.log(`File available at ${downloadURL}`);
-              resolve(downloadURL);
+              resolve({ name: file.name, url: downloadURL });
             } catch (error) {
               console.error(
                 `Error fetching download URL for ${file.name}:`,
