@@ -1,206 +1,655 @@
-'use client';
-import React, { useState } from 'react';
-import { AiOutlineClose, AiOutlineFileText, AiOutlineUser } from 'react-icons/ai';
-import { MdEdit } from 'react-icons/md';
+"use client";
+import React, { useEffect, useState } from "react";
+import { AiOutlineFileText, AiOutlineUser } from "react-icons/ai";
+import { MdEdit } from "react-icons/md";
 import { TbGridDots } from "react-icons/tb";
+import { useRouter } from "next/navigation";
+import { fetchSubjectDataById } from "../helper/firebaseHelper";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { db, storage } from "@/lib/firebaseConfig";
+import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import FadeLoader from "../Loader";
+import { Trash2 } from "lucide-react";
+import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
+import { collection, getDocs } from "firebase/firestore";
 
-const EditSubject: React.FC = () => {
-    const [firstName, setFirstName] = useState('Mathematics'); // Dummy Data
-    const [teachers, setTeachers] = useState<{ name: string; position: string }[]>([
-        { name: 'John Doe', position: 'Math Teacher' },
-        { name: 'Jane Smith', position: 'Science Teacher' },
-    ]);
-    const [isEditTeacherModalOpen, setIsEditTeacherModalOpen] = useState(false);
-    const [newTeacherName, setNewTeacherName] = useState('');
-    const [newTeacherPosition, setNewTeacherPosition] = useState('');
-    const [selectedTeacherIndex, setSelectedTeacherIndex] = useState<number | null>(null); // Index of the teacher being edited
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [isFileEdited, setIsFileEdited] = useState(false); // Track if file is edited
+interface EditSubjectFormProps {
+  subjectid: string;
+}
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setSelectedFile(e.target.files[0]);
-            setIsFileEdited(true); // Mark as edited
+interface Teacher {
+  SubjectTeacherID: string;
+  SubjectTeacherName: string;
+  SubjectTeacherPosition?: string;
+}
+
+interface SelectedTeacher {
+  SubjectTeacherID: string;
+  SubjectTeacherName: string;
+  SubjectTeacherPosition: string;
+}
+
+const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
+  console.log(subjectid);
+  const router = useRouter();
+  const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File[]>([]);
+  const [SubjectTeachersId, setSubjectTeachersId] = useState<Teacher[]>([]);
+  const [selectedTeachers, setSelectedTeachers] = useState<SelectedTeacher[]>(
+    []
+  );
+  const [newTeacherName, setNewTeacherName] = useState("");
+  const [newTeacherPosition, setNewTeacherPosition] = useState("");
+  // const [fileLink, setFileLink] = useState<string | null>(null);
+
+  const [subjectData, setSubjectData] = useState<{
+    name: string;
+    files: { Name: string; Url: string }[];
+    SubjectTeachersId: Teacher[];
+  }>({ name: "", files: [], SubjectTeachersId: [] });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (subjectid) {
+      const fetchSubjectData = async () => {
+        setLoading(true);
+        try {
+          const subjectData = await fetchSubjectDataById(subjectid);
+          console.log(subjectData, "Fetched subjectData Data");
+
+          setSubjectData({
+            ...subjectData,
+            name: subjectData.SubjectName || "",
+            files: subjectData.SubjectFile || [],
+            SubjectTeachersId:
+              subjectData.SubjectTeachersId.map(
+                (teacher: {
+                  SubjectTeacherID: string;
+                  SubjectTeacherName: string;
+                  SubjectTeacherPosition: string;
+                }) => ({
+                  SubjectTeacherID: teacher.SubjectTeacherID || "",
+                  SubjectTeacherName: teacher.SubjectTeacherName,
+                  SubjectTeacherPosition: teacher.SubjectTeacherPosition,
+                })
+              ) || [],
+          });
+        } catch (error) {
+          console.error("Error fetching student data:", error);
+        } finally {
+          setLoading(false);
         }
+      };
+
+      fetchSubjectData();
+    }
+  }, [subjectid]);
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "teachers"));
+        const fetchedTeachers = querySnapshot.docs.map((doc) => ({
+          SubjectTeacherID: doc.id,
+          SubjectTeacherName: doc.data()["First Name"],
+        }));
+
+        setSubjectTeachersId(fetchedTeachers);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      }
     };
 
-    const handleEditTeacher = (index: number) => {
-        const teacher = teachers[index];
-        setSelectedTeacherIndex(index);
-        setNewTeacherName(teacher.name);
-        setNewTeacherPosition(teacher.position);
-        setIsEditTeacherModalOpen(true); // Open modal for editing
-    };
+    fetchTeachers();
+  }, [selectedTeachers, , isAddTeacherModalOpen]);
 
-    const handleSaveTeacher = () => {
-        if (selectedTeacherIndex !== null) {
-            const updatedTeachers = teachers.map((teacher, index) =>
-                index === selectedTeacherIndex
-                    ? { name: newTeacherName, position: newTeacherPosition }
-                    : teacher
-            );
-            setTeachers(updatedTeachers);
-        }
+  const handleAddTeacher = () => {
+    if (!newTeacherName || !newTeacherPosition) {
+      alert("Please select a teacher and enter a position!");
+      return;
+    }
 
-        // Close modal and reset fields
-        setIsEditTeacherModalOpen(false);
-        setNewTeacherName('');
-        setNewTeacherPosition('');
-        setSelectedTeacherIndex(null);
-    };
-
-    return (
-        <div className="p-6 rounded-md">
-            {/* Header Section */}
-            <div className="flex justify-between items-center mb-6">
-                <button className="flex items-center space-x-2 text-black hover:text-[#414d6b]">
-                    <MdEdit size={18} />
-                    <span className="text-sm font-bold">Edit Subject</span>
-                </button>
-            </div>
-
-            {/* Title Section */}
-            <h2 className="text-xl font-medium mb-4 text-[#414d6b] p-6">Edit Subject Details</h2>
-
-            {/* Input Section */}
-            <div className="mb-6 px-6">
-                <label htmlFor="firstName" className="block font-medium mb-2 text-gray-700">
-                    Subject Name
-                </label>
-                <input
-                    type="text"
-                    id="firstName"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-                    placeholder="Enter Subject Name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                />
-            </div>
-
-            {/* File Upload Section */}
-            <div className="mb-6 px-6">
-                <label htmlFor="fileUpload" className="block font-medium mb-2 text-gray-700">
-                    Upload Subject File
-                </label>
-                <input
-                    type="file"
-                    id="fileUpload"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-                    onChange={handleFileChange}
-                />
-                {!isFileEdited && selectedFile === null && (
-                    <div className="mt-2 text-gray-500">
-                        {/* Display existing file if no new file is selected */}
-                        <div className="flex items-center space-x-2">
-                            <AiOutlineFileText size={24} className="text-gray-500" />
-                            <span className="text-sm text-gray-500">Existing File:</span>
-                            <span className="font-semibold">SubjectFile.pdf</span> {/* Dummy Data */}
-                        </div>
-                    </div>
-                )}
-                {selectedFile && (
-                    <div className="mt-2">
-                        {/* Display file preview if it's an image */}
-                        {selectedFile.type.startsWith('image/') ? (
-                            <img
-                                src={URL.createObjectURL(selectedFile)}
-                                alt="File Preview"
-                                className="w-32 h-32 object-cover rounded-md"
-                            />
-                        ) : (
-                            <div className="flex items-center space-x-2">
-                                <AiOutlineFileText size={24} className="text-gray-500" />
-                                <span className="text-sm text-gray-500">Selected File:</span>
-                                <span className="font-semibold">{selectedFile.name}</span>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {/* Subject teachers section */}
-            <div className="mb-6 px-6 pt-11">
-                <div className="flex items-center space-x-3 mb-4">
-                    <h3 className="text-lg font-medium text-gray-700">Subject Teachers</h3>
-                </div>
-
-                <table className="w-full text-left border-collapse">
-                    <thead></thead>
-                    <tbody>
-                        {teachers.map((teacher, index) => (
-                            <tr key={index} className="border-b hover:bg-gray-100">
-                                <td className="p-3">
-                                    <div className="flex items-center text-gray-500">
-                                        <TbGridDots size={20} />
-                                    </div>
-                                </td>
-                                <td className="p-3 flex items-center space-x-2">
-                                    <AiOutlineUser size={20} className="text-gray-500" />
-                                    <span className="font-medium text-gray-700">{teacher.name}</span>
-                                </td>
-                                <td className="p-3 text-gray-500">{teacher.position}</td>
-                                <td className="p-3">
-                                    <button
-                                        className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                                        onClick={() => handleEditTeacher(index)} // Edit teacher action
-                                    >
-                                        <MdEdit size={20} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Edit Teacher Modal */}
-            {isEditTeacherModalOpen && (
-                <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-10">
-                    <div className="bg-white p-6 rounded-md w-full max-w-md">
-                        {/* Modal Header */}
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-semibold text-gray-700">Edit Teacher</h2>
-                            <button
-                                className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                                onClick={() => setIsEditTeacherModalOpen(false)}
-                            >
-                                <AiOutlineClose size={20} />
-                            </button>
-                        </div>
-
-                        {/* Teacher Form */}
-                        <div className="mb-4">
-                            <label className="block font-medium text-gray-700 mb-2">Teacher Name</label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-                                placeholder="Teacher Name"
-                                value={newTeacherName}
-                                onChange={(e) => setNewTeacherName(e.target.value)}
-                            />
-                        </div>
-                        <div className="mb-6">
-                            <label className="block font-medium text-gray-700 mb-2">Position</label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-                                placeholder="Position"
-                                value={newTeacherPosition}
-                                onChange={(e) => setNewTeacherPosition(e.target.value)}
-                            />
-                        </div>
-                        <button
-                            className="w-full bg-[#576086] text-white py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
-                            onClick={handleSaveTeacher} // Save changes
-                        >
-                            Save Changes
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+    const teacherToAdd = SubjectTeachersId.find(
+      (teacher) => teacher.SubjectTeacherName === newTeacherName
     );
+
+    if (!teacherToAdd) {
+      alert("Selected teacher not found!");
+      return;
+    }
+
+    setSelectedTeachers([
+      ...selectedTeachers,
+      {
+        SubjectTeacherID: teacherToAdd.SubjectTeacherID,
+        SubjectTeacherName: teacherToAdd.SubjectTeacherName,
+        SubjectTeacherPosition: newTeacherPosition,
+      },
+    ]);
+    setNewTeacherName("");
+    setNewTeacherPosition("");
+  };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFile(Array.from(e.target.files));
+    }
+  };
+
+  const handleUpload = async (): Promise<{ Name: string; Url: string }[]> => {
+    setLoading(true);
+    const uploadPromises = selectedFile.map((file) => {
+      return new Promise<{ Name: string; Url: string }>((resolve, reject) => {
+        const storageRef = ref(storage, `subjectfile/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+            console.log(`Upload for ${file.name} is ${progress}% done`);
+          },
+          (error) => {
+            console.error(`Upload failed for ${file.name}:`, error);
+            alert(`File upload failed for ${file.name}. Please try again.`);
+            reject(error);
+          },
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve({ Name: file.name, Url: downloadURL });
+            } catch (error) {
+              console.error(
+                `Error fetching download URL for ${file.name}:`,
+                error
+              );
+              reject(error);
+            }
+          }
+        );
+      });
+    });
+    const fileLinks = await Promise.all(uploadPromises);
+    setLoading(false);
+    return fileLinks;
+  };
+
+  const handleUpdate = async () => {
+    try {
+      setLoading(true);
+
+      const newFileLinks = await handleUpload();
+      console.log(newFileLinks, "New File Links");
+
+      const subjectsRef = doc(db, "subjects", subjectid.toString());
+      const docSnapshot = await getDoc(subjectsRef);
+
+      if (!docSnapshot.exists()) {
+        throw new Error("Subject not found!");
+      }
+
+      const existingData = docSnapshot.data();
+      const existingSubjectFile = existingData?.SubjectFile || [];
+
+      const updatedSubjectFile = [...existingSubjectFile, ...newFileLinks];
+
+      const updatedSubjectData = {
+        SubjectName: subjectData.name || existingData?.SubjectName || "",
+        SubjectFile: updatedSubjectFile,
+        SubjectTeachersId: [
+          ...(subjectData.SubjectTeachersId || existingData?.teachers || []),
+          ...selectedTeachers,
+        ],
+        SubjectUpatedAt: serverTimestamp(),
+      };
+
+      await updateDoc(subjectsRef, updatedSubjectData);
+
+      setSubjectData({ name: "", files: [], SubjectTeachersId: [] });
+      router.push("/subjects");
+
+      alert("Subject updated successfully!");
+    } catch (error) {
+      console.error("Error updating subject: ", error);
+      alert("Failed to update subject. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleDeleteTeacher = async (teacherId: string) => {
+    try {
+      setLoading(true);
+
+      // Reference to the subject document in Firestore
+      const subjectsRef = doc(db, "subjects", subjectid.toString());
+      const docSnapshot = await getDoc(subjectsRef);
+
+      if (!docSnapshot.exists()) {
+        throw new Error("Subject not found!");
+      }
+
+      const existingData = docSnapshot.data();
+      const existingTeachers: Teacher[] = existingData?.teachers || [];
+
+      // Filter out the teacher to be deleted
+      const updatedTeachers = existingTeachers.filter(
+        (teacher) => teacher.SubjectTeacherID !== teacherId
+      );
+
+      // Prepare the updated subject data
+      const updatedSubjectData = {
+        SubjectName: subjectData.name || existingData?.SubjectName || "",
+        SubjectFile: existingData?.SubjectFile || [],
+        SubjectTeachersId: updatedTeachers, // Updated list of teachers after deletion
+        SubjectUpatedAt: serverTimestamp(),
+      };
+
+      // Update Firestore document
+      await updateDoc(subjectsRef, updatedSubjectData);
+
+      // Update the local state after deletion
+      setSubjectData((prev) => ({
+        ...prev,
+        SubjectTeachersId: updatedTeachers,
+      }));
+
+      alert("Teacher deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting teacher: ", error);
+      alert("Failed to delete teacher. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const filteredTeachers = SubjectTeachersId.filter((teacher) =>
+    teacher?.SubjectTeacherName?.toLowerCase().includes(
+      newTeacherName?.toLowerCase() || ""
+    )
+  );
+
+  return (
+    <>
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <FadeLoader />
+        </div>
+      )}
+
+      <div className="p-6 rounded-md">
+        {/* Header Section */}
+
+        <div className="flex justify-between items-center mb-6">
+          <button className="flex items-center space-x-2 text-black hover:text-[#414d6b]">
+            <MdEdit size={18} />
+            <span className="text-sm font-bold">Edit Subject</span>
+          </button>
+        </div>
+
+        {/* Title Section */}
+        <h2 className="text-xl font-medium mb-4 text-[#414d6b] p-6">
+          Edit Subject Details
+        </h2>
+
+        {/* Input Section */}
+        <div className="mb-6 px-6">
+          <label
+            htmlFor="subjectName"
+            className="block font-medium mb-2 text-gray-700"
+          >
+            Subject Name
+          </label>
+
+          <input
+            type="text"
+            id="subjectName"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+            placeholder="Enter Subject Name"
+            value={subjectData.name}
+            onChange={(e) =>
+              setSubjectData({ ...subjectData, name: e.target.value })
+            }
+            required
+          />
+        </div>
+
+        {/* File Upload Section */}
+        <div className="mb-6 px-6">
+          <label
+            htmlFor="fileUpload"
+            className="block font-medium mb-2 text-gray-700"
+          >
+            Upload Subject File
+          </label>
+          <input
+            type="file"
+            id="fileUpload"
+            // value={subjectData.files}
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+            onChange={handleFileChange}
+            multiple
+          />
+          {selectedFile.length > 0 && (
+            <div className="mt-4 space-y-4">
+              {selectedFile.map((file, index) => (
+                <div key={index}>
+                  {file.type.startsWith("image/") ? (
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`File Preview ${index}`}
+                      className="w-32 h-32 object-cover rounded-md"
+                    />
+                  ) : file.type === "application/pdf" ? (
+                    <div className="mt-4">
+                      <embed
+                        src={URL.createObjectURL(file)}
+                        type="application/pdf"
+                        className="w-full h-96 border rounded"
+                      />
+                      <a
+                        href={URL.createObjectURL(file)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block mt-2 text-blue-500 hover:underline text-sm"
+                      >
+                        Open PDF in new tab
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <AiOutlineFileText size={24} className="text-gray-500" />
+                      <span className="text-sm text-gray-500">
+                        Selected File:
+                      </span>
+                      <a
+                        href={URL.createObjectURL(file)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-blue-500 hover:underline"
+                      >
+                        {file.name}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {subjectData.files.length > 0 && (
+            <>
+              {subjectData.files.map((file, index) => {
+                const fileUrl = file.Url;
+                const fileName = file.Name;
+
+                if (!fileUrl) {
+                  return null;
+                }
+
+                const isImage =
+                  fileUrl.startsWith("https://") &&
+                  (fileUrl.endsWith(".jpg") ||
+                    fileUrl.endsWith(".jpeg") ||
+                    fileUrl.endsWith(".png") ||
+                    fileUrl.endsWith(".gif"));
+
+                const isPdf = fileUrl.endsWith(".pdf");
+
+                return (
+                  <div key={index} className="my-4">
+                    {isImage ? (
+                      <img
+                        src={fileUrl}
+                        alt={`File Preview ${fileName}`}
+                        className="w-full max-w-sm object-cover rounded-md"
+                      />
+                    ) : isPdf ? (
+                      <div className="mt-4">
+                        <embed
+                          src={fileUrl}
+                          type="application/pdf"
+                          className="w-full h-96 border rounded"
+                        />
+                        <a
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block mt-2 text-blue-500 hover:underline text-sm"
+                        >
+                          Open PDF in new tab
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <AiOutlineFileText
+                          size={24}
+                          className="text-gray-500"
+                        />
+                        <span className="text-sm text-gray-500">File:</span>
+                        <a
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-blue-500 hover:underline"
+                        >
+                          {fileName}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </div>
+
+        {/* Subject teachers section */}
+        <div className="mb-6 px-6 pt-11">
+          <div className="flex items-center space-x-3 mb-4">
+            <h3 className="text-lg font-medium text-gray-700">
+              Subject Teachers
+            </h3>
+            <button
+              className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b] focus:outline-none"
+              onClick={() => setIsAddTeacherModalOpen(true)}
+            >
+              Add Teacher
+            </button>
+          </div>
+
+          <table className="w-full text-left border-collapse">
+            <thead></thead>
+            <tbody>
+              {subjectData.SubjectTeachersId.map((teacher, index) => (
+                <tr key={index} className="border-b hover:bg-gray-100">
+                  <td className="p-3">
+                    <div className="flex items-center text-gray-500">
+                      <TbGridDots size={20} />
+                    </div>
+                  </td>
+                  <td className="p-3 flex items-center space-x-2">
+                    <AiOutlineUser size={20} className="text-gray-500" />
+                    <span className="font-medium text-gray-700">
+                      {teacher.SubjectTeacherName}
+                    </span>
+                  </td>
+                  <td className="p-3 text-gray-500">
+                    <span className="font-medium text-gray-700">
+                      {teacher.SubjectTeacherPosition}
+                    </span>
+                  </td>
+                  <td className="p-3">
+                    <button
+                      className="text-gray-500 hover:text-gray-700 focus:outline-none m-2"
+                      onClick={() =>
+                        handleDeleteTeacher(teacher.SubjectTeacherID)
+                      } // Edit teacher action
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {selectedTeachers.length > 0 && (
+            <>
+              <div>new teachers</div>
+              <table className="w-full text-left border-collapse max-h-52 overflow-scroll overflow-x-hidden">
+                <thead></thead>
+                <tbody>
+                  {selectedTeachers.map((teacher, index) => (
+                    <tr key={index} className="border-b hover:bg-gray-100">
+                      <td className="p-3">
+                        <div className="flex items-center text-gray-500">
+                          <TbGridDots size={20} />
+                        </div>
+                      </td>
+                      <td className="p-3 flex items-center space-x-2">
+                        <AiOutlineUser size={20} className="text-gray-500" />
+                        <span className="font-medium text-gray-700">
+                          {teacher.SubjectTeacherName}
+                        </span>
+                      </td>
+                      <td className="p-3 text-gray-500">
+                        {teacher.SubjectTeacherPosition}
+                      </td>
+                      <td className="p-3">
+                        <button
+                          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                          onClick={() =>
+                            setSelectedTeachers(
+                              selectedTeachers.filter((_, i) => i !== index)
+                            )
+                          }
+                        >
+                          <AiOutlineClose size={20} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
+        {isAddTeacherModalOpen && (
+          <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-10">
+            <div className="bg-white p-6 rounded-md w-full max-w-md">
+              {/* Modal Header */}
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-700">
+                  Add Teacher
+                </h2>
+                <button
+                  className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                  onClick={() => setIsAddTeacherModalOpen(false)}
+                >
+                  <AiOutlineClose size={20} />
+                </button>
+              </div>
+
+              {/* Search Input */}
+              <div className="relative mb-6">
+                <AiOutlineSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500" />
+                <input
+                  type="text"
+                  className="w-full px-10 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+                  placeholder="Find Teacher"
+                  value={newTeacherName}
+                  onChange={(e) => setNewTeacherName(e.target.value)}
+                />
+              </div>
+
+              {/* Filtered Teacher List */}
+              {newTeacherName.length > 0 && filteredTeachers.length > 0 ? (
+                <>
+                  <p className="font-medium text-gray-700 mb-2">
+                    Select a Teacher:
+                  </p>
+                  <div className="mb-4 bg-gray-50 p-1 rounded-lg shadow  max-h-52 overflow-scroll overflow-x-hidden">
+                    {filteredTeachers.map((teacher) => (
+                      <div
+                        key={teacher.SubjectTeacherID}
+                        className="cursor-pointer hover:bg-gray-200 bg-white p-2 m-2 rounded-md"
+                        onClick={() =>
+                          setNewTeacherName(teacher.SubjectTeacherName)
+                        }
+                      >
+                        {teacher.SubjectTeacherName}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="font-medium text-gray-700 mb-2 bg-gray-50 p-2 rounded-full text-center">
+                  Sorry, No teacher found Named = &quot;{`${newTeacherName}`}{" "}
+                  &quot;
+                </p>
+              )}
+
+              {/* Add Teacher Form */}
+              <div className="mb-6">
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 mb-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#576086]"
+                  placeholder="Enter Position for Selected Teacher"
+                  value={newTeacherPosition}
+                  onChange={(e) => setNewTeacherPosition(e.target.value)}
+                />
+                <button
+                  className="bg-[#576086] mx-auto my-5 text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
+                  onClick={handleAddTeacher}
+                >
+                  Add Teacher
+                </button>
+              </div>
+
+              {/* Selected Teacher List */}
+              <div className="space-y-4 max-h-44 overflow-scroll overflow-x-hidden">
+                {selectedTeachers.map((teacher, index) => (
+                  <div
+                    key={index}
+                    className="p-4 bg-gray-50 rounded-lg shadow-sm flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <AiOutlineUser size={28} className="text-gray-500" />
+                      <div>
+                        <p className="font-medium text-gray-700">
+                          {teacher.SubjectTeacherName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {teacher.SubjectTeacherPosition}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                      onClick={() => {
+                        setSelectedTeachers((prev) =>
+                          prev.filter((_, i) => i !== index)
+                        );
+                        handleDeleteTeacher(teacher.SubjectTeacherID);
+                      }}
+                    >
+                      <AiOutlineClose size={20} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div>
+          <button
+            onClick={handleUpdate}
+            className="bg-[#576086] text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
+          >
+            save
+          </button>
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default EditSubject;
