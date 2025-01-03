@@ -32,14 +32,8 @@ const fetcher = async () => {
 };
 
 const mockSubjects: Subject[] = [
-  { id: 1, name: "Maths", classDiv: "VII A" },
-  { id: 2, name: "Science", classDiv: "VIII B" },
-  { id: 3, name: "English", classDiv: "IX C" },
-  { id: 4, name: "History", classDiv: "VII B" },
-  { id: 5, name: "Geography", classDiv: "VIII C" },
-  { id: 6, name: "Biology", classDiv: "IX A" },
-  { id: 7, name: "Physics", classDiv: "X A" },
-  { id: 8, name: "Chemistry", classDiv: "X B" },
+  { id: 1, name: "7th", classDiv: "VII A" },
+  { id: 2, name: "8th", classDiv: "VIII B" },
 ];
 
 const ITEMS_PER_PAGE = 80;
@@ -135,7 +129,7 @@ console.log("fonal classes", currentClasses);
             </DialogContent>
           </Dialog>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-6">
     
   
           <Link href="/addclass">
@@ -177,7 +171,7 @@ console.log("fonal classes", currentClasses);
         <table className="w-full border-none text-left">
           <thead>
             <tr className="border-b">
-              <th className="px-4 text-gray-500 py-2">Subject Name</th>
+              <th className="px-4 text-gray-500 py-2">Class Name</th>
               <th className="px-4 text-gray-500 py-2">Div</th>
               <th className="px-4 text-gray-500 py-2">Action</th>
             </tr>

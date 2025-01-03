@@ -82,7 +82,6 @@ export const fetchStudentDataById = async (studentId: string) => {
 
 export const fetchTeacherDataById = async (teacherId: string) => {
   try {
-    // Reference to the student document in the Firestore "students" collection
     const teacherDocRef = doc(db, "teachers", teacherId);  // Adjust collection name if needed
     const teacherDocSnap = await getDoc(teacherDocRef);
 
@@ -97,6 +96,23 @@ export const fetchTeacherDataById = async (teacherId: string) => {
     throw new Error("Failed to fetch teacher data");
   }
 };
+
+export const fetchSubjectDataById = async (subjectId: string) => {
+  try {
+    const subjectDocRef = doc(db, "subjects", subjectId);  // Adjust collection name if needed
+    const subjectDocSnap = await getDoc(subjectDocRef);
+
+    if (subjectDocSnap.exists()) {
+      // Return student data as a plain object
+      return subjectDocSnap.data();
+    } else {
+      throw new Error("subject not found");
+    }
+  } catch (error) {
+    console.error("Error fetching subject data:", error);
+    throw new Error("Failed to fetch subject data");
+  }
+}
 
 
 export const fetchFormFields = async (userId: string): Promise<FormField[]> => {

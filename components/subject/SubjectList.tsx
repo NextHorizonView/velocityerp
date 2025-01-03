@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { IoIosCloudUpload, IoIosSearch } from "react-icons/io";
 import { FaTrash, FaPen } from "react-icons/fa";
@@ -11,55 +11,94 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"; // Adjust path as per your setup
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig";
 
 export type Subject = {
-  id: number;
+  id: string;
   name: string;
-  classDiv: string | number;
+  SubjectUpatedAt: Timestamp;
 };
-
-const mockSubjects: Subject[] = [
-  { id: 1, name: "Maths", classDiv: "VII A" },
-  { id: 2, name: "Science", classDiv: "VIII B" },
-  { id: 3, name: "English", classDiv: "IX C" },
-  { id: 4, name: "History", classDiv: "VII B" },
-  { id: 5, name: "Geography", classDiv: "VIII C" },
-  { id: 6, name: "Biology", classDiv: "IX A" },
-  { id: 7, name: "Physics", classDiv: "X A" },
-  { id: 8, name: "Chemistry", classDiv: "X B" },
-];
 
 const ITEMS_PER_PAGE = 8;
 
 const SubjectTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<keyof Subject | "newest">(
-    "newest"
-  );
-  const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
+  const [sortField, setSortField] = useState<"newest" | "oldest">("newest");
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const handleSort = (field: keyof Subject | "newest") => {
-    setSortField(field);
-    if (field !== "newest") {
-      const sortedSubjects = [...subjects].sort((a, b) =>
-        String(a[field]).localeCompare(String(b[field]))
-      );
-      setSubjects(sortedSubjects);
-    } else {
-      setSubjects(mockSubjects);
+  // Separate sorting logic for Firestore Timestamps
+  const sortSubjects = (
+    subjectsToSort: Subject[],
+    field: "newest" | "oldest"
+  ) => {
+    return [...subjectsToSort].sort((a, b) => {
+      const timeA = a.SubjectUpatedAt.toMillis();
+      const timeB = b.SubjectUpatedAt.toMillis();
+
+      return field === "newest" ? timeB - timeA : timeA - timeB;
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const subjectDocRef = doc(db, "subjects", id);
+      const subjectDocSnap = await getDoc(subjectDocRef);
+
+      if (!subjectDocSnap.exists()) {
+        throw new Error(`Subject with ID ${id} does not exist`);
+      }
+
+      await deleteDoc(subjectDocRef);
+      setSubjects((prevSubjects) => {
+        const updatedSubjects = prevSubjects.filter(
+          (subject) => subject.id !== id
+        );
+        return sortSubjects(updatedSubjects, sortField);
+      });
+      console.log(`Subject with ID ${id} deleted successfully!`);
+      alert(`Subject with ID ${id} deleted successfully!`);
+    } catch (error) {
+      console.error("Error deleting document:", error);
     }
   };
 
-  const handleDelete = (id: number) => {
-    const updatedSubjects = subjects.filter((subject) => subject.id !== id);
-    setSubjects(updatedSubjects);
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "subjects"));
+        const fetchedSubjects = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data()["SubjectName"],
+          SubjectUpatedAt: doc.data().SubjectUpatedAt,
+        }));
+
+        const sortedSubjects = sortSubjects(fetchedSubjects, sortField);
+        setSubjects(sortedSubjects);
+      } catch (error) {
+        console.error("Error fetching subjects:", error);
+      }
+    };
+    fetchSubjects();
+  }, [handleDelete, sortField]);
+
+  const handleSort = (field: "newest" | "oldest") => {
+    setSortField(field);
+    setSubjects((prevSubjects) => sortSubjects(prevSubjects, field));
   };
 
   const filteredSubjects = subjects.filter((subject) =>
-    subject.name.toLowerCase().includes(searchTerm.toLowerCase())
+    subject?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredSubjects.length / ITEMS_PER_PAGE);
@@ -73,6 +112,19 @@ const SubjectTable = () => {
       setCurrentPage(page);
     }
   };
+
+  // const formatDate = (timestamp: Timestamp) => {
+  //   const date = timestamp.toDate();
+  //   return date.toLocaleString("en-US", {
+  //     day: "numeric",
+  //     month: "long",
+  //     year: "numeric",
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //     second: "2-digit",
+  //     hour12: false,
+  //   });
+  // };
 
   return (
     <div className="container mx-auto p-6">
@@ -105,11 +157,6 @@ const SubjectTable = () => {
           </Dialog>
         </div>
         <div className="flex items-center space-x-4">
-          <Link href="/addsubject-exp">
-            <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
-              +
-            </button>
-          </Link>
           <Link href="/addsubject">
             <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
               + Add New Subject
@@ -131,16 +178,13 @@ const SubjectTable = () => {
             <select
               value={sortField}
               className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
-              onChange={(e) =>
-                handleSort(e.target.value as keyof Subject | "newest")
-              }
+              onChange={(e) => {
+                const value = e.target.value as "newest" | "oldest";
+                handleSort(value);
+              }}
             >
-              <option value="newest" className="bg-transparent">
-                Newest
-              </option>
-              <option value="classDiv" className="bg-transparent">
-                Class
-              </option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
             </select>
           </div>
         </div>
@@ -152,7 +196,7 @@ const SubjectTable = () => {
           <thead>
             <tr className="border-b">
               <th className="px-4 text-gray-500 py-2">Subject Name</th>
-              <th className="px-4 text-gray-500 py-2">Class/Div</th>
+              {/* <th className="px-4 text-gray-500 py-2">Updated At</th> */}
               <th className="px-4 text-gray-500 py-2">Action</th>
             </tr>
           </thead>
@@ -160,10 +204,12 @@ const SubjectTable = () => {
             {currentSubjects.map((subject) => (
               <tr key={subject.id} className="border-b hover:bg-gray-100">
                 <td className="px-4 py-2">{subject.name}</td>
-                <td className="px-4 py-2">{subject.classDiv}</td>
+                {/* <td className="px-4 py-2">
+                  {formatDate(subject.SubjectUpatedAt)}
+                </td> */}
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
-                    <Link href="/editsubject">
+                    <Link href={`/editsubject/${subject.id}`} passHref>
                       <FaPen className="text-black" />
                     </Link>
                   </button>
