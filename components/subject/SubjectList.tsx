@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"; // Adjust path as per your setup
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   collection,
@@ -19,70 +19,82 @@ import {
   doc,
   getDoc,
   getDocs,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 
 export type Subject = {
   id: string;
   name: string;
-  // classDiv: string | number;
+  SubjectUpatedAt: Timestamp;
 };
 
 const ITEMS_PER_PAGE = 8;
 
 const SubjectTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<keyof Subject | "newest">(
-    "newest"
-  );
+  const [sortField, setSortField] = useState<"newest" | "oldest">("newest");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Separate sorting logic for Firestore Timestamps
+  const sortSubjects = (
+    subjectsToSort: Subject[],
+    field: "newest" | "oldest"
+  ) => {
+    return [...subjectsToSort].sort((a, b) => {
+      const timeA = a.SubjectUpatedAt.toMillis();
+      const timeB = b.SubjectUpatedAt.toMillis();
+
+      return field === "newest" ? timeB - timeA : timeA - timeB;
+    });
+  };
 
   const handleDelete = async (id: string) => {
     try {
       const subjectDocRef = doc(db, "subjects", id);
+      const subjectDocSnap = await getDoc(subjectDocRef);
 
-      // Check if the document exists
-      const subjecttDocSnap = await getDoc(subjectDocRef);
-      if (!subjecttDocSnap.exists()) {
+      if (!subjectDocSnap.exists()) {
         throw new Error(`Subject with ID ${id} does not exist`);
       }
 
-      // Delete the document
       await deleteDoc(subjectDocRef);
+      setSubjects((prevSubjects) => {
+        const updatedSubjects = prevSubjects.filter(
+          (subject) => subject.id !== id
+        );
+        return sortSubjects(updatedSubjects, sortField);
+      });
       console.log(`Subject with ID ${id} deleted successfully!`);
       alert(`Subject with ID ${id} deleted successfully!`);
     } catch (error) {
       console.error("Error deleting document:", error);
     }
   };
+
   useEffect(() => {
-    const fetchedSubjects = async () => {
+    const fetchSubjects = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "subjects"));
         const fetchedSubjects = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           name: doc.data()["SubjectName"],
+          SubjectUpatedAt: doc.data().SubjectUpatedAt,
         }));
 
-        setSubjects(fetchedSubjects);
+        const sortedSubjects = sortSubjects(fetchedSubjects, sortField);
+        setSubjects(sortedSubjects);
       } catch (error) {
-        console.error("Error fetching teachers:", error);
+        console.error("Error fetching subjects:", error);
       }
     };
-    fetchedSubjects();
-  }, [handleDelete]);
+    fetchSubjects();
+  }, [handleDelete, sortField]);
 
-  const handleSort = (field: keyof Subject | "newest") => {
+  const handleSort = (field: "newest" | "oldest") => {
     setSortField(field);
-    if (field !== "newest") {
-      const sortedSubjects = [...subjects].sort((a, b) =>
-        String(a[field]).localeCompare(String(b[field]))
-      );
-      setSubjects(sortedSubjects);
-    } else {
-      setSubjects([...subjects].sort((a, b) => Number(a.id) - Number(b.id)));
-    }
+    setSubjects((prevSubjects) => sortSubjects(prevSubjects, field));
   };
 
   const filteredSubjects = subjects.filter((subject) =>
@@ -100,6 +112,19 @@ const SubjectTable = () => {
       setCurrentPage(page);
     }
   };
+
+  // const formatDate = (timestamp: Timestamp) => {
+  //   const date = timestamp.toDate();
+  //   return date.toLocaleString("en-US", {
+  //     day: "numeric",
+  //     month: "long",
+  //     year: "numeric",
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //     second: "2-digit",
+  //     hour12: false,
+  //   });
+  // };
 
   return (
     <div className="container mx-auto p-6">
@@ -153,16 +178,13 @@ const SubjectTable = () => {
             <select
               value={sortField}
               className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
-              onChange={(e) =>
-                handleSort(e.target.value as keyof Subject | "newest")
-              }
+              onChange={(e) => {
+                const value = e.target.value as "newest" | "oldest";
+                handleSort(value);
+              }}
             >
-              <option value="newest" className="bg-transparent">
-                Newest
-              </option>
-              <option value="classDiv" className="bg-transparent">
-                Class
-              </option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
             </select>
           </div>
         </div>
@@ -174,7 +196,7 @@ const SubjectTable = () => {
           <thead>
             <tr className="border-b">
               <th className="px-4 text-gray-500 py-2">Subject Name</th>
-              {/* <th className="px-4 text-gray-500 py-2">Class/Div</th> */}
+              {/* <th className="px-4 text-gray-500 py-2">Updated At</th> */}
               <th className="px-4 text-gray-500 py-2">Action</th>
             </tr>
           </thead>
@@ -182,7 +204,9 @@ const SubjectTable = () => {
             {currentSubjects.map((subject) => (
               <tr key={subject.id} className="border-b hover:bg-gray-100">
                 <td className="px-4 py-2">{subject.name}</td>
-                {/* <td className="px-4 py-2">{subject.classDiv}</td> */}
+                {/* <td className="px-4 py-2">
+                  {formatDate(subject.SubjectUpatedAt)}
+                </td> */}
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
                     <Link href={`/editsubject/${subject.id}`} passHref>
