@@ -39,6 +39,8 @@ const AddClass: React.FC = () => {
     const [selectedDivision, setSelectedDivision] = useState<string>("");
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [Classteachers, setClassTeachers] = useState<Teacher[]>([]);
+    const [toShowClassTeachers, setToShowClassTeachers] = useState<Teacher[]>([]);
+
 
     // const [selectedClassteacher,setSelectedClassteacher] =
     //     useState<string>("");
@@ -84,7 +86,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                     subjectId: doc.id,
                     SubjectName: doc.data().SubjectName,
                     teachers: doc.data().teachers,
-                    toLowercase: () => doc.data().SubjectName.toLowerCase(),
+                    toLowercase: () => doc.data().SubjectName?.toLowerCase(),
                 }));
                 setSubjects(fetchedSubjects);
             } catch (error) {
@@ -175,6 +177,16 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
         newSubjectDropdowns[teacherIndex] = false;
         setSubjectDropdowns(newSubjectDropdowns);
       };
+
+
+// to filter teachers
+      const filteredTeachers = teachers.filter((teacher) =>
+        teacher.name?.toLowerCase().includes(searchTerm?.toLowerCase())
+      );
+
+      const filteredClassTeachers = Classteachers.filter((teacher) =>
+        teacher.name?.toLowerCase().includes(ClasssearchTerm?.toLowerCase())
+      );
 
     return (
         <div className="p-6 rounded-md">
@@ -317,7 +329,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                 </div>
 
                                 {/* Selected Teacher Card */}
-                                {Classteachers.map((teacher, index) => (
+                                {filteredClassTeachers.map((teacher, index) => (
                                     <div
                                         key={index}
                                         className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between"
@@ -328,7 +340,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                             </div>
                                             <div>
                                                 <p className="text-sm font-medium text-gray-700">
-                                                    {teacher.name}
+                                                   {teacher.name}
                                                 </p>
                                                 <select
                                                     id="subjectDropdown"
@@ -338,7 +350,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                                     {Classteachers.map((teacher, index) => (
                                                         <option
                                                             key={index}
-                                                            value={teacher.position.toLowerCase().replace(/\s+/g, '-')}
+                                                            value={teacher.position?.toLowerCase().replace(/\s+/g, '-')}
                                                         >
                                                             {teacher.position}
                                                         </option>
@@ -369,7 +381,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                     <tbody>
                         {Classteachers
                             .filter((teacher) =>
-                                teacher.name.toLowerCase().includes(ClasssearchTerm.toLowerCase())
+                                teacher.name?.toLowerCase().includes(ClasssearchTerm?.toLowerCase())
                             )
                             .map((teacher, index) => (
                                 <tr key={index} className="border-b hover:bg-gray-100">
@@ -493,7 +505,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
 {/* WITH SEARCH FILTER  */}
 
-{teachers.map((teacher, index) => (
+{filteredTeachers.map((teacher, index) => (
   <div
     key={index}
     className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between"
@@ -540,7 +552,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
               {subjects.map((subject, subjectIndex) =>
                 subject.teachers.map((as, teacherIndex) =>
                   as.name === teacher.name &&
-                  subject.SubjectName.toLowerCase().includes(searchSubjects[index].toLowerCase()) ? (
+                  subject.SubjectName?.toLowerCase().includes(searchSubjects[index]?.toLowerCase()) ? (
                     <div key={`${subjectIndex}-${teacherIndex}`} className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                     onClick={() => handleSubjectSelect(index, subject.SubjectName)}
                     >
@@ -597,7 +609,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                     <tbody>
                         {teachers
                             .filter((teacher) =>
-                                teacher.name.toLowerCase().includes(searchTerm.toLowerCase())
+                                teacher.name?.toLowerCase().includes(searchTerm?.toLowerCase())
                             )
                             .map((teacher, index) => (
                                 <tr key={index} className="border-b hover:bg-gray-100">

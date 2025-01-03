@@ -1,34 +1,23 @@
-'use client';
+"use client";
+
 import React, { useState } from "react";
 import Link from "next/link";
 import { IoIosCloudUpload, IoIosSearch } from "react-icons/io";
 import { FaTrash, FaPen } from "react-icons/fa";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"; // Adjust path as per your setup
-import { Button } from "@/components/ui/button"; 
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
-import useSWR from "swr";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"; // Adjust path as per your setup
+import { Button } from "@/components/ui/button";
 
 export type Subject = {
   id: number;
   name: string;
   classDiv: string | number;
-};
-
-export interface ClassData {
-  id: string;
-  className: string;
-  classDivision: string;
-  classTeacherId: string;
-  classSubjects: { subjectName: string; subjectId: string; subjectTeacherId: string }[];
-}
-
-const fetcher = async () => {
-  const querySnapshot = await getDocs(collection(db, 'classes'));
-  return querySnapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as ClassData[];
 };
 
 const mockSubjects: Subject[] = [
@@ -42,57 +31,39 @@ const mockSubjects: Subject[] = [
   { id: 8, name: "Chemistry", classDiv: "X B" },
 ];
 
-const ITEMS_PER_PAGE = 80;
+const ITEMS_PER_PAGE = 8;
 
 const SubjectTable = () => {
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<keyof ClassData | "newest">("newest");
+  const [sortField, setSortField] = useState<keyof Subject | "newest">(
+    "newest"
+  );
   const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
   const [currentPage, setCurrentPage] = useState(1);
-  const [classList, setClassList] = useState<ClassData[]>([]);
-  // const [totalPages, setTotalPages] = useState(1);
 
-  // const handleSort = (field: keyof Subject | "newest") => {
-  //   setSortField(field);
-  //   if (field !== "newest") {
-  //     const sortedSubjects = [...subjects].sort((a, b) =>
-  //       String(a[field]).localeCompare(String(b[field]))
-  //     );
-  //     setSubjects(sortedSubjects);
-  //   } else {
-  //     setSubjects(mockSubjects);
-  //   }
-  // };
-  //
-
-  const { data: fetchedClasses, error } = useSWR<ClassData[]>('classes', fetcher);
-  console.log("fetched claases", fetchedClasses);
-  if (error) return <div>Error loading classes</div>;
-  if (!fetchedClasses) return <div>Loading...</div>;
-  const handleSort = (field: keyof ClassData | "newest") => {
+  const handleSort = (field: keyof Subject | "newest") => {
     setSortField(field);
     if (field !== "newest") {
-      const sortedClasses = [...fetchedClasses].sort((a, b) =>
+      const sortedSubjects = [...subjects].sort((a, b) =>
         String(a[field]).localeCompare(String(b[field]))
       );
-      setClassList(sortedClasses);
+      setSubjects(sortedSubjects);
     } else {
-      setClassList(fetchedClasses);
+      setSubjects(mockSubjects);
     }
   };
 
-  const handleDelete = (id: string) => {
-    const updatedClasses = fetchedClasses.filter((classItem) => classItem.id !== id);
-    setClassList(updatedClasses);
+  const handleDelete = (id: number) => {
+    const updatedSubjects = subjects.filter((subject) => subject.id !== id);
+    setSubjects(updatedSubjects);
   };
 
-  const filteredClasses = fetchedClasses.filter((classItem) =>
-    classItem.className.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSubjects = subjects.filter((subject) =>
+    subject.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalPages = Math.ceil(fetchedClasses.length / ITEMS_PER_PAGE);
-  const currentClasses = fetchedClasses.slice(
+  const totalPages = Math.ceil(filteredSubjects.length / ITEMS_PER_PAGE);
+  const currentSubjects = filteredSubjects.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -103,14 +74,12 @@ const SubjectTable = () => {
     }
   };
 
-console.log("fonal classes", currentClasses);
-
   return (
     <div className="container mx-auto p-6">
       {/* Header Section */}
       <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col space-y-2">
-          <h1 className="text-2xl font-bold text-[#576086]">Class</h1>
+          <h1 className="text-2xl font-bold text-[#576086]">Subject</h1>
           <Dialog>
             <DialogTrigger asChild>
               <button className="w-10 h-10 p-0 bg-transparent border-none">
@@ -136,11 +105,14 @@ console.log("fonal classes", currentClasses);
           </Dialog>
         </div>
         <div className="flex items-center space-x-4">
-    
-  
-          <Link href="/addclass">
+          <Link href="/addsubject-exp">
             <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
-              + Add New Class
+              +
+            </button>
+          </Link>
+          <Link href="/addsubject">
+            <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
+              + Add New Subject
             </button>
           </Link>
           <div className="relative">
@@ -157,9 +129,11 @@ console.log("fonal classes", currentClasses);
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">Sort by:</span>
             <select
-              value={sortField} 
+              value={sortField}
               className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
-              onChange={(e) => handleSort(e.target.value as keyof ClassData | "newest")}
+              onChange={(e) =>
+                handleSort(e.target.value as keyof Subject | "newest")
+              }
             >
               <option value="newest" className="bg-transparent">
                 Newest
@@ -178,30 +152,25 @@ console.log("fonal classes", currentClasses);
           <thead>
             <tr className="border-b">
               <th className="px-4 text-gray-500 py-2">Subject Name</th>
-              <th className="px-4 text-gray-500 py-2">Div</th>
+              <th className="px-4 text-gray-500 py-2">Class/Div</th>
               <th className="px-4 text-gray-500 py-2">Action</th>
             </tr>
           </thead>
           <tbody>
-            {currentClasses.map((classItem) => (
-              <tr key={classItem.id} className="border-b hover:bg-gray-100">
-                <td className="px-4 py-2">
-                {classItem.classSubjects?.map((subject, index) => (
-                  <div key={index}>
-                    {subject.subjectName}
-                  </div>
-                ))}
-
-                </td>
-                <td className="px-4 py-2">{classItem.className} {classItem.classDivision}</td>
+            {currentSubjects.map((subject) => (
+              <tr key={subject.id} className="border-b hover:bg-gray-100">
+                <td className="px-4 py-2">{subject.name}</td>
+                <td className="px-4 py-2">{subject.classDiv}</td>
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
                     <Link href="/editsubject">
-                    <FaPen className="text-black" />
+                      <FaPen className="text-black" />
                     </Link>
-                    
                   </button>
-                  <button className="p-2" onClick={() => handleDelete(classItem.id)}>
+                  <button
+                    className="p-2"
+                    onClick={() => handleDelete(subject.id)}
+                  >
                     <FaTrash className="text-black" />
                   </button>
                 </td>
@@ -214,8 +183,13 @@ console.log("fonal classes", currentClasses);
       {/* Pagination Section */}
       <div className="flex justify-between items-center mt-4">
         <span className="text-sm text-gray-600">
-          Showing data {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredClasses.length)} to{" "}
-          {Math.min(currentPage * ITEMS_PER_PAGE, filteredClasses.length)} of {filteredClasses.length} entries
+          Showing data{" "}
+          {Math.min(
+            (currentPage - 1) * ITEMS_PER_PAGE + 1,
+            filteredSubjects.length
+          )}{" "}
+          to {Math.min(currentPage * ITEMS_PER_PAGE, filteredSubjects.length)}{" "}
+          of {filteredSubjects.length} entries
         </span>
         <div className="flex items-center space-x-2">
           <button
@@ -229,7 +203,9 @@ console.log("fonal classes", currentClasses);
             <button
               key={index}
               className={`px-3 py-1 rounded ${
-                currentPage === index + 1 ? "bg-[#F7B696] text-white" : "bg-gray-200 text-gray-600"
+                currentPage === index + 1
+                  ? "bg-[#F7B696] text-white"
+                  : "bg-gray-200 text-gray-600"
               } hover:bg-[#F7B696] hover:text-white`}
               onClick={() => handlePageChange(index + 1)}
             >
