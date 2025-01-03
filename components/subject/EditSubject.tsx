@@ -18,15 +18,15 @@ interface EditSubjectFormProps {
 }
 
 interface Teacher {
-  id: string;
-  name: string;
-  position?: string;
+  SubjectTeacherID: string;
+  SubjectTeacherName: string;
+  SubjectTeacherPosition?: string;
 }
 
 interface SelectedTeacher {
-  id: string;
-  name: string;
-  position: string;
+  SubjectTeacherID: string;
+  SubjectTeacherName: string;
+  SubjectTeacherPosition: string;
 }
 
 const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
@@ -63,10 +63,14 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
             files: subjectData.SubjectFile || [],
             teachers:
               subjectData.teachers.map(
-                (teacher: { id: string; name: string; position: string }) => ({
-                  id: teacher.id || "",
-                  name: teacher.name,
-                  position: teacher.position,
+                (teacher: {
+                  SubjectTeacherID: string;
+                  SubjectTeacherName: string;
+                  SubjectTeacherPosition: string;
+                }) => ({
+                  SubjectTeacherID: teacher.SubjectTeacherID || "",
+                  SubjectTeacherName: teacher.SubjectTeacherName,
+                  SubjectTeacherPosition: teacher.SubjectTeacherPosition,
                 })
               ) || [],
           });
@@ -85,8 +89,8 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
       try {
         const querySnapshot = await getDocs(collection(db, "teachers"));
         const fetchedTeachers = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          name: doc.data()["First Name"],
+          SubjectTeacherID: doc.id,
+          SubjectTeacherName: doc.data()["First Name"],
         }));
 
         setTeachers(fetchedTeachers);
@@ -105,7 +109,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
     }
 
     const teacherToAdd = teachers.find(
-      (teacher) => teacher.name === newTeacherName
+      (teacher) => teacher.SubjectTeacherName === newTeacherName
     );
 
     if (!teacherToAdd) {
@@ -116,9 +120,9 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
     setSelectedTeachers([
       ...selectedTeachers,
       {
-        id: teacherToAdd.id,
-        name: teacherToAdd.name,
-        position: newTeacherPosition,
+        SubjectTeacherID: teacherToAdd.SubjectTeacherID,
+        SubjectTeacherName: teacherToAdd.SubjectTeacherName,
+        SubjectTeacherPosition: newTeacherPosition,
       },
     ]);
     setNewTeacherName("");
@@ -229,7 +233,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
 
       // Filter out the teacher to be deleted
       const updatedTeachers = existingTeachers.filter(
-        (teacher) => teacher.id !== teacherId
+        (teacher) => teacher.SubjectTeacherID !== teacherId
       );
 
       // Prepare the updated subject data
@@ -258,7 +262,9 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
     }
   };
   const filteredTeachers = teachers.filter((teacher) =>
-    teacher?.name?.toLowerCase().includes(newTeacherName?.toLowerCase() || "")
+    teacher?.SubjectTeacherName?.toLowerCase().includes(
+      newTeacherName?.toLowerCase() || ""
+    )
   );
 
   return (
@@ -462,18 +468,20 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
                   <td className="p-3 flex items-center space-x-2">
                     <AiOutlineUser size={20} className="text-gray-500" />
                     <span className="font-medium text-gray-700">
-                      {teacher.name}
+                      {teacher.SubjectTeacherName}
                     </span>
                   </td>
                   <td className="p-3 text-gray-500">
                     <span className="font-medium text-gray-700">
-                      {teacher.position}
+                      {teacher.SubjectTeacherPosition}
                     </span>
                   </td>
                   <td className="p-3">
                     <button
                       className="text-gray-500 hover:text-gray-700 focus:outline-none m-2"
-                      onClick={() => handleDeleteTeacher(teacher.id)} // Edit teacher action
+                      onClick={() =>
+                        handleDeleteTeacher(teacher.SubjectTeacherID)
+                      } // Edit teacher action
                     >
                       <Trash2 size={20} />
                     </button>
@@ -498,10 +506,12 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
                       <td className="p-3 flex items-center space-x-2">
                         <AiOutlineUser size={20} className="text-gray-500" />
                         <span className="font-medium text-gray-700">
-                          {teacher.name}
+                          {teacher.SubjectTeacherName}
                         </span>
                       </td>
-                      <td className="p-3 text-gray-500">{teacher.position}</td>
+                      <td className="p-3 text-gray-500">
+                        {teacher.SubjectTeacherPosition}
+                      </td>
                       <td className="p-3">
                         <button
                           className="text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -558,11 +568,13 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
                   <div className="mb-4 bg-gray-50 p-1 rounded-lg shadow  max-h-52 overflow-scroll overflow-x-hidden">
                     {filteredTeachers.map((teacher) => (
                       <div
-                        key={teacher.id}
+                        key={teacher.SubjectTeacherID}
                         className="cursor-pointer hover:bg-gray-200 bg-white p-2 m-2 rounded-md"
-                        onClick={() => setNewTeacherName(teacher.name)}
+                        onClick={() =>
+                          setNewTeacherName(teacher.SubjectTeacherName)
+                        }
                       >
-                        {teacher.name}
+                        {teacher.SubjectTeacherName}
                       </div>
                     ))}
                   </div>
@@ -602,10 +614,10 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
                       <AiOutlineUser size={28} className="text-gray-500" />
                       <div>
                         <p className="font-medium text-gray-700">
-                          {teacher.name}
+                          {teacher.SubjectTeacherName}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {teacher.position}
+                          {teacher.SubjectTeacherPosition}
                         </p>
                       </div>
                     </div>
@@ -615,7 +627,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
                         setSelectedTeachers((prev) =>
                           prev.filter((_, i) => i !== index)
                         );
-                        handleDeleteTeacher(teacher.id);
+                        handleDeleteTeacher(teacher.SubjectTeacherID);
                       }}
                     >
                       <AiOutlineClose size={20} />

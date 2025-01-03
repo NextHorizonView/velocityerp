@@ -26,9 +26,9 @@ interface Teacher {
   name: string;
 }
 interface SelectedTeacher {
-  id: string;
-  name: string;
-  position: string;
+  SubjectTeacherID: string;
+  SubjectTeacherName: string;
+  SubjectTeacherPosition: string;
 }
 
 const AddSubject: React.FC = () => {
@@ -88,7 +88,8 @@ const AddSubject: React.FC = () => {
           ...selectedTeachers.filter(
             (newTeacher) =>
               !existingTeachers.some(
-                (t: { id: string }) => t.id === newTeacher.id
+                (t: { SubjectTeacherID: string }) =>
+                  t.SubjectTeacherID === newTeacher.SubjectTeacherID
               )
           ),
         ];
@@ -198,9 +199,9 @@ const AddSubject: React.FC = () => {
     setSelectedTeachers([
       ...selectedTeachers,
       {
-        id: teacherToAdd.id,
-        name: teacherToAdd.name,
-        position: newTeacherPosition,
+        SubjectTeacherID: teacherToAdd.id,
+        SubjectTeacherName: teacherToAdd.name,
+        SubjectTeacherPosition: newTeacherPosition,
       },
     ]);
     setNewTeacherName("");
@@ -342,10 +343,12 @@ const AddSubject: React.FC = () => {
                   <td className="p-3 flex items-center space-x-2">
                     <AiOutlineUser size={20} className="text-gray-500" />
                     <span className="font-medium text-gray-700">
-                      {teacher.name}
+                      {teacher.SubjectTeacherName}
                     </span>
                   </td>
-                  <td className="p-3 text-gray-500">{teacher.position}</td>
+                  <td className="p-3 text-gray-500">
+                    {teacher.SubjectTeacherPosition}
+                  </td>
                   <td className="p-3">
                     <button
                       className="text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -446,10 +449,10 @@ const AddSubject: React.FC = () => {
                       <AiOutlineUser size={28} className="text-gray-500" />
                       <div>
                         <p className="font-medium text-gray-700">
-                          {teacher.name}
+                          {teacher.SubjectTeacherName}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {teacher.position}
+                          {teacher.SubjectTeacherPosition}
                         </p>
                       </div>
                     </div>
