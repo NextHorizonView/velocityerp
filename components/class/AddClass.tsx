@@ -39,7 +39,7 @@ const AddClass: React.FC = () => {
     const [selectedDivision, setSelectedDivision] = useState<string>("");
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [Classteachers, setClassTeachers] = useState<Teacher[]>([]);
-    const [toShowClassTeachers, setToShowClassTeachers] = useState<Teacher[]>([]);
+    // const [toShowClassTeachers, setToShowClassTeachers] = useState<Teacher[]>([]);
 
 
     const [selectedClassteacher,setSelectedClassteacher] =  useState<Teacher[]>([]);
@@ -202,9 +202,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
 
 // to filter teachers
-      const filteredTeachers = teachers.filter((teacher) =>
-        teacher.name?.toLowerCase().includes(searchTerm?.toLowerCase())
-      );
+
 
       const filteredClassTeachers = selectedClassteacher.filter((teacher) =>
         teacher.name?.toLowerCase().includes(ClasssearchTerm?.toLowerCase())
@@ -733,6 +731,6 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
 export default AddClass;
 
-function setIsDialogOpen(arg0: boolean) {
-    throw new Error("Function not implemented.");
-}
+// function setIsDialogOpen(arg0: boolean) {
+//     throw new Error("Function not implemented.");
+// }

@@ -31,10 +31,7 @@ const fetcher = async (): Promise<ClassData[]> => {
   })) as ClassData[];
 };
 
-const mockSubjects: Subject[] = [
-  { id: 1, name: "7th", classDiv: "VII A" },
-  { id: 2, name: "8th", classDiv: "VIII B" },
-];
+
 
 const ITEMS_PER_PAGE = 80;
 
@@ -42,7 +39,7 @@ const SubjectTable = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<keyof ClassData | "newest">("newest");
-  const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
+  // const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
   const [currentPage, setCurrentPage] = useState(1);
   const [classList, setClassList] = useState<ClassData[]>([]);
   // const [totalPages, setTotalPages] = useState(1);
@@ -59,6 +56,8 @@ const SubjectTable = () => {
   //   }
   // };
   //
+  console.log(classList);
+  
 
   const { data: fetchedClasses, error } = useSWR<ClassData[]>('classes', fetcher);
   console.log("fetched claases", fetchedClasses);
