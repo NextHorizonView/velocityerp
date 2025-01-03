@@ -34,7 +34,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
   const router = useRouter();
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [SubjectTeachersId, setSubjectTeachersId] = useState<Teacher[]>([]);
   const [selectedTeachers, setSelectedTeachers] = useState<SelectedTeacher[]>(
     []
   );
@@ -44,9 +44,9 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
 
   const [subjectData, setSubjectData] = useState<{
     name: string;
-    files: { name: string; url: string }[];
-    teachers: Teacher[];
-  }>({ name: "", files: [], teachers: [] });
+    files: { Name: string; Url: string }[];
+    SubjectTeachersId: Teacher[];
+  }>({ name: "", files: [], SubjectTeachersId: [] });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -61,8 +61,8 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
             ...subjectData,
             name: subjectData.SubjectName || "",
             files: subjectData.SubjectFile || [],
-            teachers:
-              subjectData.teachers.map(
+            SubjectTeachersId:
+              subjectData.SubjectTeachersId.map(
                 (teacher: {
                   SubjectTeacherID: string;
                   SubjectTeacherName: string;
@@ -93,7 +93,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
           SubjectTeacherName: doc.data()["First Name"],
         }));
 
-        setTeachers(fetchedTeachers);
+        setSubjectTeachersId(fetchedTeachers);
       } catch (error) {
         console.error("Error fetching teachers:", error);
       }
@@ -108,7 +108,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
       return;
     }
 
-    const teacherToAdd = teachers.find(
+    const teacherToAdd = SubjectTeachersId.find(
       (teacher) => teacher.SubjectTeacherName === newTeacherName
     );
 
@@ -134,10 +134,10 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
     }
   };
 
-  const handleUpload = async (): Promise<{ name: string; url: string }[]> => {
+  const handleUpload = async (): Promise<{ Name: string; Url: string }[]> => {
     setLoading(true);
     const uploadPromises = selectedFile.map((file) => {
-      return new Promise<{ name: string; url: string }>((resolve, reject) => {
+      return new Promise<{ Name: string; Url: string }>((resolve, reject) => {
         const storageRef = ref(storage, `subjectfile/${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -157,7 +157,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
           async () => {
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve({ name: file.name, url: downloadURL });
+              resolve({ Name: file.name, Url: downloadURL });
             } catch (error) {
               console.error(
                 `Error fetching download URL for ${file.name}:`,
@@ -196,8 +196,8 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
       const updatedSubjectData = {
         SubjectName: subjectData.name || existingData?.SubjectName || "",
         SubjectFile: updatedSubjectFile,
-        teachers: [
-          ...(subjectData.teachers || existingData?.teachers || []),
+        SubjectTeachersId: [
+          ...(subjectData.SubjectTeachersId || existingData?.teachers || []),
           ...selectedTeachers,
         ],
         SubjectUpatedAt: serverTimestamp(),
@@ -205,7 +205,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
 
       await updateDoc(subjectsRef, updatedSubjectData);
 
-      setSubjectData({ name: "", files: [], teachers: [] });
+      setSubjectData({ name: "", files: [], SubjectTeachersId: [] });
       router.push("/subjects");
 
       alert("Subject updated successfully!");
@@ -240,7 +240,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
       const updatedSubjectData = {
         SubjectName: subjectData.name || existingData?.SubjectName || "",
         SubjectFile: existingData?.SubjectFile || [],
-        teachers: updatedTeachers, // Updated list of teachers after deletion
+        SubjectTeachersId: updatedTeachers, // Updated list of teachers after deletion
         SubjectUpatedAt: serverTimestamp(),
       };
 
@@ -250,7 +250,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
       // Update the local state after deletion
       setSubjectData((prev) => ({
         ...prev,
-        teachers: updatedTeachers,
+        SubjectTeachersId: updatedTeachers,
       }));
 
       alert("Teacher deleted successfully!");
@@ -261,7 +261,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
       setLoading(false);
     }
   };
-  const filteredTeachers = teachers.filter((teacher) =>
+  const filteredTeachers = SubjectTeachersId.filter((teacher) =>
     teacher?.SubjectTeacherName?.toLowerCase().includes(
       newTeacherName?.toLowerCase() || ""
     )
@@ -377,8 +377,8 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
           {subjectData.files.length > 0 && (
             <>
               {subjectData.files.map((file, index) => {
-                const fileUrl = file.url;
-                const fileName = file.name;
+                const fileUrl = file.Url;
+                const fileName = file.Name;
 
                 if (!fileUrl) {
                   return null;
@@ -458,7 +458,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
           <table className="w-full text-left border-collapse">
             <thead></thead>
             <tbody>
-              {subjectData.teachers.map((teacher, index) => (
+              {subjectData.SubjectTeachersId.map((teacher, index) => (
                 <tr key={index} className="border-b hover:bg-gray-100">
                   <td className="p-3">
                     <div className="flex items-center text-gray-500">
