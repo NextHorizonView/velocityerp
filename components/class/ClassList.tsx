@@ -17,13 +17,13 @@ export type Subject = {
 
 export interface ClassData {
   id: string;
-  className: string;
-  classDivision: string;
-  classTeacherId: string;
-  classSubjects: { subjectName: string; subjectId: string; subjectTeacherId: string }[];
+  ClassName: string;
+  ClassDivision: string;
+  ClassTeacherId: string[];
+  ClassSubjects: { SubjectName: string; SubjectId: string; SubjectTeacherID: string }[];
 }
 
-const fetcher = async () => {
+const fetcher = async (): Promise<ClassData[]> => {
   const querySnapshot = await getDocs(collection(db, 'classes'));
   return querySnapshot.docs.map((doc) => ({
     id: doc.id,
@@ -82,7 +82,7 @@ const SubjectTable = () => {
   };
 
   const filteredClasses = fetchedClasses.filter((classItem) =>
-    classItem.className.toLowerCase().includes(searchTerm.toLowerCase())
+    classItem.ClassName?.toLowerCase().includes(searchTerm?.toLowerCase())
   );
 
   const totalPages = Math.ceil(fetchedClasses.length / ITEMS_PER_PAGE);
@@ -180,14 +180,15 @@ console.log("fonal classes", currentClasses);
             {currentClasses.map((classItem) => (
               <tr key={classItem.id} className="border-b hover:bg-gray-100">
                 <td className="px-4 py-2">
-                {classItem.classSubjects?.map((subject, index) => (
+                {/* {classItem.classSubjects?.map((subject, index) => (
                   <div key={index}>
                     {subject.subjectName}
                   </div>
-                ))}
+                ))} */}
 
+{classItem.ClassName} 
                 </td>
-                <td className="px-4 py-2">{classItem.className} {classItem.classDivision}</td>
+                <td className="px-4 py-2">{classItem.ClassDivision}</td>
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
                     <Link href="/editsubject">
