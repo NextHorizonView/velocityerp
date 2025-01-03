@@ -33,7 +33,7 @@ interface SelectedTeacher {
 
 const AddSubject: React.FC = () => {
   const [SubjectName, setSubjectName] = useState("");
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [SubjectTeachersId, setSubjectTeachersId] = useState<Teacher[]>([]);
   const [selectedTeachers, setSelectedTeachers] = useState<SelectedTeacher[]>(
     []
   );
@@ -53,7 +53,7 @@ const AddSubject: React.FC = () => {
           name: doc.data()["First Name"],
         }));
 
-        setTeachers(fetchedTeachers);
+        setSubjectTeachersId(fetchedTeachers);
       } catch (error) {
         console.error("Error fetching teachers:", error);
       }
@@ -96,7 +96,7 @@ const AddSubject: React.FC = () => {
 
         await updateDoc(docRef, {
           assignedTeachers: updatedTeachers,
-          subjectId: existingData.subjectId || querySnapshot.docs[0].id, // Ensure subjectId is updated
+          SubjectId: existingData.SubjectId || querySnapshot.docs[0].id, // Ensure SubjectId is updated
           SubjectFile: fileLinks,
           SubjectUpatedAt: serverTimestamp(), // Add the timestamp for updates
         });
@@ -107,13 +107,13 @@ const AddSubject: React.FC = () => {
         const newSubjectRef = await addDoc(subjectsRef, {
           SubjectName,
           SubjectFile: fileLinks,
-          teachers: selectedTeachers,
+          SubjectTeachersId: selectedTeachers,
           SubjectCreatedAt: serverTimestamp(),
         });
 
         // Update with the generated SubjectID and timestamp
         await updateDoc(newSubjectRef, {
-          subjectId: newSubjectRef.id, // Assign Firestore ID as SubjectID
+          SubjectId: newSubjectRef.id, // Assign Firestore ID as SubjectID
           SubjectUpatedAt: serverTimestamp(), // Add updatedAt timestamp for consistency
         });
 
@@ -131,11 +131,11 @@ const AddSubject: React.FC = () => {
     }
   };
 
-  const handleUpload = async (): Promise<{ name: string; url: string }[]> => {
+  const handleUpload = async (): Promise<{ Name: string; Url: string }[]> => {
     setLoading(true);
 
     const uploadPromises = selectedFile.map((file) => {
-      return new Promise<{ name: string; url: string }>((resolve, reject) => {
+      return new Promise<{ Name: string; Url: string }>((resolve, reject) => {
         const storageRef = ref(storage, `subjectfile/${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -156,7 +156,7 @@ const AddSubject: React.FC = () => {
             try {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               console.log(`File available at ${downloadURL}`);
-              resolve({ name: file.name, url: downloadURL });
+              resolve({ Name: file.name, Url: downloadURL });
             } catch (error) {
               console.error(
                 `Error fetching download URL for ${file.name}:`,
@@ -177,7 +177,7 @@ const AddSubject: React.FC = () => {
     }
   };
 
-  const filteredTeachers = teachers.filter((teacher) =>
+  const filteredTeachers = SubjectTeachersId.filter((teacher) =>
     teacher?.name?.toLowerCase().includes(newTeacherName?.toLowerCase() || "")
   );
 
@@ -187,7 +187,7 @@ const AddSubject: React.FC = () => {
       return;
     }
 
-    const teacherToAdd = teachers.find(
+    const teacherToAdd = SubjectTeachersId.find(
       (teacher) => teacher.name === newTeacherName
     );
 
