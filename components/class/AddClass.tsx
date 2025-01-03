@@ -25,15 +25,15 @@ interface Teacher {
 
 interface Subject {
     toLowercase(): unknown;
-    subjectId: string;
+    SubjectId: string;
     SubjectName: string;
-    teachers: {
-        name: string; id: string 
+    SubjectTeachersId: {
+        SubjectTeacherName: string; SubjectTeacherID: string 
 }[];
 }
 
 const AddClass: React.FC = () => {
-    const [className, setClassName] = useState<string>("");
+    const [ClassName, setClassName] = useState<string>("");
     const [divisions, setDivisions] = useState<string[]>(["A (Default)", "B"]);
     const [newDivision, setNewDivision] = useState<string>("");
     const [selectedDivision, setSelectedDivision] = useState<string>("");
@@ -42,9 +42,10 @@ const AddClass: React.FC = () => {
     const [toShowClassTeachers, setToShowClassTeachers] = useState<Teacher[]>([]);
 
 
-    // const [selectedClassteacher,setSelectedClassteacher] =
-    //     useState<string>("");
+    const [selectedClassteacher,setSelectedClassteacher] =  useState<Teacher[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [selectedSubjectTeacher,setSelectedSubjectTeacher] =  useState<Teacher[]>([]);
+
     const [searchTerm, setSearchTerm] = useState('');
     // const [searchSubject, setSearchSubject] = useState('');
 
@@ -52,6 +53,10 @@ const AddClass: React.FC = () => {
 // const [subjectDropdown, setSubjectDropdown] = useState<boolean>(false);
 const [subjectDropdowns, setSubjectDropdowns] = useState<boolean[]>([]);
 const [searchSubjects, setSearchSubjects] = useState<string[]>([]);
+const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+const [isDialogOpenSubject, setIsDialogOpenSubject] = useState(false);
+
 
 
   const [showNewDivisionInput, setShowNewDivisionInput] = useState<boolean>(false);
@@ -69,8 +74,11 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                     name: doc.data()["First Name"],
                     position: doc.data().Position,
                 }));
-                setTeachers(fetchedTeachers);
-                setClassTeachers(fetchedTeachers);
+                // setTeachers(fetchedTeachers);
+                // setClassTeachers(fetchedTeachers);
+                setSelectedClassteacher(fetchedTeachers);
+                setSelectedSubjectTeacher(fetchedTeachers);
+
                 //
                 setSearchSubjects(new Array(fetchedTeachers.length).fill(''));
                 setSubjectDropdowns(new Array(fetchedTeachers.length).fill(false));
@@ -83,9 +91,9 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
             try {
                 const querySnapshot = await getDocs(collection(db, "subjects"));
                 const fetchedSubjects = querySnapshot.docs.map((doc) => ({
-                    subjectId: doc.id,
+                    SubjectId: doc.id,
                     SubjectName: doc.data().SubjectName,
-                    teachers: doc.data().teachers,
+                    SubjectTeachersId: doc.data().SubjectTeachersId,
                     toLowercase: () => doc.data().SubjectName?.toLowerCase(),
                 }));
                 setSubjects(fetchedSubjects);
@@ -127,20 +135,20 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
     const handleSubmit = async () => {
         
-        const classId = uuidv4();
-        const classSubjects = subjects.map((subject) => ({
+        const ClassId = uuidv4();
+        const ClassSubjects = subjects.map((subject) => ({
             SubjectName: subject.SubjectName,
-            subjectId: subject.subjectId,
-            subjectTeacherId: subject.teachers[0]?.id || "",
+            SubjectId: subject.SubjectId,
+            SubjectTeacherID: Array.isArray(subject.SubjectTeachersId) && subject.SubjectTeachersId.length > 0 ? subject.SubjectTeachersId[0].SubjectTeacherID : "",
         }));
 
         const classteacherId=Classteachers.map((teacher) => teacher.id);
         const classData = {
-            classId,
-            className,
-            classDivision: selectedDivision,
-            classTeacherId: classteacherId,
-            classSubjects,
+            ClassId,
+            ClassName,
+            ClassDivision: selectedDivision,
+            ClassTeacherId: classteacherId,
+            ClassSubjects,
         };
 
         console.log("Submitting Class Data: ", classData);
@@ -167,6 +175,20 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
         setSubjectDropdowns(newSubjectDropdowns);
       };
 
+      const saveClassTeachers = () => {
+        // setClassTeachers(selectedClassteacher);
+        setClassTeachers(filteredClassTeachers);
+        setIsDialogOpen(false);
+        // console.log('Saving class teachers:', selectedClassTeachers);
+    };
+
+    const saveSubjectTeachers = () => {
+        // setClassTeachers(selectedClassteacher);
+        setTeachers(filteredSubjectTeachers);
+        setIsDialogOpenSubject(false);
+        // console.log('Saving class teachers:', selectedSubjectTeacher);
+    };
+
       // selected subject 
       const handleSubjectSelect = (teacherIndex:number, SubjectName:string) :void=> {
         const newSelectedSubjects = [...selectedSubjects];
@@ -184,9 +206,16 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
         teacher.name?.toLowerCase().includes(searchTerm?.toLowerCase())
       );
 
-      const filteredClassTeachers = Classteachers.filter((teacher) =>
+      const filteredClassTeachers = selectedClassteacher.filter((teacher) =>
         teacher.name?.toLowerCase().includes(ClasssearchTerm?.toLowerCase())
       );
+
+      const filteredSubjectTeachers = selectedSubjectTeacher.filter((teacher) =>
+        teacher.name?.toLowerCase().includes(searchTerm?.toLowerCase())
+      );
+
+
+
 
     return (
         <div className="p-6 rounded-md">
@@ -220,7 +249,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                     id="className"
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
                     placeholder="Enter Class Name"
-                    value={className}
+                    value={ClassName}
                     onChange={(e) => setClassName(e.target.value)}
                     required
                 />
@@ -305,9 +334,10 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 <div className="mb-6 px-6 pt-11">
                 <div className="flex items-center space-x-3 mb-4">
                     <h3 className="text-lg font-medium text-[#666666]">Class Teacher</h3>
-                    <Dialog>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b]">
+                            <Button className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b]"
+                            >
                                 Add Teacher
                             </Button>
                         </DialogTrigger>
@@ -342,7 +372,13 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                                 <p className="text-sm font-medium text-gray-700">
                                                    {teacher.name}
                                                 </p>
-                                                <select
+
+                                     <p 
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+                                     
+                                     > {teacher.position} </p>
+                                                
+                                             {/* <select
                                                     id="subjectDropdown"
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
                                                 >
@@ -354,8 +390,10 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                                         >
                                                             {teacher.position}
                                                         </option>
-                                                    ))}
-                                                </select>
+                                                    ))} 
+                                                </select> */}
+
+                                                
                                             </div>
                                         </div>
                                         <button className="text-red-600 hover:text-red-700">
@@ -364,10 +402,20 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                     </div>
                                 ))}
 
+
+
+
+
+
+
+
+
+                                
+
                         
 
                                 {/* Save Button */}
-                                <Button className="w-full bg-[#576086] text-white hover:bg-[#414d6b]">
+                                <Button className="w-full bg-[#576086] text-white hover:bg-[#414d6b]" onClick={saveClassTeachers}>
                                     Save
                                 </Button>
                             </div>
@@ -378,7 +426,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
                 <table className="w-full text-left border-collapse">
                     <thead></thead>
-                    <tbody>
+                    {/* <tbody>
                         {Classteachers
                             .filter((teacher) =>
                                 teacher.name?.toLowerCase().includes(ClasssearchTerm?.toLowerCase())
@@ -405,7 +453,39 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                     </td>
                                 </tr>
                             ))}
+                    </tbody> */}
+
+
+<tbody>
+                        {Classteachers 
+
+                            // .filter((teacher) =>
+                            //     teacher.name?.toLowerCase().includes(ClasssearchTerm?.toLowerCase())
+                            // )
+                            .map((teacher, index) => (
+                                <tr key={index} className="border-b hover:bg-gray-100">
+                                    <td className="p-3">
+                                        <div className="flex items-center text-gray-500">
+                                            <TbGridDots size={20} />
+                                        </div>
+                                    </td>
+                                    <td className="p-3 flex items-center space-x-2">
+                                        <AiOutlineUser size={20} className="text-gray-500" />
+                                        <span className="font-medium text-gray-700">{teacher.name}</span>
+                                    </td>
+                                    <td className="p-3 text-gray-500">{teacher.position}</td>
+                                    <td className="p-3">
+                                        <button
+                                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            onClick={() => setClassTeachers(Classteachers.filter((_, i) => i !== index))}
+                                        >
+                                            <AiOutlineClose size={20} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
                     </tbody>
+               
                 </table>
             </div>
 
@@ -413,7 +493,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
             <div className="mb-6 px-6 pt-11">
                 <div className="flex items-center space-x-3 mb-4">
                     <h3 className="text-lg font-medium text-[#666666]">Subject Teachers</h3>
-                    <Dialog>
+                    <Dialog open={isDialogOpenSubject} onOpenChange={setIsDialogOpenSubject}>
                         <DialogTrigger asChild>
                             <Button className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b]">
                                 Add Subject Teacher
@@ -505,7 +585,9 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
 {/* WITH SEARCH FILTER  */}
 
-{filteredTeachers.map((teacher, index) => (
+{/* {filteredTeachers.map((teacher, index) => ( */}
+{filteredSubjectTeachers.map((teacher, index) => (
+
   <div
     key={index}
     className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between"
@@ -550,8 +632,8 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                 />
               </div>
               {subjects.map((subject, subjectIndex) =>
-                subject.teachers.map((as, teacherIndex) =>
-                  as.name === teacher.name &&
+                subject.SubjectTeachersId.map((as, teacherIndex) =>
+                  as.SubjectTeacherName === teacher.name &&
                   subject.SubjectName?.toLowerCase().includes(searchSubjects[index]?.toLowerCase()) ? (
                     <div key={`${subjectIndex}-${teacherIndex}`} className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                     onClick={() => handleSubjectSelect(index, subject.SubjectName)}
@@ -595,7 +677,9 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                 </div> */}
 
                                 {/* Save Button */}
-                                <Button className="w-full bg-[#576086] text-white hover:bg-[#414d6b]">
+                                <Button className="w-full bg-[#576086] text-white hover:bg-[#414d6b]"
+                                onClick={saveSubjectTeachers}
+                                >
                                     Save
                                 </Button>
                             </div>
@@ -608,9 +692,9 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                     <thead></thead>
                     <tbody>
                         {teachers
-                            .filter((teacher) =>
-                                teacher.name?.toLowerCase().includes(searchTerm?.toLowerCase())
-                            )
+                            // .filter((teacher) =>
+                            //     teacher.name?.toLowerCase().includes(searchTerm?.toLowerCase())
+                            // )
                             .map((teacher, index) => (
                                 <tr key={index} className="border-b hover:bg-gray-100">
                                     <td className="p-3">
@@ -648,3 +732,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 };
 
 export default AddClass;
+
+function setIsDialogOpen(arg0: boolean) {
+    throw new Error("Function not implemented.");
+}
