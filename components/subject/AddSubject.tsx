@@ -97,7 +97,7 @@ const AddSubject: React.FC = () => {
           assignedTeachers: updatedTeachers,
           subjectId: existingData.subjectId || querySnapshot.docs[0].id, // Ensure subjectId is updated
           SubjectFile: fileLinks,
-          updatedAt: serverTimestamp(), // Add the timestamp for updates
+          SubjectUpatedAt: serverTimestamp(), // Add the timestamp for updates
         });
 
         alert("Subject updated successfully!");
@@ -107,13 +107,13 @@ const AddSubject: React.FC = () => {
           SubjectName,
           SubjectFile: fileLinks,
           teachers: selectedTeachers,
-          createdAt: serverTimestamp(), // Add creation timestamp
+          SubjectCreatedAt: serverTimestamp(),
         });
 
         // Update with the generated SubjectID and timestamp
         await updateDoc(newSubjectRef, {
           subjectId: newSubjectRef.id, // Assign Firestore ID as SubjectID
-          updatedAt: serverTimestamp(), // Add updatedAt timestamp for consistency
+          SubjectUpatedAt: serverTimestamp(), // Add updatedAt timestamp for consistency
         });
 
         alert("Subject added successfully!");

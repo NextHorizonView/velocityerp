@@ -196,7 +196,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
           ...(subjectData.teachers || existingData?.teachers || []),
           ...selectedTeachers,
         ],
-        updatedAt: serverTimestamp(),
+        SubjectUpatedAt: serverTimestamp(),
       };
 
       await updateDoc(subjectsRef, updatedSubjectData);
@@ -237,7 +237,7 @@ const EditSubject: React.FC<EditSubjectFormProps> = ({ subjectid }) => {
         SubjectName: subjectData.name || existingData?.SubjectName || "",
         SubjectFile: existingData?.SubjectFile || [],
         teachers: updatedTeachers, // Updated list of teachers after deletion
-        updatedAt: serverTimestamp(),
+        SubjectUpatedAt: serverTimestamp(),
       };
 
       // Update Firestore document
