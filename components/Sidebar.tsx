@@ -21,6 +21,7 @@ import castEducation from "@/public/castEducation.jpg";
 import { AiOutlineQuestionCircle } from "react-icons/ai";
 import { FaUserGraduate } from "react-icons/fa";
 import withAdminAuth from '@/lib/withAdminAuth';
+import { getAuth, signOut } from "firebase/auth";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -30,6 +31,21 @@ interface SidebarProps {
 const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const pathname = usePathname() || "";
   const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(false);
+
+  const handleLogout = () => {
+    // Clear localStorage
+    localStorage.clear();
+
+    // Clear Firebase IndexedDB storage
+    const auth = getAuth();
+    signOut(auth)
+      .then(() => {
+        console.log("Logged out successfully");
+      })
+      .catch((error) => {
+        console.error("Error logging out:", error);
+      });
+  };
 
   const menuItems = [
     {
@@ -192,6 +208,15 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
       >
         <RiArrowLeftLine size={20} className="text-gray-600" />
         <span className="ml-4 text-gray-700">Hide Sidebar</span>
+      </div>
+      <div className="mt-8 flex justify-center">
+        {/* Logout Button */}
+        <button
+          className="bg-[#F7B696] text-white px-3 flex py-1.5 rounded-md hover:bg-gray-600 transition"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

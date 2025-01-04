@@ -11,7 +11,7 @@ import {
 } from "react-icons/ri";
 import { IoIosNotifications } from "react-icons/io";
 import { GoogleTranslate } from "@/components/Translation/GoogleTranslate"; // Import your component
-import { getAuth, signOut } from "firebase/auth";
+
 interface DashboardHeaderProps {
   isCollapsed: boolean;
 }
@@ -85,20 +85,7 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
     
   };
 
-  const handleLogout = () => {
-    // Clear localStorage
-    localStorage.clear();
 
-    // Clear Firebase IndexedDB storage
-    const auth = getAuth();
-    signOut(auth)
-      .then(() => {
-        console.log("Logged out successfully");
-      })
-      .catch((error) => {
-        console.error("Error logging out:", error);
-      });
-  };
 
   return (
     <div
@@ -145,13 +132,7 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
           </button>
         </div>
 
-        {/* Logout Button */}
-        <button
-          className="bg-red-500 text-white px-3 py-1.5 rounded-md hover:bg-gray-600 transition"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
+        
 
         {/* Right side */}
         <div className="flex items-center gap-4 lg:gap-10">
