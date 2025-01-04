@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useState, useEffect } from "react";
 import { MdEdit } from "react-icons/md";
@@ -15,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TbGridDots } from "react-icons/tb";
-
+import { Timestamp } from 'firebase/firestore';
 
 interface Teacher {
     id: string;
@@ -34,13 +33,13 @@ interface Subject {
 
 const AddClass: React.FC = () => {
     const [ClassName, setClassName] = useState<string>("");
-    const [divisions, setDivisions] = useState<string[]>(["A (Default)", "B"]);
+    const [divisions, setDivisions] = useState<string[]>(["A", "B"]);
     const [newDivision, setNewDivision] = useState<string>("");
     const [selectedDivision, setSelectedDivision] = useState<string>("");
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [Classteachers, setClassTeachers] = useState<Teacher[]>([]);
-    // const [toShowClassTeachers, setToShowClassTeachers] = useState<Teacher[]>([]);
 
+    // const [toShowClassTeachers, setToShowClassTeachers] = useState<Teacher[]>([]);
 
     const [selectedClassteacher,setSelectedClassteacher] =  useState<Teacher[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -58,7 +57,8 @@ const [isDialogOpen, setIsDialogOpen] = useState(false);
 const [isDialogOpenSubject, setIsDialogOpenSubject] = useState(false);
 
 
-
+const [filterClassTeachers, setFilterClassTeachers] = useState<Teacher[]>([]);
+const [filterSubjectTeachers, setFilterSubjectTeachers] = useState<Teacher[]>([]);
   const [showNewDivisionInput, setShowNewDivisionInput] = useState<boolean>(false);
 
     // const [newTeacherName, setNewTeacherName] = useState('');
@@ -106,7 +106,29 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
         fetchSubjects();
     }, []);
 
+    useEffect(() => {
+        if (ClasssearchTerm) {
+            const filtered = selectedClassteacher.filter((teacher) =>
+                teacher?.name?.toLowerCase().includes(ClasssearchTerm?.toLowerCase())
+            );
+            setFilterClassTeachers(filtered);
+        } else {
+            setFilterClassTeachers([]);
+        }
+    }, [ClasssearchTerm, Classteachers]);
 
+
+
+    useEffect(() => {
+        if (searchTerm) {
+            const filtered = selectedSubjectTeacher.filter((teacher) =>
+                teacher?.name?.toLowerCase().includes(searchTerm?.toLowerCase())
+            );
+            setFilterSubjectTeachers(filtered);
+        } else {
+            setFilterSubjectTeachers([]);
+        }
+    }, [searchTerm, selectedSubjectTeacher]);
 
     const handleAddDivision = () => {
         if (newDivision.trim() && !divisions.includes(newDivision)) {
@@ -149,8 +171,11 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
             ClassDivision: selectedDivision,
             ClassTeacherId: classteacherId,
             ClassSubjects,
+            ClassCreatedAt: Timestamp.fromDate(new Date()),
+            ClassUpdatedAt: Timestamp.fromDate(new Date()),
         };
-
+   
+        
         console.log("Submitting Class Data: ", classData);
 
         try {
@@ -177,14 +202,14 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
       const saveClassTeachers = () => {
         // setClassTeachers(selectedClassteacher);
-        setClassTeachers(filteredClassTeachers);
+        setClassTeachers([...Classteachers,...filterClassTeachers]);
         setIsDialogOpen(false);
         // console.log('Saving class teachers:', selectedClassTeachers);
     };
 
     const saveSubjectTeachers = () => {
         // setClassTeachers(selectedClassteacher);
-        setTeachers(filteredSubjectTeachers);
+        setTeachers([...teachers,...filterSubjectTeachers]);
         setIsDialogOpenSubject(false);
         // console.log('Saving class teachers:', selectedSubjectTeacher);
     };
@@ -204,15 +229,23 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 // to filter teachers
 
 
-      const filteredClassTeachers = selectedClassteacher.filter((teacher) =>
-        teacher.name?.toLowerCase().includes(ClasssearchTerm?.toLowerCase())
-      );
+    //   const filteredClassTeachers = selectedClassteacher.filter((teacher) =>
+    //     teacher.name?.toLowerCase().includes(ClasssearchTerm?.toLowerCase())
+    //   );
 
-      const filteredSubjectTeachers = selectedSubjectTeacher.filter((teacher) =>
-        teacher.name?.toLowerCase().includes(searchTerm?.toLowerCase())
-      );
+    //   const filteredSubjectTeachers = selectedSubjectTeacher.filter((teacher) =>
+    //     teacher.name?.toLowerCase().includes(searchTerm?.toLowerCase())
+    //   );
 
+      const handleRemoveClassTeacher = (teacherId: string) => {
+        setFilterClassTeachers(filterClassTeachers.filter((teacher) => teacher.id !== teacherId));
+    };
 
+    const handleRemoveSubjectTeacher = (teacherId: string) => {
+        const updatedTeachers = filterSubjectTeachers.filter((teacher) => teacher.id !== teacherId);
+        console.log("Updated Teachers: ", updatedTeachers);
+        setFilterSubjectTeachers(updatedTeachers);
+    };
 
 
     return (
@@ -357,7 +390,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                 </div>
 
                                 {/* Selected Teacher Card */}
-                                {filteredClassTeachers.map((teacher, index) => (
+                                {filterClassTeachers.map((teacher, index) => (
                                     <div
                                         key={index}
                                         className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between"
@@ -394,7 +427,9 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                                 
                                             </div>
                                         </div>
-                                        <button className="text-red-600 hover:text-red-700">
+                                        <button className="text-red-600 hover:text-red-700"
+                                          onClick={() => handleRemoveClassTeacher(teacher.id)}
+                                        >
                                             <AiOutlineClose />
                                         </button>
                                     </div>
@@ -584,7 +619,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 {/* WITH SEARCH FILTER  */}
 
 {/* {filteredTeachers.map((teacher, index) => ( */}
-{filteredSubjectTeachers.map((teacher, index) => (
+{filterSubjectTeachers.map((teacher, index) => (
 
   <div
     key={index}
@@ -646,7 +681,10 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
         </div>
       </div>
     </div>
-    <button className="text-red-600 hover:text-red-700">
+    <button className="text-red-600 hover:text-red-700"
+                     onClick={() => handleRemoveSubjectTeacher(teacher.id)}
+    
+    >
       <AiOutlineClose />
     </button>
   </div>
