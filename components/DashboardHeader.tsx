@@ -83,7 +83,7 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
       return 'Add Class'
     }
 
-    return 'Dashbord'
+    return 'Dashboard'
   };
 
 
