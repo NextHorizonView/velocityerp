@@ -82,7 +82,8 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
     else if (pathname === '/addclass'){
       return 'Add Class'
     }
-    
+
+    return 'Dashbord'
   };
 
 

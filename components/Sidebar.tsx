@@ -105,8 +105,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             isActive =
               pathname === "/subjects" ||
               pathname === "/addsubject" ||
-              pathname === "/editsubject" ||
-              pathname === "addsubject-exp";
+              pathname === "/editsubject" 
           }
           // Custom logic for "Students"
           else if (item.label === "Students") {
