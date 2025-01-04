@@ -353,6 +353,13 @@ export default function Students() {
             >
               Download CSV
             </Button>
+            <Button
+              variant="default"
+              className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+              onClick={handleDownloadCsv}
+            >
+              Download PDF
+            </Button>
           </div>
           <DialogFooter>
             <DialogClose asChild>
