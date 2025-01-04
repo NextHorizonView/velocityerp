@@ -6,7 +6,7 @@ import Calendar from '@/components/Calender';
 import Events from '@/components/Events';  // Added Events import
 import { ReactNode } from 'react';
 import withAdminAuth from '@/lib/withAdminAuth';
-import { ChevronLeft, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 interface DashboardLayoutProps {
     children: ReactNode;
