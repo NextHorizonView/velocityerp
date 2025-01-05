@@ -13,6 +13,7 @@ import {
   RiArrowLeftLine,
   RiArrowRightDoubleFill,
   RiUserAddLine,
+  RiLogoutBoxLine,
 } from "react-icons/ri";
 
 import { MdClass, MdOutlineSubject } from "react-icons/md";
@@ -33,8 +34,16 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(false);
 
   const handleLogout = () => {
-    // Clear localStorage
-    localStorage.clear();
+    // Show confirmation popup
+    const userConfirmed = window.confirm("Are you sure you want to logout?");
+
+    if (!userConfirmed) {
+      // If the user clicks "Cancel," do nothing
+      return;
+    }
+
+    // Proceed with logout
+    localStorage.clear(); // Clear localStorage
 
     // Clear Firebase IndexedDB storage
     const auth = getAuth();
@@ -69,7 +78,15 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
       label: "Notice",
       path: "/notice",
     },
+    {
+      icon: <RiLogoutBoxLine size={20} />, // Use an appropriate logout icon
+      label: "Logout",
+      action: handleLogout, // Instead of a path, provide the action
+      className:
+        "bg-[#F7B696] text-white px-3 flex py-1.5 rounded-md hover:bg-gray-600 transition",
+    },
   ];
+
 
   if (isCollapsed) {
     return (
@@ -105,7 +122,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             isActive =
               pathname === "/subjects" ||
               pathname === "/addsubject" ||
-              pathname === "/editsubject" 
+              pathname === "/editsubject";
           }
           // Custom logic for "Students"
           else if (item.label === "Students") {
@@ -113,14 +130,12 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
               pathname === "/students" ||
               pathname === "/studentform" ||
               pathname.startsWith("/editstudent/");
-          }
-          else if (item.label === "Teacher") {
+          } else if (item.label === "Teacher") {
             isActive =
               pathname === "/teacher" ||
               pathname === "/teacherform" ||
               pathname.startsWith("/editteacher/");
-          }
-          else if (item.label === "Class") {
+          } else if (item.label === "Class") {
             isActive =
               pathname === "/class" ||
               pathname === "/addclass" ||
@@ -131,16 +146,34 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             isActive = pathname === item.path;
           }
 
+          // Conditionally render Link or Button
+          if (item.path) {
+            return (
+              <Link
+                key={index}
+                href={item.path}
+                className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 ${isActive ? "bg-gray-100 border-r-4 border-red-500" : "hover:bg-gray-50"
+                  }`}
+              >
+                <div className={`${isActive ? "text-red-500" : "text-gray-600"}`}>
+                  {item.icon}
+                </div>
+                <span
+                  className={`ml-4 ${isActive ? "text-red-500 font-medium" : "text-gray-700"
+                    }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          }
+
           return (
-            <Link
+            <button
               key={index}
-              href={item.path}
-              className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200
-        ${isActive
-                  ? "bg-gray-100 border-r-4 border-red-500"
-                  : "hover:bg-gray-50"
-                }
-      `}
+              onClick={item.action}
+              className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 ${isActive ? "bg-gray-100 border-r-4 border-red-500" : "hover:bg-gray-50"
+                }`}
             >
               <div className={`${isActive ? "text-red-500" : "text-gray-600"}`}>
                 {item.icon}
@@ -151,7 +184,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
               >
                 {item.label}
               </span>
-            </Link>
+            </button>
           );
         })}
 
@@ -208,15 +241,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
         <RiArrowLeftLine size={20} className="text-gray-600" />
         <span className="ml-4 text-gray-700">Hide Sidebar</span>
       </div>
-      <div className="mt-8 flex justify-center">
-        {/* Logout Button */}
-        <button
-          className="bg-[#F7B696] text-white px-3 flex py-1.5 rounded-md hover:bg-gray-600 transition"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
-      </div>
+
     </div>
   );
 };
