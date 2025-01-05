@@ -6,7 +6,6 @@ import { FaTrash, FaPen } from "react-icons/fa";
 
 import { Button } from "@/components/ui/button";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
 import useSWR from "swr";
 import {
   Dialog,
@@ -16,7 +15,8 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebaseConfig';
 export type Subject = {
   id: number;
   name: string;
@@ -94,10 +94,22 @@ const SubjectTable = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    const updatedClasses = fetchedClasses.filter((classItem) => classItem.id !== id);
-    setClassList(updatedClasses);
-  };
+  const handleDelete = async (id: string) => {
+    try {
+        // Delete the class from Firestore
+        const classDocRef = doc(db, 'classes', id);
+        await deleteDoc(classDocRef);
+
+        // Update the state
+        const updatedClasses = fetchedClasses.filter((classItem) => classItem.id !== id);
+        setClassList(updatedClasses);
+
+        alert('Class deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting class:', error);
+        alert('Failed to delete class. Please try again.');
+    }
+};
 
   const filteredClasses = fetchedClasses.filter((classItem) =>
     classItem.ClassName?.toLowerCase().includes(searchTerm?.toLowerCase())
@@ -263,7 +275,7 @@ const SubjectTable = () => {
                     </Link>
 
                   </button>
-                  <button className="p-2" onClick={() => handleDelete(classItem?.ClassId)}>
+                  <button className="p-2" onClick={() => handleDelete(classItem?.id)}>
                     <FaTrash className="text-black" />
                   </button>
                 </td>

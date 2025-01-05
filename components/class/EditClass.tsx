@@ -21,6 +21,15 @@ interface Teacher {
   position?: string;
 }
 
+interface ClassTeacherMap {
+  id: string;
+  "First Name": string;
+  "Last Name": string;
+  Position: string;
+  City: string;
+}
+
+
 const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
   // console.log(classid);
 
@@ -33,7 +42,7 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
     ClassId: string;
     ClassName: string;
     ClassDivision: string;
-    ClassTeacherId: Teacher[];
+    ClassTeacherId: ClassTeacherMap[];
   }>({ ClassId: "", ClassName: "", ClassDivision: "", ClassTeacherId: [] });
   const [loading, setLoading] = useState(false);
 
@@ -49,24 +58,37 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
         try {
           const classData = await fetchClassDataById(classid);
           console.log(classData, "Fetched classData Data");
-
+          const teacherIds = classData.ClassTeacherId || [];
+          const teacherPromises = teacherIds.map((teacherId: string) =>
+            getDoc(doc(db, "teachers", teacherId))
+          );
+          const teacherDocs = await Promise.all(teacherPromises);
+          const teachers = teacherDocs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          console.log(teachers, "Fetched teachers Data");
+          
           setClassData({
             ClassId: classid,
             ClassName: classData.ClassName || "",
             ClassDivision: classData.ClassDivision || "",
-            ClassTeacherId:
-              classData.ClassTeacherId.map(
-                (teacher: {
-                  id: string;
-                  name: string;
-                  position: string;
-                }) => ({
-                  id: teacher.id || "",
-                  name: teacher.name,
-                  position: teacher.position,
-                })
-              ) || [],
+            // ClassTeacherId:
+            //   classData.ClassTeacherId.map(
+            //     (teacher: {
+            //       id: string;
+            //       name: string;
+            //       position: string;
+            //     }) => ({
+            //       id: teacher.id || "",
+            //       name: teacher.name,
+            //       position: teacher.position,
+            //     })
+            //   ) || [],
+            ClassTeacherId:teachers,
           });
+          console.log("Class Dataaa:", classData);
+          
         } catch (error) {
           console.error("Error fetching class data:", error);
         } finally {
@@ -87,6 +109,7 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
         const fetchedTeachers = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           name: doc.data()["First Name"],
+          position: doc.data()["Position"],
         }));
 
         setSelectedTeachers(fetchedTeachers);
@@ -96,7 +119,14 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
     };
 
     fetchTeachers();
-  }, [selectedTeachers, isAddTeacherModalOpen]);
+  }, []);
+
+
+  const handleRemoveNewTeacher = (index: number) => {
+    setSelectedTeachers((prevSelectedTeachers) => 
+        prevSelectedTeachers.filter((_, i) => i !== index)
+    );
+};
 
   const handleAddTeacher = () => {
     if (!newTeacherName || !newTeacherPosition) {
@@ -150,6 +180,7 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
         if (!Array.isArray(selectedTeachers)) {
             throw new Error("selectedTeachers is not an array");
         }
+        const classTeacherIds = classData.ClassTeacherId.map(teacher => teacher.id);
 
         // Ensure no undefined values in ClassTeacherId
         const updatedTeachers = [
@@ -158,19 +189,19 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
         ].filter(teacher => teacher !== undefined);
 
         const updatedClassData = {
-            ClassName: classData.ClassName || existingData?.ClassName || "",
-            ClassDivision: classData.ClassDivision || existingData?.ClassDivision || "",
-            ClassTeacherId: updatedTeachers,
-            ClassUpdatedAt: Timestamp.fromDate(new Date()),
-            
-        };
+          ClassName: classData.ClassName || existingData?.ClassName || "",
+          ClassDivision: classData.ClassDivision || existingData?.ClassDivision || "",
+          ClassTeacherId: classTeacherIds,
+          ClassCreatedAt: existingData?.ClassCreatedAt, 
+          ClassUpdatedAt: serverTimestamp(),
+      };
 
         console.log("Updated Class Data:", updatedClassData);
 
         await updateDoc(classesRef, updatedClassData);
 
         setClassData({ ClassId: classid, ClassName: "", ClassDivision: "", ClassTeacherId: [] });
-        router.push("/classes");
+        router.push("/class");
 
         alert("Class updated successfully!");
     } catch (error) {
@@ -186,7 +217,7 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
     try {
       setLoading(true);
 
-      const classesRef = doc(db, "classes", classid.toString());
+      const classesRef = doc(db, "classes", classid?.toString());
       const docSnapshot = await getDoc(classesRef);
 
       if (!docSnapshot.exists()) {
@@ -227,6 +258,10 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
   const filteredTeachers = selectedTeachers.filter((teacher) =>
     teacher?.name?.toLowerCase().includes(newTeacherName?.toLowerCase() || "")
   );
+
+
+  console.log("Class Dataaa3:", selectedTeachers);
+
 
   return (
     <>
@@ -318,12 +353,12 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
                   <td className="p-3 flex items-center space-x-2">
                     <AiOutlineUser size={20} className="text-gray-500" />
                     <span className="font-medium text-gray-700">
-                      {teacher.name}
+                      {teacher["First Name"]}
                     </span>
                   </td>
                   <td className="p-3 text-gray-500">
                     <span className="font-medium text-gray-700">
-                      {teacher.position}
+                      {teacher.Position}
                     </span>
                   </td>
                   <td className="p-3">
@@ -365,11 +400,7 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
                       <td className="p-3">
                         <button
                           className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                          onClick={() =>
-                            setSelectedTeachers(
-                              selectedTeachers.filter((_, i) => i !== index)
-                            )
-                          }
+                          onClick={() => handleRemoveNewTeacher(index)}
                         >
                           <AiOutlineClose size={20} />
                         </button>
