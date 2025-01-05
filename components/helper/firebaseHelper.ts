@@ -115,6 +115,26 @@ export const fetchSubjectDataById = async (subjectId: string) => {
 }
 
 
+
+export const fetchClassDataById = async (ClassId: string) => {
+  try {
+    console.log("Fetching data for ClassId:", ClassId);
+
+    const classDocRef = doc(db, "classes", ClassId);  // Adjust collection name if needed
+    const classDocSnap = await getDoc(classDocRef);
+
+    if (classDocSnap.exists()) {
+      // Return class data as a plain object
+      return classDocSnap.data();
+    } else {
+      throw new Error("Class not found");
+    }
+  } catch (error) {
+    console.error("Error fetching class data:", error);
+    throw new Error("Failed to fetch class data");
+  }
+};
+
 export const fetchFormFields = async (userId: string): Promise<FormField[]> => {
   try {
     if (!userId) {

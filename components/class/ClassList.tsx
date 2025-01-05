@@ -16,7 +16,8 @@ export type Subject = {
 };
 
 export interface ClassData {
-  id: string;
+  id:string;
+  ClassId: string;
   ClassName: string;
   ClassDivision: string;
   ClassTeacherId: string[];
@@ -177,7 +178,7 @@ console.log("fonal classes", currentClasses);
           </thead>
           <tbody>
             {currentClasses.map((classItem) => (
-              <tr key={classItem.id} className="border-b hover:bg-gray-100">
+              <tr key={classItem.ClassId} className="border-b hover:bg-gray-100">
                 <td className="px-4 py-2">
                 {/* {classItem.classSubjects?.map((subject, index) => (
                   <div key={index}>
@@ -190,12 +191,12 @@ console.log("fonal classes", currentClasses);
                 <td className="px-4 py-2">{classItem.ClassDivision}</td>
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
-                    <Link href="/editsubject">
+                    <Link href={`/editclass/${classItem?.id}`} passHref>
                     <FaPen className="text-black" />
                     </Link>
                     
                   </button>
-                  <button className="p-2" onClick={() => handleDelete(classItem.id)}>
+                  <button className="p-2" onClick={() => handleDelete(classItem?.ClassId)}>
                     <FaTrash className="text-black" />
                   </button>
                 </td>
