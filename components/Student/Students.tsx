@@ -310,10 +310,7 @@ export default function Students() {
 
       {/* Import/Export Dialog */}
       {/* upload csv */}
-      <Dialog
-        open={isImportExportDialogOpen}
-        onOpenChange={setIsImportExportDialogOpen}
-      >
+      <Dialog open={isImportExportDialogOpen} onOpenChange={setIsImportExportDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base">Import/Export</DialogTitle>
@@ -325,6 +322,7 @@ export default function Students() {
           </div>
 
           <div className="mt-4 flex flex-col space-y-4">
+            {/* File Upload */}
             <label
               htmlFor="file-upload"
               className="flex items-center justify-center w-full px-4 py-2 bg-[#576086] hover:bg-[#474d6b] text-white h-10 text-sm cursor-pointer rounded-md"
@@ -338,14 +336,19 @@ export default function Students() {
               />
               Upload CSV
             </label>
-            <Button
-              variant="default"
-              className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
-              onClick={handleUploadCsv}
-              disabled={!file}
-            >
-              Upload this file
-            </Button>
+
+            {/* Conditionally Render "Upload this file" Button */}
+            {file && (
+              <Button
+                variant="default"
+                className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+                onClick={handleUploadCsv}
+              >
+                Upload this file
+              </Button>
+            )}
+
+            {/* Download Buttons */}
             <Button
               variant="default"
               className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
@@ -361,6 +364,7 @@ export default function Students() {
               Download PDF
             </Button>
           </div>
+
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline" size="sm">
