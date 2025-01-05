@@ -17,9 +17,9 @@ import {
 } from "@/components/ui/popover";
 import useSWR from "swr";
 import { fetchEnquiryDetails, Student ,Status} from "@/components/helper/firebaseHelper";
+import { db } from "@/lib/firebaseConfig";
 import { doc,updateDoc } from "firebase/firestore";
-import { getFirebaseServices } from '@/lib/firebaseConfig';
-const { db } = getFirebaseServices();
+
 export default function StudentStatusTable() {
   const [openPopover, setOpenPopover] = React.useState<string | null>(null);
 

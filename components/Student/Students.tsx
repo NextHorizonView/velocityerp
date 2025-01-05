@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo , useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
@@ -18,30 +18,13 @@ import {
 
 import Papa from "papaparse";
 import useSWR from "swr";
-<<<<<<< Updated upstream
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
-=======
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
->>>>>>> Stashed changes
+import { db } from "@/lib/firebaseConfig";
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
 import { mutate } from "swr";
 import StudentsTable from "./StudentTable";
-
-        
-       
-import { useRouter } from "next/navigation";
-
+import { usePathname } from "next/navigation";
 import FadeLoader from "../Loader";
-import { getFirebaseServices } from '@/lib/firebaseConfig';
-
-const { db } = getFirebaseServices();
-
 
 export type Student = {
   id: number;
@@ -67,6 +50,7 @@ const fetchStudents = async () => {
 const ITEMS_PER_PAGE = 8;
 
 export default function Students() {
+  const path = usePathname();
   const userId =
     typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
@@ -77,6 +61,11 @@ export default function Students() {
     userId ? () => fetchFormFields(userId) : null,
     { revalidateOnFocus: false }
   );
+  useEffect(() => {
+    if (path === "/students") {
+      mutate("students");
+    }
+  }, [path]);
 
   const formFields = fields[0]?.FormFields || [];
 
@@ -93,29 +82,28 @@ export default function Students() {
     useState(false);
   const [file, setFile] = useState<File | null>(null);
 
-
   const handleDelete = async (student: Student) => {
     try {
       const studentDocRef = doc(db, "students", student.id.toString());
-  
+
       // Check if the document exists
       const studentDocSnap = await getDoc(studentDocRef);
       if (!studentDocSnap.exists()) {
         throw new Error(`Student with ID ${student.id} does not exist`);
       }
-  
+
       // Call the API to delete the document and auth account
       const response = await fetch("/api/deleteStudent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid: student.id }), // Pass the student's uid
       });
-  
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to delete student.");
       }
-  
+
       console.log(`Student with ID ${student.id} deleted successfully!`);
       mutate("students"); // Refresh the student list
     } catch (error) {
@@ -153,7 +141,12 @@ export default function Students() {
   // );
 
   if (error) return <div>Error loading students</div>;
-  if (!students) return <div><FadeLoader/></div>;
+  if (!students)
+    return (
+      <div>
+        <FadeLoader />
+      </div>
+    );
   if (fieldsError) {
     console.error("Error fetching fields:", fieldsError);
     return <div>Error loading form fields</div>;
@@ -317,10 +310,7 @@ export default function Students() {
 
       {/* Import/Export Dialog */}
       {/* upload csv */}
-      <Dialog
-        open={isImportExportDialogOpen}
-        onOpenChange={setIsImportExportDialogOpen}
-      >
+      <Dialog open={isImportExportDialogOpen} onOpenChange={setIsImportExportDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base">Import/Export</DialogTitle>
@@ -332,6 +322,7 @@ export default function Students() {
           </div>
 
           <div className="mt-4 flex flex-col space-y-4">
+            {/* File Upload */}
             <label
               htmlFor="file-upload"
               className="flex items-center justify-center w-full px-4 py-2 bg-[#576086] hover:bg-[#474d6b] text-white h-10 text-sm cursor-pointer rounded-md"
@@ -345,14 +336,19 @@ export default function Students() {
               />
               Upload CSV
             </label>
-            <Button
-              variant="default"
-              className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
-              onClick={handleUploadCsv}
-              disabled={!file}
-            >
-              Upload this file
-            </Button>
+
+            {/* Conditionally Render "Upload this file" Button */}
+            {file && (
+              <Button
+                variant="default"
+                className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+                onClick={handleUploadCsv}
+              >
+                Upload this file
+              </Button>
+            )}
+
+            {/* Download Buttons */}
             <Button
               variant="default"
               className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
@@ -360,7 +356,15 @@ export default function Students() {
             >
               Download CSV
             </Button>
+            <Button
+              variant="default"
+              className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+              onClick={handleDownloadCsv}
+            >
+              Download PDF
+            </Button>
           </div>
+
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline" size="sm">

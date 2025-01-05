@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import EditStudentForm from "@/components/Student/EditStudentForm";
+import EditSubject from "@/components/subject/EditSubject";
+import React from "react";
 
 export default async function Page({
   params,
@@ -11,8 +12,7 @@ export default async function Page({
 
   return (
     <DashboardLayout>
-      {/* Post: {params.fieldid} */}
-      <EditStudentForm studentid={fieldid} />
+      <EditSubject subjectid={fieldid} />
     </DashboardLayout>
   );
 }

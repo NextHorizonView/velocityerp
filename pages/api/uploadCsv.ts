@@ -1,8 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { parse } from 'papaparse';
-import { getAdminServices } from '@/lib/firebaseAdmin';
-
-const { adminAuth, adminFirestore } = getAdminServices();
+import { adminAuth, adminFirestore } from '@/lib/firebaseAdmin';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

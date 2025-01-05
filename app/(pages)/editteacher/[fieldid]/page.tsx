@@ -1,6 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import EditStudentForm from "@/components/Student/EditStudentForm";
-
+import EditTeacherForm from "@/components/Teacher/EditTeacherForm";
 export default async function Page({
   params,
 }: {
@@ -12,7 +11,7 @@ export default async function Page({
   return (
     <DashboardLayout>
       {/* Post: {params.fieldid} */}
-      <EditStudentForm studentid={fieldid} />
+      <EditTeacherForm teacherid={fieldid} />
     </DashboardLayout>
   );
 }

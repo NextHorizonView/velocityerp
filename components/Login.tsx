@@ -10,11 +10,9 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaGooglePlay } from 'react-icons/fa';
 import { AiOutlineApple } from "react-icons/ai";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
+import { auth } from '@/lib/firebaseConfig';
 import withAuthentication from '@/lib/withAuthentication';
-import { getFirebaseServices } from '@/lib/firebaseConfig';
 
-
-const { auth } = getFirebaseServices();
 interface LoginProps {
   authUser: { uid: string; email: string; role: string; domain: string } | null;
 }

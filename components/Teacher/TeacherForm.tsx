@@ -4,21 +4,20 @@ import { Edit as FaEdit, Trash2 as FaTrash } from "lucide-react";
 
 import useSWR, { mutate } from "swr";
 import {
-  addFormField,
-  fetchFormFields,
-  deleteFormField,
-  updateFormField,
-  saveStudentData,
+  addFormFieldTeacher,
+  fetchFormFieldsTeacher,
+  deleteFormFieldTeacher,
+  updateFormFieldTeacher,
+  saveTeacherData,
 } from "@/components/helper/firebaseHelper";
 import {
   FormField,
   FieldType,
   FormData,
-  
 } from "@/components/helper/firebaseHelper";
 import FadeLoader from "../Loader";
 
-const StudentForm: React.FC = () => {
+const TeacherForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({});
   // const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [newFieldName, setNewFieldName] = useState("");
@@ -64,7 +63,7 @@ const StudentForm: React.FC = () => {
 
   const { data: fields = [], error } = useSWR<FormField[]>(
     userId ? `formFields-${userId}` : null,
-    userId ? () => fetchFormFields(userId) : null,
+    userId ? () => fetchFormFieldsTeacher(userId) : null,
     { revalidateOnFocus: false }
   );
 
@@ -119,7 +118,7 @@ const StudentForm: React.FC = () => {
     };
 
     try {
-      await addFormField(userId, newField);
+      await addFormFieldTeacher(userId, newField);
       mutate(`formFields-${userId}`);
       setNewFieldName("");
       setNewFieldType(FieldType.TEXT);
@@ -141,7 +140,7 @@ const StudentForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await updateFormField(formFieldId, currentFieldName, updates);
+      await updateFormFieldTeacher(formFieldId, currentFieldName, updates);
       mutate(`formFields-${userId}`);
       // setEditingFieldId(null);
     } catch (error) {
@@ -157,7 +156,7 @@ const StudentForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await deleteFormField(formFieldId, fieldName);
+      await deleteFormFieldTeacher(formFieldId, fieldName);
       mutate(`formFields-${userId}`);
     } catch (error) {
       console.error("Error deleting field:", error);
@@ -181,7 +180,9 @@ const StudentForm: React.FC = () => {
           return (
             <div key={fieldKey} className=" p-4 rounded-md mb-4">
               <div className="flex  justify-between">
-                <label className="block text-m font-medium text-[#576086] mb-2">{FieldName}</label>
+                <label className="block text-m font-medium text-[#576086] mb-2">
+                  {FieldName}
+                </label>
                 <div className="flex space-x-4">
                   <FaTrash
                     className="cursor-pointer text-gray-800"
@@ -223,7 +224,7 @@ const StudentForm: React.FC = () => {
                 <div className="flex space-x-4">
                   {FieldName === "City" || FieldName === "State" ? (
                     <></>
-                  ) : (
+                  ) : isEditMode ? (
                     <>
                       <FaTrash
                         className="cursor-pointer text-gray-800"
@@ -238,6 +239,8 @@ const StudentForm: React.FC = () => {
                         className="cursor-pointer text-gray-800"
                       />
                     </>
+                  ) : (
+                    <></>
                   )}
                 </div>
               </div>
@@ -286,45 +289,44 @@ const StudentForm: React.FC = () => {
         default:
           return (
             <div key={fieldKey} className="p-4 rounded-md mb-4">
-  <div className="flex justify-between">
-    <label className="text-m text-[#576086]">{FieldName}</label>
+              <div className="flex justify-between">
+                <label className="text-m text-[#576086]">{FieldName}</label>
 
-    {FieldName === "Email" ||
-    FieldName === "Pincode" ||
-    FieldName === "First Name" ||
-    FieldName === "Last Name" ? (
-      <></>
-    ) : isEditMode ? (
-      <>
-        <div className="flex space-x-4">
-          <FaTrash
-            className="cursor-pointer text-gray-800"
-            onClick={() =>
-              handleDeleteField(field.FormFieldID || "", FieldName)
-            }
-          />
-          <FaEdit
-            onClick={() =>
-              handleEditClick(field.FormFieldID || "", FieldName)
-            }
-            className="cursor-pointer text-gray-800"
-          />
-        </div>
-      </>
-    ) : (
-      <></>
-    )}
-  </div>
+                {FieldName === "Email" ||
+                FieldName === "Pincode" ||
+                FieldName === "First Name" ||
+                FieldName === "Last Name" ? (
+                  <></>
+                ) : isEditMode ? (
+                  <>
+                    <div className="flex space-x-4">
+                      <FaTrash
+                        className="cursor-pointer text-gray-800"
+                        onClick={() =>
+                          handleDeleteField(field.FormFieldID || "", FieldName)
+                        }
+                      />
+                      <FaEdit
+                        onClick={() =>
+                          handleEditClick(field.FormFieldID || "", FieldName)
+                        }
+                        className="cursor-pointer text-gray-800"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <></>
+                )}
+              </div>
 
-  <input
-    name={FieldName}
-    placeholder={getPlaceholder(FieldName)}
-    value={formData[FieldName] || ""}
-    onChange={handleChange}
-    className="w-full px-3 py-2 mt-2 border border-[#CCCCCC] rounded-md focus:ring-2 focus:ring-gray-700"
-  />
-</div>
-
+              <input
+                name={FieldName}
+                placeholder={getPlaceholder(FieldName)}
+                value={formData[FieldName] || ""}
+                onChange={handleChange}
+                className="w-full px-3 py-2 mt-2 border border-[#CCCCCC] rounded-md focus:ring-2 focus:ring-gray-700"
+              />
+            </div>
           );
       }
     });
@@ -333,18 +335,15 @@ const StudentForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Add the role parameter here (you can pass the role value based on your requirements)
-      const role = "student"; // You can set this dynamically based on your form data
-      await saveStudentData(formData, role ); // Pass both formData and role
+      await saveTeacherData(formData);
       console.log(formData);
       setFormData({});
     } catch (error) {
-      console.error("Error saving student data:", error);
-      alert("Failed to save student data.");
+      console.error("Error saving teacher data:", error);
+      alert("Failed to save teacher data.");
     }
   };
 
-  
   const handleEditFormToggle = () => {
     if (isEditMode) {
       setIsEditMode(false); // Save changes and stop editing
@@ -353,14 +352,19 @@ const StudentForm: React.FC = () => {
     }
   };
 
-  if (!fields && !error) return <p><FadeLoader /></p>;
+  if (!fields && !error)
+    return (
+      <p>
+        <FadeLoader />
+      </p>
+    );
   if (error) return <p>Error loading fields</p>;
 
   return (
     <div className="w-full max-w-3xl mx-auto p-4 bg-[#FAFAF8] shadow-sm rounded-lg">
       <div className="rounded-3xl">
         <h2 className="text-3xl w-full flex items-center  justify-center m-2 font-semibold text-[#576086] py-4">
-          Please enter Student Details
+          Please enter teacher Details
         </h2>
       </div>
 
@@ -403,7 +407,7 @@ const StudentForm: React.FC = () => {
 
           <div className="mb-4">
             {newFieldType === FieldType.SELECT ||
-              newFieldType === FieldType.RADIO ? (
+            newFieldType === FieldType.RADIO ? (
               <input
                 value={newFieldOptions}
                 onChange={(e) => setNewFieldOptions(e.target.value)}
@@ -449,4 +453,4 @@ const StudentForm: React.FC = () => {
   );
 };
 
-export default StudentForm;
+export default TeacherForm;
