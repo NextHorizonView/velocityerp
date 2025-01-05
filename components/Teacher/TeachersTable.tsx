@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { mutate } from "swr";
 import { deleteDoc, doc, getDoc } from "firebase/firestore";
+import { db } from "../../lib/firebaseConfig";
 import {
   Table,
   TableBody,
@@ -39,9 +40,6 @@ export type Teacher = {
   religion?: string;
   studentId?: string;
 };
-import { getFirebaseServices } from '@/lib/firebaseConfig';
-
-const { db } = getFirebaseServices();
 
 interface TeachersTableProps {
   teachers: Teacher[];
