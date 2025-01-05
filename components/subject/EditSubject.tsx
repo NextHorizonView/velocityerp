@@ -6,13 +6,14 @@ import { TbGridDots } from "react-icons/tb";
 import { useRouter } from "next/navigation";
 import { fetchSubjectDataById } from "../helper/firebaseHelper";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
-import { db, storage } from "@/lib/firebaseConfig";
 import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import FadeLoader from "../Loader";
 import { Trash2 } from "lucide-react";
 import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
 import { collection, getDocs } from "firebase/firestore";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
 
+const { db, storage } = getFirebaseServices();
 interface EditSubjectFormProps {
   subjectid: string;
 }
