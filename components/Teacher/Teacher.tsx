@@ -18,6 +18,14 @@ import { fetchFormFieldsTeacher, FormField } from "../helper/firebaseHelper";
 import useSWR, { mutate } from "swr";
 import FadeLoader from "../Loader";
 import { usePathname } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 export type Teacher = {
   id: number;
@@ -70,6 +78,15 @@ export default function Teachers() {
     key: keyof Teacher;
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
+
+  const handleImportExport = () => {
+    setIsImportExportDialogOpen(true);
+  };
+
+  const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
+    useState(false);
+
+    const [file] = useState<File | null>(null);
 
   const handleDelete = async (teacher: Teacher) => {
     try {
@@ -162,9 +179,11 @@ export default function Teachers() {
             variant="ghost"
             size="lg"
             className="w-10 h-10 p-0 bg-transparent border-none"
+            onClick={handleImportExport}
           >
             <IoIosCloudUpload className="h-10 w-10 text-black" />
           </Button>
+          
         </div>
         <div className="flex items-center space-x-4">
           <Link href="/teacherform">
@@ -290,6 +309,70 @@ export default function Teachers() {
           </div>
         </div>
       </div>
+      <Dialog open={isImportExportDialogOpen} onOpenChange={setIsImportExportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Import/Export</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2">
+            <p className="text-sm text-gray-500">
+              Choose an action to import or export student data.
+            </p>
+          </div>
+
+          <div className="mt-4 flex flex-col space-y-4">
+            {/* File Upload */}
+            <label
+              htmlFor="file-upload"
+              className="flex items-center justify-center w-full px-4 py-2 bg-[#576086] hover:bg-[#474d6b] text-white h-10 text-sm cursor-pointer rounded-md"
+            >
+              <input
+                type="file"
+                accept=".csv"
+                // onChange={handleFileChange}
+                className="hidden"
+                id="file-upload"
+              />
+              Upload CSV
+            </label>
+
+            {/* Conditionally Render "Upload this file" Button */}
+            {file && (
+              <Button
+                variant="default"
+                className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+                // onClick={handleUploadCsv}
+              >
+                Upload this file
+              </Button>
+            )}
+
+            {/* Download Buttons */}
+            <Button
+              variant="default"
+              className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+              // onClick={handleDownloadCsv}
+            >
+              Download CSV
+            </Button>
+            <Button
+              variant="default"
+              className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+              // onClick={handleDownloadCsv}
+            >
+              Download PDF
+            </Button>
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" size="sm">
+                Cancel
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -3,11 +3,19 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { IoIosCloudUpload, IoIosSearch } from "react-icons/io";
 import { FaTrash, FaPen } from "react-icons/fa";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"; // Adjust path as per your setup
-import { Button } from "@/components/ui/button"; 
+
+import { Button } from "@/components/ui/button";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import useSWR from "swr";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 export type Subject = {
   id: number;
@@ -38,6 +46,16 @@ const ITEMS_PER_PAGE = 80;
 
 const SubjectTable = () => {
 
+  // Import/Export of csv
+  const handleImportExport = () => {
+    setIsImportExportDialogOpen(true);
+  };
+
+  const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
+    useState(false);
+
+  const [file] = useState<File | null>(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<keyof ClassData | "newest">("newest");
   // const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
@@ -58,7 +76,7 @@ const SubjectTable = () => {
   // };
   //
   console.log(classList);
-  
+
 
   const { data: fetchedClasses, error } = useSWR<ClassData[]>('classes', fetcher);
   console.log("fetched claases", fetchedClasses);
@@ -97,7 +115,7 @@ const SubjectTable = () => {
     }
   };
 
-console.log("fonal classes", currentClasses);
+  console.log("fonal classes", currentClasses);
 
   return (
     <div className="container mx-auto p-6">
@@ -105,33 +123,82 @@ console.log("fonal classes", currentClasses);
       <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col space-y-2">
           <h1 className="text-2xl font-bold text-[#576086]">Class</h1>
-          <Dialog>
-            <DialogTrigger asChild>
-              <button className="w-10 h-10 p-0 bg-transparent border-none">
-                <IoIosCloudUpload className="h-5 w-5 text-black" />
-              </button>
-            </DialogTrigger>
-            <DialogContent>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="w-10 h-10 p-0 bg-transparent border-none"
+            onClick={handleImportExport}
+          >
+            <IoIosCloudUpload className="h-10 w-10 text-black" />
+          </Button>
+          <Dialog open={isImportExportDialogOpen} onOpenChange={setIsImportExportDialogOpen}>
+            <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Upload/Download Documents</DialogTitle>
-                <DialogDescription>
-                  Select an option to upload or download documents.
-                </DialogDescription>
+                <DialogTitle className="text-base">Import/Export</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <Button variant="outline" className="w-full">
-                  Upload Document
+              <div className="mt-2">
+                <p className="text-sm text-gray-500">
+                  Choose an action to import or export student data.
+                </p>
+              </div>
+
+              <div className="mt-4 flex flex-col space-y-4">
+                {/* File Upload */}
+                <label
+                  htmlFor="file-upload"
+                  className="flex items-center justify-center w-full px-4 py-2 bg-[#576086] hover:bg-[#474d6b] text-white h-10 text-sm cursor-pointer rounded-md"
+                >
+                  <input
+                    type="file"
+                    accept=".csv"
+                    // onChange={handleFileChange}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  Upload CSV
+                </label>
+
+                {/* Conditionally Render "Upload this file" Button */}
+                {file && (
+                  <Button
+                    variant="default"
+                    className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+                  // onClick={handleUploadCsv}
+                  >
+                    Upload this file
+                  </Button>
+                )}
+
+                {/* Download Buttons */}
+                <Button
+                  variant="default"
+                  className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+                // onClick={handleDownloadCsv}
+                >
+                  Download CSV
                 </Button>
-                <Button variant="default" className="w-full">
-                  Download Template
+                <Button
+                  variant="default"
+                  className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+                // onClick={handleDownloadCsv}
+                >
+                  Download PDF
                 </Button>
               </div>
+
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" size="sm">
+                    Cancel
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
         <div className="flex items-center space-x-6">
-    
-  
+
+
           <Link href="/addclass">
             <button className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm rounded-md">
               + Add New Class
@@ -151,7 +218,7 @@ console.log("fonal classes", currentClasses);
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">Sort by:</span>
             <select
-              value={sortField} 
+              value={sortField}
               className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
               onChange={(e) => handleSort(e.target.value as keyof ClassData | "newest")}
             >
@@ -180,13 +247,13 @@ console.log("fonal classes", currentClasses);
             {currentClasses.map((classItem) => (
               <tr key={classItem.ClassId} className="border-b hover:bg-gray-100">
                 <td className="px-4 py-2">
-                {/* {classItem.classSubjects?.map((subject, index) => (
+                  {/* {classItem.classSubjects?.map((subject, index) => (
                   <div key={index}>
                     {subject.subjectName}
                   </div>
                 ))} */}
 
-{classItem.ClassName} 
+                  {classItem.ClassName}
                 </td>
                 <td className="px-4 py-2">{classItem.ClassDivision}</td>
                 <td className="px-4 py-2 flex space-x-2">
@@ -194,7 +261,7 @@ console.log("fonal classes", currentClasses);
                     <Link href={`/editclass/${classItem?.id}`} passHref>
                     <FaPen className="text-black" />
                     </Link>
-                    
+
                   </button>
                   <button className="p-2" onClick={() => handleDelete(classItem?.ClassId)}>
                     <FaTrash className="text-black" />
@@ -223,9 +290,8 @@ console.log("fonal classes", currentClasses);
           {Array.from({ length: totalPages }).map((_, index) => (
             <button
               key={index}
-              className={`px-3 py-1 rounded ${
-                currentPage === index + 1 ? "bg-[#F7B696] text-white" : "bg-gray-200 text-gray-600"
-              } hover:bg-[#F7B696] hover:text-white`}
+              className={`px-3 py-1 rounded ${currentPage === index + 1 ? "bg-[#F7B696] text-white" : "bg-gray-200 text-gray-600"
+                } hover:bg-[#F7B696] hover:text-white`}
               onClick={() => handlePageChange(index + 1)}
             >
               {index + 1}
