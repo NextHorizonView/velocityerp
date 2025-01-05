@@ -8,8 +8,11 @@ import {
   fetchFormFieldsTeacher,
 } from "../helper/firebaseHelper";
 import { useRouter } from "next/navigation";
-import { db } from "@/lib/firebaseConfig";
 import { doc, updateDoc } from "firebase/firestore";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+
+const { db } = getFirebaseServices();
 
 interface EditTeacherFormProps {
   teacherid: string;

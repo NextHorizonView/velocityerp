@@ -1,12 +1,12 @@
 import DashboardLayout from '@/components/DashboardLayout'
+import EditStudentForm from '@/components/Student/EditStudentForm'
 import React from 'react'
-import AddClass from '@/components/class/AddClass'
 
 const page = () => {
   return (
     <div>
         <DashboardLayout>
-            <AddClass/>
+            <EditStudentForm/>
         </DashboardLayout>
     </div>
   )

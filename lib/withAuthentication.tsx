@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebaseConfig';
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { auth, db, storage } = getFirebaseServices();
 
 interface AuthUser {
   uid: string;

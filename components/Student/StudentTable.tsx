@@ -1,8 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { mutate } from "swr";
 import { deleteDoc, doc, getDoc } from "firebase/firestore";
-import { db } from "../../lib/firebaseConfig";
 import {
   Table,
   TableBody,
@@ -25,7 +24,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 
 interface StudentsTableProps {
   students: Student[];

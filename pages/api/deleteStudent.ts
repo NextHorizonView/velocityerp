@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { adminAuth, adminFirestore } from "@/lib/firebaseAdmin";
+import { getAdminServices } from '@/lib/firebaseAdmin';
+
+const { adminAuth, adminFirestore } = getAdminServices();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
