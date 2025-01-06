@@ -5,7 +5,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // Use next/navigation instead of next/router
 import { useAuthState } from 'react-firebase-hooks/auth'; // Import useAuthState from react-firebase-hooks/auth
 import { getIdTokenResult } from 'firebase/auth';
-import { auth } from '@/lib/firebaseConfig'; // Import Firebase auth
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { auth } = getFirebaseServices();
 import { ComponentType } from 'react';
 
 const withAdminAuth = <P extends object>(WrappedComponent: ComponentType<P>) => {

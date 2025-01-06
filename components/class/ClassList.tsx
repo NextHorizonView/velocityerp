@@ -16,7 +16,9 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebaseConfig';
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 export type Subject = {
   id: number;
   name: string;

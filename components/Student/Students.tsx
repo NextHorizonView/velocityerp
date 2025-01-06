@@ -21,7 +21,9 @@ import { Filter } from "lucide-react";
 import Papa from "papaparse";
 import useSWR from "swr";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
 import { mutate } from "swr";
 import StudentsTable from "./StudentTable";

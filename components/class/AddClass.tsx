@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { MdEdit } from "react-icons/md";
 import { AiOutlineClose, AiOutlineSearch, AiOutlineUser } from 'react-icons/ai';
-import { db } from "@/lib/firebaseConfig";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 import {
     collection,
     addDoc,

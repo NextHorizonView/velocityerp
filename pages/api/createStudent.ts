@@ -1,5 +1,6 @@
 // pages/api/createStudent.ts
-import { adminAuth } from "@/lib/firebaseAdmin";
+import { getAdminServices } from "@/lib/firebaseAdmin";
+const { adminAuth } = getAdminServices();
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

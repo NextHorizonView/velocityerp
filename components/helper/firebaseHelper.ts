@@ -1,5 +1,7 @@
 import { collection, getDocs, query, where, addDoc, doc,updateDoc,getDoc, setDoc} from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 
 export enum FieldType {
   TEXT = 'Text',

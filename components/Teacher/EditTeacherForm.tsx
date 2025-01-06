@@ -8,7 +8,9 @@ import {
   fetchFormFieldsTeacher,
 } from "../helper/firebaseHelper";
 import { useRouter } from "next/navigation";
-import { db } from "@/lib/firebaseConfig";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 import { doc, updateDoc } from "firebase/firestore";
 
 interface EditTeacherFormProps {
