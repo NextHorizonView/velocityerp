@@ -4,7 +4,9 @@ import { AiOutlineUser } from "react-icons/ai";
 import { MdEdit } from "react-icons/md";
 import { TbGridDots } from "react-icons/tb";
 import { useRouter } from "next/navigation";
-import { db } from "@/lib/firebaseConfig";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 import { doc, getDoc, serverTimestamp,Timestamp,updateDoc } from "firebase/firestore";
 import FadeLoader from "../Loader";
 import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";

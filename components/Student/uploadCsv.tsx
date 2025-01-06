@@ -1,6 +1,8 @@
 
 import { getFirestore, collection, getDocs} from 'firebase/firestore';
-import { app } from '@/lib/firebaseConfig';
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { app } = getFirebaseServices();
 import { Student } from './Students';
 
 const db = getFirestore(app);

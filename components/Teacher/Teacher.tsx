@@ -13,7 +13,9 @@ import {
   getDoc,
   getDocs,
 } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 import { fetchFormFieldsTeacher, FormField } from "../helper/firebaseHelper";
 import useSWR, { mutate } from "swr";
 import FadeLoader from "../Loader";

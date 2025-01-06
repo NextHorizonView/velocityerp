@@ -16,7 +16,9 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { db, storage } from "@/lib/firebaseConfig";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db, storage } = getFirebaseServices();
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import FadeLoader from "../Loader";
 import { serverTimestamp } from "firebase/firestore"; // Import the serverTimestamp

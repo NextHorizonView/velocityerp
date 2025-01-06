@@ -17,7 +17,9 @@ import {
 } from "@/components/ui/popover";
 import useSWR from "swr";
 import { fetchEnquiryDetails, Student ,Status} from "@/components/helper/firebaseHelper";
-import { db } from "@/lib/firebaseConfig";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 import { doc, updateDoc } from "firebase/firestore";
 
 export default function StudentStatusTable() {

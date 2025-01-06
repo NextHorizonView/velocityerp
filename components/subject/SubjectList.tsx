@@ -20,7 +20,9 @@ import {
   getDocs,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { getFirebaseServices } from '@/lib/firebaseConfig';
+
+const { db } = getFirebaseServices();
 import { DialogClose } from "@radix-ui/react-dialog";
 
 export type Subject = {
