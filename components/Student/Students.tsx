@@ -3,7 +3,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
-
+import FilterModal from "./StudentsFilter";
+import { FilterState } from "./StudentsFilter";
 import { IoIosCloudUpload } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
 import Link from "next/link";
@@ -15,6 +16,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { Filter } from "lucide-react";
 
 import Papa from "papaparse";
 import useSWR from "swr";
@@ -40,6 +42,10 @@ export type Student = {
   religion?: string;
   studentId?: string;
 };
+
+
+
+
 
 const fetchStudents = async () => {
   const querySnapshot = await getDocs(collection(db, "students"));
@@ -67,13 +73,25 @@ export default function Students() {
     }
   }, [path]);
 
+  // filter states
+  const [,setFilters] = useState<FilterState | null>(null);
+  const [isFilterOpen, setFilterOpen] = useState(false);
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    // Don't close the modal automatically
+    console.log('Applied Filters:', newFilters);
+    // Apply filtering logic here
+  };
+
+
   const formFields = fields[0]?.FormFields || [];
 
   const [currentPage, setCurrentPage] = useState(1);
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [sortConfig, setSortConfig] = useState<{
+  const [sortConfig] = useState<{
     key: keyof Student;
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
@@ -152,15 +170,7 @@ export default function Students() {
     return <div>Error loading form fields</div>;
   }
 
-  const handleSort = (key: keyof Student) => {
-    setSortConfig({
-      key,
-      direction:
-        sortConfig.key === key && sortConfig.direction === "asc"
-          ? "desc"
-          : "asc",
-    });
-  };
+
 
   const totalPages = Math.ceil(
     filteredAndSortedStudents.length / ITEMS_PER_PAGE
@@ -214,6 +224,7 @@ export default function Students() {
       <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col space-y-2">
           <h1 className="text-2xl font-bold text-[#576086]">All Students</h1>
+
           <Button
             variant="ghost"
             size="lg"
@@ -245,18 +256,20 @@ export default function Students() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">Sort by:</span>
-            <select
-              className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
-              onChange={(e) => handleSort(e.target.value as keyof Student)}
+            <button
+              onClick={() => setFilterOpen(true)}
+              className=" flex space-x-3 px-4 py-2 justify-center bg-[#576086] text-white rounded-lg"
             >
-              <option value="name" className="bg-transparent">
-                Name
-              </option>
-              <option value="class" className="bg-transparent">
-                Class
-              </option>
-            </select>
+              <Filter className="w-5 h-5 flex mt-1" />
+              Filter
+            </button>
+            {/* Filter Modal */}
+            <FilterModal
+              onFilterChange={handleFilterChange}
+              isOpen={isFilterOpen}
+              onClose={() => setFilterOpen(false)}
+
+            />
           </div>
         </div>
       </div>
@@ -374,6 +387,7 @@ export default function Students() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
