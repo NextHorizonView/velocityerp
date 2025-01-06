@@ -267,8 +267,7 @@ export default function Students() {
             <FilterModal
               onFilterChange={handleFilterChange}
               isOpen={isFilterOpen}
-              onClose={() => setFilterOpen(false)}
-
+              onClose={() => setFilterOpen(false)} initialFilters={null}
             />
           </div>
         </div>
