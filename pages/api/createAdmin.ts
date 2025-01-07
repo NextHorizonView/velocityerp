@@ -1,14 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import admin from 'firebase-admin';
 
-// Hardcode the Firebase configuration for school1
-const school1FirebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_SCHOOL1_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_SCHOOL1_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_SCHOOL1_FIREBASE_PROJECT_ID,
-  appId: process.env.NEXT_PUBLIC_SCHOOL1_FIREBASE_APP_ID,
-  databaseURL: process.env.SCHOOL1_FIREBASE_DATABASE_URL,
-};
 
 if (!admin.apps.length) {
   admin.initializeApp({

@@ -37,8 +37,9 @@ const CreateUser = () => {
         setMessage(`Error: ${result.error}`);
       }
     } catch (error) {
-      setMessage('An unexpected error occurred.');
-    } finally {
+      setMessage(`An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+     finally {
       setLoading(false);
     }
   };
