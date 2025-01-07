@@ -22,7 +22,7 @@ import castEducation from "@/public/castEducation.jpg";
 import { AiOutlineQuestionCircle } from "react-icons/ai";
 import { FaUserGraduate } from "react-icons/fa";
 import withAdminAuth from '@/lib/withAdminAuth';
-import { getAuth, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { getFirebaseServices } from "@/lib/firebaseConfig"; 
 
 interface SidebarProps {
