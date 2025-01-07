@@ -23,6 +23,7 @@ import { AiOutlineQuestionCircle } from "react-icons/ai";
 import { FaUserGraduate } from "react-icons/fa";
 import withAdminAuth from '@/lib/withAdminAuth';
 import { getAuth, signOut } from "firebase/auth";
+import { getFirebaseServices } from "@/lib/firebaseConfig"; 
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -36,17 +37,15 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const handleLogout = () => {
     // Show confirmation popup
     const userConfirmed = window.confirm("Are you sure you want to logout?");
-
-    if (!userConfirmed) {
-      // If the user clicks "Cancel," do nothing
-      return;
-    }
-
+    if (!userConfirmed) return; // Do nothing if the user clicks "Cancel"
+  
     // Proceed with logout
     localStorage.clear(); // Clear localStorage
-
-    // Clear Firebase IndexedDB storage
-    const auth = getAuth();
+  
+    // Get Firebase services (auth, db, etc.)
+    const { auth } = getFirebaseServices();
+  
+    // Sign out of Firebase
     signOut(auth)
       .then(() => {
         console.log("Logged out successfully");
