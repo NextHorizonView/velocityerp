@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { doc, deleteDoc } from 'firebase/firestore';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
+import FilterModal, { FilterState } from "../Student/StudentsFilter";
+import { Filter } from "lucide-react";
 
 const { db } = getFirebaseServices();
 export type Subject = {
@@ -59,10 +61,21 @@ const SubjectTable = () => {
   const [file] = useState<File | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<keyof ClassData | "newest">("newest");
+  
   // const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
   const [currentPage, setCurrentPage] = useState(1);
   const [classList, setClassList] = useState<ClassData[]>([]);
+
+  const [,setFilters] = useState<FilterState | null>(null);
+  const [isFilterOpen, setFilterOpen] = useState(false);
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    // Don't close the modal automatically
+    console.log('Applied Filters:', newFilters);
+    // Apply filtering logic here
+  };
+
   // const [totalPages, setTotalPages] = useState(1);
 
   // const handleSort = (field: keyof Subject | "newest") => {
@@ -84,17 +97,7 @@ const SubjectTable = () => {
   console.log("fetched claases", fetchedClasses);
   if (error) return <div>Error loading classes</div>;
   if (!fetchedClasses) return <div>Loading...</div>;
-  const handleSort = (field: keyof ClassData | "newest") => {
-    setSortField(field);
-    if (field !== "newest") {
-      const sortedClasses = [...fetchedClasses].sort((a, b) =>
-        String(a[field]).localeCompare(String(b[field]))
-      );
-      setClassList(sortedClasses);
-    } else {
-      setClassList(fetchedClasses);
-    }
-  };
+  
 
   const handleDelete = async (id: string) => {
     try {
@@ -229,21 +232,19 @@ const SubjectTable = () => {
               <IoIosSearch className="text-gray-500" />
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">Sort by:</span>
-            <select
-              value={sortField}
-              className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
-              onChange={(e) => handleSort(e.target.value as keyof ClassData | "newest")}
+          <button
+              onClick={() => setFilterOpen(true)}
+              className=" flex space-x-3 px-4 py-2 justify-center bg-[#576086] text-white rounded-lg"
             >
-              <option value="newest" className="bg-transparent">
-                Newest
-              </option>
-              <option value="classDiv" className="bg-transparent">
-                Class
-              </option>
-            </select>
-          </div>
+              <Filter className="w-5 h-5 flex mt-1" />
+              Filter
+            </button>
+            {/* Filter Modal */}
+            <FilterModal
+              onFilterChange={handleFilterChange}
+              isOpen={isFilterOpen}
+              onClose={() => setFilterOpen(false)} initialFilters={null}
+            />
         </div>
       </div>
 

@@ -24,6 +24,8 @@ import { getFirebaseServices } from '@/lib/firebaseConfig';
 
 const { db } = getFirebaseServices();
 import { DialogClose } from "@radix-ui/react-dialog";
+import FilterModal, { FilterState } from "../Student/StudentsFilter";
+import { Filter } from "lucide-react";
 
 export type Subject = {
   id: string;
@@ -35,9 +37,20 @@ const ITEMS_PER_PAGE = 8;
 
 const SubjectTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<"newest" | "oldest">("newest");
+  const [sortField] = useState<"newest" | "oldest">("newest");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [,setFilters] = useState<FilterState | null>(null);
+  const [isFilterOpen, setFilterOpen] = useState(false);
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    // Don't close the modal automatically
+    console.log('Applied Filters:', newFilters);
+    // Apply filtering logic here
+  };
+
 
   // Import/Export
   const handleImportExport = () => {
@@ -104,10 +117,6 @@ const SubjectTable = () => {
     fetchSubjects();
   }, [handleDelete, sortField]);
 
-  const handleSort = (field: "newest" | "oldest") => {
-    setSortField(field);
-    setSubjects((prevSubjects) => sortSubjects(prevSubjects, field));
-  };
 
   const filteredSubjects = subjects.filter((subject) =>
     subject?.name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -235,20 +244,19 @@ const SubjectTable = () => {
               <IoIosSearch className="text-gray-500" />
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">Sort by:</span>
-            <select
-              value={sortField}
-              className="border rounded-md px-3 h-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#576086] bg-transparent"
-              onChange={(e) => {
-                const value = e.target.value as "newest" | "oldest";
-                handleSort(value);
-              }}
+          <button
+              onClick={() => setFilterOpen(true)}
+              className=" flex space-x-3 px-4 py-2 justify-center bg-[#576086] text-white rounded-lg"
             >
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-            </select>
-          </div>
+              <Filter className="w-5 h-5 flex mt-1" />
+              Filter
+            </button>
+            {/* Filter Modal */}
+            <FilterModal
+              onFilterChange={handleFilterChange}
+              isOpen={isFilterOpen}
+              onClose={() => setFilterOpen(false)} initialFilters={null}
+            />
         </div>
       </div>
 
