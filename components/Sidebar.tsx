@@ -77,15 +77,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
       label: "Notice",
       path: "/notice",
     },
-    {
-      icon: <RiLogoutBoxLine size={20} />, // Use an appropriate logout icon
-      label: "Logout",
-      action: handleLogout, // Instead of a path, provide the action
-      className:
-        "bg-[#F7B696] text-white px-3 flex py-1.5 rounded-md hover:bg-gray-600 transition",
-    },
   ];
-
 
   if (isCollapsed) {
     return (
@@ -109,44 +101,41 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
       </div>
 
       {/* Menu Items */}
-      <nav className="mt-4">
+      <nav className="mt-4 flex flex-col h-[calc(100%-180px)]">
+        <div className="flex-grow">
+          {menuItems.map((item, index) => {
+            // Check active condition
+            let isActive = false;
 
+            // Custom logic for "Subjects"
+            if (item.label === "Subject") {
+              isActive =
+                pathname === "/subjects" ||
+                pathname === "/addsubject" ||
+                pathname === "/editsubject";
+            }
+            // Custom logic for "Students"
+            else if (item.label === "Students") {
+              isActive =
+                pathname === "/students" ||
+                pathname === "/studentform" ||
+                pathname.startsWith("/editstudent/");
+            } else if (item.label === "Teacher") {
+              isActive =
+                pathname === "/teacher" ||
+                pathname === "/teacherform" ||
+                pathname.startsWith("/editteacher/");
+            } else if (item.label === "Class") {
+              isActive =
+                pathname === "/class" ||
+                pathname === "/addclass" ||
+                pathname.startsWith("/editteacher/");
+            }
+            // Default logic for other menu items
+            else {
+              isActive = pathname === item.path;
+            }
 
-        {menuItems.map((item, index) => {
-          // Check active condition
-          let isActive = false;
-
-          // Custom logic for "Subjects"
-          if (item.label === "Subject") {
-            isActive =
-              pathname === "/subjects" ||
-              pathname === "/addsubject" ||
-              pathname === "/editsubject";
-          }
-          // Custom logic for "Students"
-          else if (item.label === "Students") {
-            isActive =
-              pathname === "/students" ||
-              pathname === "/studentform" ||
-              pathname.startsWith("/editstudent/");
-          } else if (item.label === "Teacher") {
-            isActive =
-              pathname === "/teacher" ||
-              pathname === "/teacherform" ||
-              pathname.startsWith("/editteacher/");
-          } else if (item.label === "Class") {
-            isActive =
-              pathname === "/class" ||
-              pathname === "/addclass" ||
-              pathname.startsWith("/editteacher/");
-          }
-          // Default logic for other menu items
-          else {
-            isActive = pathname === item.path;
-          }
-
-          // Conditionally render Link or Button
-          if (item.path) {
             return (
               <Link
                 key={index}
@@ -165,82 +154,72 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                 </span>
               </Link>
             );
-          }
+          })}
 
-          return (
-            <button
-              key={index}
-              onClick={item.action}
-              className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 ${isActive ? "bg-gray-100 border-r-4 border-red-500" : "hover:bg-gray-50"
+          {/* Enquiry Section */}
+          <div
+            className="relative group"
+            onMouseEnter={() => setIsEnquiryExpanded(true)}
+            onMouseLeave={() => setIsEnquiryExpanded(false)}
+            onClick={() => setIsEnquiryExpanded((prev) => !prev)}
+          >
+            <div
+              className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 ${isEnquiryExpanded ? "bg-gray-100 border-r-4 border-red-500" : "hover:bg-gray-50"
                 }`}
             >
-              <div className={`${isActive ? "text-red-500" : "text-gray-600"}`}>
-                {item.icon}
+              <AiOutlineQuestionCircle size={20} className="text-gray-700" />
+              <span className="ml-4 text-gray-700">Enquiry</span>
+            </div>
+
+            {/* Dropdown: Positioned within Sidebar */}
+            {isEnquiryExpanded && (
+              <div className="flex flex-col bg-[#FAFAF8] pl-8 pr-4 py-2">
+                <Link
+                  href="/enquiry/admission"
+                  className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${pathname === "/enquiry/admission"
+                    ? "text-red-500 font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                >
+                  <RiUserAddLine size={20} />
+                  <span className="ml-4">Admission</span>
+                </Link>
+                <Link
+                  href="/enquiry/business"
+                  className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${pathname === "/enquiry/business"
+                    ? "text-red-500 font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                >
+                  <FaUserGraduate size={20} />
+                  <span className="ml-4">Business</span>
+                </Link>
               </div>
-              <span
-                className={`ml-4 ${isActive ? "text-red-500 font-medium" : "text-gray-700"
-                  }`}
-              >
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
+            )}
+          </div>
+        </div>
 
-
-
-        {/* Enquiry Section */}
-        <div
-          className="relative group"
-          onMouseEnter={() => setIsEnquiryExpanded(true)}
-          onMouseLeave={() => setIsEnquiryExpanded(false)}
-          onClick={() => setIsEnquiryExpanded((prev) => !prev)}
-        >
+        {/* Bottom Actions */}
+        <div className="mt-auto">
+          {/* Hide Sidebar Button */}
           <div
-            className={`flex items-center px-4 py-3 cursor-pointer transition-colors duration-200 ${isEnquiryExpanded ? "bg-gray-100 border-r-4 border-red-500" : "hover:bg-gray-50"
-              }`}
+            onClick={() => setIsCollapsed(true)}
+            className="flex items-center px-4 py-3 cursor-pointer hover:bg-gray-50"
           >
-            <AiOutlineQuestionCircle size={20} className="text-gray-700" />
-            <span className="ml-4 text-gray-700">Enquiry</span>
+            <RiArrowLeftLine size={20} className="text-gray-600" />
+            <span className="ml-4 text-gray-700">Hide Sidebar</span>
           </div>
 
-          {/* Dropdown: Positioned within Sidebar */}
-          {isEnquiryExpanded && (
-            <div className="flex flex-col bg-[#FAFAF8] pl-8 pr-4 py-2">
-              <Link
-                href="/enquiry/admission"
-                className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${pathname === "/enquiry/admission"
-                  ? "text-red-500 font-medium"
-                  : "text-gray-700 hover:bg-gray-50"
-                  }`}
-              >
-                <RiUserAddLine size={20} />
-                <span className="ml-4">Admission</span>
-              </Link>
-              <Link
-                href="/enquiry/business"
-                className={`flex items-center py-2 text-sm cursor-pointer transition-colors duration-200 ${pathname === "/enquiry/business"
-                  ? "text-red-500 font-medium"
-                  : "text-gray-700 hover:bg-gray-50"
-                  }`}
-              >
-                <FaUserGraduate size={20} />
-                <span className="ml-4">Business</span>
-              </Link>
-            </div>
-          )}
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center px-4 py-3 w-full cursor-pointer transition-colors duration-200 text-red-700 "
+          >
+            <RiLogoutBoxLine size={20} />
+            <span className="ml-4">Logout</span>
+          </button>
         </div>
       </nav>
-
-      {/* Hide Sidebar Button */}
-      <div
-        onClick={() => setIsCollapsed(true)}
-        className="flex items-center px-4 py-3 mt-4 cursor-pointer hover:bg-gray-50"
-      >
-        <RiArrowLeftLine size={20} className="text-gray-600" />
-        <span className="ml-4 text-gray-700">Hide Sidebar</span>
-      </div>
-
     </div>
   );
 };
