@@ -396,6 +396,8 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                     <div
                                         key={index}
                                         className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between"
+
+                                        onClick={()=>setClassSearchTerm(teacher.name)}
                                     >
                                         <div className="flex items-center space-x-4">
                                             <div className="bg-gray-300 w-10 h-10 rounded-full flex items-center justify-center">
@@ -675,7 +677,9 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                     >
                       {subject.SubjectName}
                     </div>
-                  ) : null
+                  ) : <>
+                  <h1>no</h1>
+                  </>
                 )
               )}
             </div>

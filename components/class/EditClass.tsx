@@ -366,7 +366,7 @@ setTeachers(
                         handleRemoveOtherTeacher(index)
                       } // Edit teacher action
                     >
-                     9 <AiOutlineClose size={20} />
+                     <AiOutlineClose size={20} />
                     </button>
                   </td>
                 </tr>

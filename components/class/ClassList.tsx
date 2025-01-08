@@ -44,7 +44,7 @@ const fetcher = async (): Promise<ClassData[]> => {
 
 
 
-const ITEMS_PER_PAGE = 80;
+const ITEMS_PER_PAGE = 10;
 
 const SubjectTable = () => {
 
