@@ -42,6 +42,25 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     // Proceed with logout
     localStorage.clear(); // Clear localStorage
   
+    // Clear IndexedDB databases
+    const databasesToDelete = [
+      "firebase-heartbeat-database",
+      "firebaseLocalStorageDb",
+    ];
+  
+    databasesToDelete.forEach((dbName) => {
+      const request = indexedDB.deleteDatabase(dbName);
+      request.onsuccess = () => {
+        console.log(`Database "${dbName}" deleted successfully`);
+      };
+      request.onerror = (e) => {
+        console.error(`Error deleting database "${dbName}":`, e);
+      };
+      request.onblocked = () => {
+        console.warn(`Database "${dbName}" deletion is blocked`);
+      };
+    });
+  
     // Get Firebase services (auth, db, etc.)
     const { auth } = getFirebaseServices();
   
@@ -49,11 +68,16 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     signOut(auth)
       .then(() => {
         console.log("Logged out successfully");
+        // Redirect to home page after logout
+        window.location.href = '/'; // Option 1: Simple redirection
+        // OR
+        // router.push('/'); // Option 2: Using Next.js useRouter
       })
       .catch((error) => {
         console.error("Error logging out:", error);
       });
   };
+  
 
   const menuItems = [
     {

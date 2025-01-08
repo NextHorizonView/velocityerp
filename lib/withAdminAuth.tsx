@@ -24,15 +24,15 @@ const withAdminAuth = <P extends object>(WrappedComponent: ComponentType<P>) => 
 
             if (role !== 'admin' && role !== 'schoolAdmin' && role !== 'superAdmin' && role !== 'student') {
               console.error('User does not have admin role');
-              router.push('/login'); // Redirect to login page if not admin
+              router.push('/'); // Redirect to login page if not admin
             }
           } catch (error: unknown) {
             const err = error as Error;
             console.error('Error checking role:', err.message);
-            router.push('/login'); // Redirect to login page on error
+            router.push('/'); // Redirect to login page on error
           }
         } else if (!loading) {
-          router.push('/login'); // Redirect to login page if no user
+          router.push('/'); // Redirect to login page if no user
         }
       };
 
