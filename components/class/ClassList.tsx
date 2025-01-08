@@ -61,7 +61,7 @@ const SubjectTable = () => {
   const [file] = useState<File | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<keyof ClassData | "newest">("newest");
+  
   // const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
   const [currentPage, setCurrentPage] = useState(1);
   const [classList, setClassList] = useState<ClassData[]>([]);
@@ -97,17 +97,7 @@ const SubjectTable = () => {
   console.log("fetched claases", fetchedClasses);
   if (error) return <div>Error loading classes</div>;
   if (!fetchedClasses) return <div>Loading...</div>;
-  const handleSort = (field: keyof ClassData | "newest") => {
-    setSortField(field);
-    if (field !== "newest") {
-      const sortedClasses = [...fetchedClasses].sort((a, b) =>
-        String(a[field]).localeCompare(String(b[field]))
-      );
-      setClassList(sortedClasses);
-    } else {
-      setClassList(fetchedClasses);
-    }
-  };
+  
 
   const handleDelete = async (id: string) => {
     try {
