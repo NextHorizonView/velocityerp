@@ -117,10 +117,6 @@ const SubjectTable = () => {
     fetchSubjects();
   }, [handleDelete, sortField]);
 
-  const handleSort = (field: "newest" | "oldest") => {
-    setSortField(field);
-    setSubjects((prevSubjects) => sortSubjects(prevSubjects, field));
-  };
 
   const filteredSubjects = subjects.filter((subject) =>
     subject?.name?.toLowerCase().includes(searchTerm.toLowerCase())

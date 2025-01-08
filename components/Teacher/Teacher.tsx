@@ -169,15 +169,7 @@ export default function Teachers() {
     return <div>Error loading form fields</div>;
   }
 
-  const handleSort = (key: keyof Teacher) => {
-    setSortConfig({
-      key,
-      direction:
-        sortConfig.key === key && sortConfig.direction === "asc"
-          ? "desc"
-          : "asc",
-    });
-  };
+  
 
   const totalPages = Math.ceil(
     filteredAndSortedTeachers.length / ITEMS_PER_PAGE
