@@ -22,6 +22,7 @@ interface Teacher {
     id: string;
     name: string;
     position: string;
+    subject?: string;
 }
 
 interface Subject {
@@ -57,8 +58,9 @@ const [searchSubjects, setSearchSubjects] = useState<string[]>([]);
 const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 const [isDialogOpenSubject, setIsDialogOpenSubject] = useState(false);
+const [selectedDropSubTeachers, setSelectedDropSubTeachers] = useState<Teacher[]>([]);
 
-
+ 
 const [filterClassTeachers, setFilterClassTeachers] = useState<Teacher[]>([]);
 const [filterSubjectTeachers, setFilterSubjectTeachers] = useState<Teacher[]>([]);
   const [showNewDivisionInput, setShowNewDivisionInput] = useState<boolean>(false);
@@ -209,18 +211,35 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
         // console.log('Saving class teachers:', selectedClassTeachers);
     };
 
+    // const saveSubjectTeachers = () => {
+    //     setTeachers([...teachers, ...selectedDropSubTeachers]);
+    //     setSelectedDropSubTeachers([]);
+    //     // setTeachers([...teachers,...filterSubjectTeachers]);
+    //     setIsDialogOpenSubject(false);
+    //     // console.log('Saving class teachers:', selectedSubjectTeacher);
+    // };
+
     const saveSubjectTeachers = () => {
-        // setClassTeachers(selectedClassteacher);
-        setTeachers([...teachers,...filterSubjectTeachers]);
-        setIsDialogOpenSubject(false);
-        // console.log('Saving class teachers:', selectedSubjectTeacher);
+      const updatedTeachers = selectedDropSubTeachers.map((teacher, index) => {
+        const subject = selectedSubjects[index];
+        return { ...teacher, subject };
+      });
+    
+      console.log("Updated Teachers:", updatedTeachers); // Debugging log
+      setTeachers([...teachers, ...updatedTeachers]);
+      setSelectedDropSubTeachers([]);
+      setIsDialogOpenSubject(false);
     };
+    
 
       // selected subject 
       const handleSubjectSelect = (teacherIndex:number, SubjectName:string) :void=> {
         const newSelectedSubjects = [...selectedSubjects];
         newSelectedSubjects[teacherIndex] = SubjectName;
+    console.log("Selected new Subjects: ", newSelectedSubjects);
+
         setSelectedSubjects(newSelectedSubjects);
+    console.log("Selected Subjects: ", selectedSubjects);
     
         const newSubjectDropdowns = [...subjectDropdowns];
         newSubjectDropdowns[teacherIndex] = false;
@@ -248,6 +267,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
         console.log("Updated Teachers: ", updatedTeachers);
         setFilterSubjectTeachers(updatedTeachers);
     };
+
 
 
     return (
@@ -622,74 +642,378 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
 {/* WITH SEARCH FILTER  */}
 
-{/* {filteredTeachers.map((teacher, index) => ( */}
-{filterSubjectTeachers.map((teacher, index) => (
 
+
+{/* 
+{filterSubjectTeachers.map((teacher, index) => (
   <div
-    key={index}
-    className="border rounded-lg p-4 bg-gray-50 flex items-center justify-between"
+    key={teacher.id} 
+    className={`border rounded-lg p-4 flex items-center justify-between cursor-pointer ${
+      selectedDropSubTeachers.includes(teacher) ? 'bg-[#576086] text-white' : 'bg-gray-50'
+    }`}
+    onClick={() => {
+      if (selectedDropSubTeachers.includes(teacher)) {
+        setSelectedDropSubTeachers(
+          selectedDropSubTeachers.filter((t) => t.id !== teacher.id)
+        );
+      } else {
+        setSelectedDropSubTeachers([...selectedDropSubTeachers, teacher]);
+      }
+    }}
   >
     <div className="flex items-center space-x-4">
       <div className="bg-gray-300 w-10 h-10 rounded-full flex items-center justify-center">
-        <AiOutlineUser className="text-gray-600" />
+        <AiOutlineUser
+          className={`${
+            selectedDropSubTeachers.includes(teacher) ? 'text-white' : 'text-gray-600'
+          }`}
+        />
       </div>
       <div>
-        <p className="text-sm font-medium text-gray-700">{teacher.name}</p>
-        {/* <select
-          id="subjectDropdown"
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+        <p
+          className={`text-sm font-medium ${
+            selectedDropSubTeachers.includes(teacher)
+              ? 'text-white'
+              : 'text-gray-700'
+          }`}
         >
-          <option value="">{teacher.position}</option>
-          {teachers.map((t, i) => (
-            <option
-              key={i}
-              value={t.position.toLowerCase().replace(/\s+/g, '-')}
+          {teacher.name}
+        </p>
+
+        {selectedDropSubTeachers.includes(teacher) && (
+          <div className="relative mt-2" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086] cursor-pointer flex justify-between items-center"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent parent click handler
+                toggleDropdown(index);
+              }}
             >
-              {t.position}
-            </option>
-          ))}
-        </select> */}
-        <div className="relative mt-2">
-          <div
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086] cursor-pointer flex justify-between items-center"
-            onClick={() => toggleDropdown(index)}
-          >
-            <span>Select the Subject</span>
-            <span className="ml-2">&#9662;</span> {/* Triangle */}
-          </div>
-          {subjectDropdowns[index] && (
-            <div className="absolute w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto z-10">
-              <div className="px-4 py-2">
-                <Input
-                  id="searchSubject"
-                  placeholder="Search the Subject"
-                  value={searchSubjects[index]}
-                  onChange={(e) => handleSearchChange(index, e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              {subjects.map((subject, subjectIndex) =>
-                subject.SubjectTeachersId.map((as, teacherIndex) =>
-                  as.SubjectTeacherName === teacher.name &&
-                  subject.SubjectName?.toLowerCase().includes(searchSubjects[index]?.toLowerCase()) ? (
-                    <div key={`${subjectIndex}-${teacherIndex}`} className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => handleSubjectSelect(index, subject.SubjectName)}
-                    >
-                      {subject.SubjectName}
-                    </div>
-                  ) : <>
-                  <h1>no</h1>
-                  </>
-                )
-              )}
+              <span>Select the Subject</span>
+              <span className="ml-2">&#9662;</span>
             </div>
-          )}
-        </div>
+
+            {subjectDropdowns[index] && (
+              <div className="absolute w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto z-10 text-black">
+                <div className="px-4 py-2">
+                  <Input
+                    id={`searchSubject-${index}`}
+                    placeholder="Search the Subject"
+                    value={searchSubjects[index]}
+                    onChange={(e) => handleSearchChange(index, e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {subjects
+                  .filter((subject) =>
+                    subject.SubjectTeachersId.some(
+                      (as) =>
+                        as.SubjectTeacherName === teacher.name &&
+                        subject.SubjectName
+                          .toLowerCase()
+                          .includes(searchSubjects[index].toLowerCase())
+                    )
+                  )
+                  .map((subject, subjectIndex) =>
+                    subject.SubjectTeachersId
+                      .filter((as) => as.SubjectTeacherName === teacher.name)
+                      .map((as, teacherIndex) => (
+                        <div
+                          key={`${subjectIndex}-${teacherIndex}`}
+                          className="text-black px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSubjectSelect(index, subject.SubjectName);
+                          }}
+                        >
+                          {subject.SubjectName}
+                        </div>
+                      ))
+                  )}
+
+                {!subjects.some((subject) =>
+                  subject.SubjectTeachersId.some(
+                    (as) =>
+                      as.SubjectTeacherName === teacher.name &&
+                      subject.SubjectName
+                        .toLowerCase()
+                        .includes(searchSubjects[index].toLowerCase())
+                  )
+                ) && (
+                  <div className="px-4 py-2 text-gray-500">
+                    No subjects available
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
-    <button className="text-red-600 hover:text-red-700"
-                     onClick={() => handleRemoveSubjectTeacher(teacher.id)}
-    
+    <button
+      className={`hover:text-red-700 ${
+        selectedDropSubTeachers.includes(teacher)
+          ? 'text-white'
+          : 'text-red-600'
+      }`}
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent parent click handler
+        handleRemoveSubjectTeacher(teacher.id);
+      }}
+    >
+      <AiOutlineClose />
+    </button>
+  </div>
+))} */}
+
+{/* 
+{filterSubjectTeachers.map((teacher, index) => (
+  <div
+    key={teacher.id}
+    className={`border rounded-lg p-4 flex items-center justify-between cursor-pointer ${
+      selectedDropSubTeachers.includes(teacher) ? 'bg-[#576086] text-white' : 'bg-gray-50'
+    }`}
+    onClick={() => {
+      if (selectedDropSubTeachers.includes(teacher)) {
+        setSelectedDropSubTeachers(
+          selectedDropSubTeachers.filter((t) => t.id !== teacher.id)
+        );
+      } else {
+        setSelectedDropSubTeachers([...selectedDropSubTeachers, teacher]);
+      }
+    }}
+  >
+    <div className="flex items-center space-x-4">
+      <div className="bg-gray-300 w-10 h-10 rounded-full flex items-center justify-center">
+        <AiOutlineUser
+          className={`${
+            selectedDropSubTeachers.includes(teacher) ? 'text-white' : 'text-gray-600'
+          }`}
+        />
+      </div>
+      <div>
+        <p
+          className={`text-sm font-medium ${
+            selectedDropSubTeachers.includes(teacher)
+              ? 'text-white'
+              : 'text-gray-700'
+          }`}
+        >
+          {teacher.name}
+        </p>
+
+        {selectedDropSubTeachers.includes(teacher) && (
+          <div className="relative mt-2" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086] cursor-pointer flex justify-between items-center"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent parent click handler
+                toggleDropdown(index);
+              }}
+            >
+              <span>
+                {selectedSubjects[index] || "Select the Subject"}
+              </span>
+              <span className="ml-2">&#9662;</span>
+            </div>
+
+            {subjectDropdowns[index] && (
+              <div className="absolute w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto z-10 text-black">
+                <div className="px-4 py-2">
+                  <Input
+                    id={`searchSubject-${index}`}
+                    placeholder="Search the Subject"
+                    value={searchSubjects[index]}
+                    onChange={(e) => handleSearchChange(index, e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {subjects
+                  .filter((subject) =>
+                    subject.SubjectTeachersId.some(
+                      (as) =>
+                        as.SubjectTeacherName === teacher.name &&
+                        subject.SubjectName
+                          .toLowerCase()
+                          .includes(searchSubjects[index].toLowerCase())
+                    )
+                  )
+                  .map((subject, subjectIndex) =>
+                    subject.SubjectTeachersId
+                      .filter((as) => as.SubjectTeacherName === teacher.name)
+                      .map((as, teacherIndex) => (
+                        <div
+                          key={`${subjectIndex}-${teacherIndex}`}
+                          className="text-black px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSubjectSelect(index, subject.SubjectName);
+                          }}
+                        >
+                          {subject.SubjectName}
+                        </div>
+                      ))
+                  )}
+
+                {!subjects.some((subject) =>
+                  subject.SubjectTeachersId.some(
+                    (as) =>
+                      as.SubjectTeacherName === teacher.name &&
+                      subject.SubjectName
+                        .toLowerCase()
+                        .includes(searchSubjects[index].toLowerCase())
+                  )
+                ) && (
+                  <div className="px-4 py-2 text-gray-500">
+                    No subjects available
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+    <button
+      className={`hover:text-red-700 ${
+        selectedDropSubTeachers.includes(teacher)
+          ? 'text-white'
+          : 'text-red-600'
+      }`}
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent parent click handler
+        handleRemoveSubjectTeacher(teacher.id);
+      }}
+    >
+      <AiOutlineClose />
+    </button>
+  </div>
+))} */}
+
+
+
+{filterSubjectTeachers.map((teacher, index) => (
+  <div
+    key={teacher.id}
+    className={`border rounded-lg p-4 flex items-center justify-between cursor-pointer ${
+      selectedDropSubTeachers.includes(teacher) ? 'bg-[#576086] text-white' : 'bg-gray-50'
+    }`}
+    onClick={() => {
+      if (selectedDropSubTeachers.includes(teacher)) {
+        setSelectedDropSubTeachers(
+          selectedDropSubTeachers.filter((t) => t.id !== teacher.id)
+        );
+      } else {
+        setSelectedDropSubTeachers([...selectedDropSubTeachers, teacher]);
+      }
+    }}
+  >
+    <div className="flex items-center space-x-4">
+      <div className="bg-gray-300 w-10 h-10 rounded-full flex items-center justify-center">
+        <AiOutlineUser
+          className={`${
+            selectedDropSubTeachers.includes(teacher) ? 'text-white' : 'text-gray-600'
+          }`}
+        />
+      </div>
+      <div>
+        <p
+          className={`text-sm font-medium ${
+            selectedDropSubTeachers.includes(teacher)
+              ? 'text-white'
+              : 'text-gray-700'
+          }`}
+        >
+          {teacher.name}
+        </p>
+
+        {selectedDropSubTeachers.includes(teacher) && (
+          <div className="relative mt-2" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086] cursor-pointer flex justify-between items-center"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent parent click handler
+                toggleDropdown(index);
+              }}
+            >
+              <span>
+                {selectedSubjects[index] || "Select the Subject"} {/* Show selected subject */}
+              </span>
+              <span className="ml-2">&#9662;</span>
+            </div>
+
+            {subjectDropdowns[index] && (
+              <div className="absolute w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto z-10 text-black">
+                <div className="px-4 py-2">
+                  <Input
+                    id={`searchSubject-${index}`}
+                    placeholder="Search the Subject"
+                    value={searchSubjects[index]}
+                    onChange={(e) => handleSearchChange(index, e.target.value)}
+                    className="w-full px-4 py-3 text-base border rounded-md focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+                  />
+                </div>
+
+                {/* Filter subjects based on search query */}
+                {subjects
+                  .filter((subject) =>
+                    subject.SubjectTeachersId.some(
+                      (as) =>
+                        as.SubjectTeacherName === teacher.name &&
+                        subject.SubjectName
+                          .toLowerCase()
+                          .includes(searchSubjects[index].toLowerCase())
+                    )
+                  )
+                  .map((subject, subjectIndex) =>
+                    subject.SubjectTeachersId
+                      .filter((as) => as.SubjectTeacherName === teacher.name)
+                      .map((as, teacherIndex) => (
+                        <div
+                          key={`${subjectIndex}-${teacherIndex}`}
+                          className="text-black px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSubjectSelect(index, subject.SubjectName);
+                          }}
+                        >
+                          {subject.SubjectName}
+                        </div>
+                      ))
+                  )}
+
+                {/* Fallback if no subjects match */}
+                {!subjects.some((subject) =>
+                  subject.SubjectTeachersId.some(
+                    (as) =>
+                      as.SubjectTeacherName === teacher.name &&
+                      subject.SubjectName
+                        .toLowerCase()
+                        .includes(searchSubjects[index].toLowerCase())
+                  )
+                ) && (
+                  <div className="px-4 py-2 text-gray-500">
+                    No subjects available
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+    <button
+      className={`hover:text-red-700 ${
+        selectedDropSubTeachers.includes(teacher)
+          ? 'text-white'
+          : 'text-red-600'
+      }`}
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent parent click handler
+        handleRemoveSubjectTeacher(teacher.id);
+      }}
     >
       <AiOutlineClose />
     </button>
@@ -699,26 +1023,8 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
 
 
+                           
 
-                                {/* Subject Dropdown */}
-                                {/* <div>
-                                    <select
-                                        id="subjectDropdown"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-                                    >
-                                        <option value="">Select the Subject</option>
-                                        {teachers.map((teacher, index) => (
-                                            <option
-                                                key={index}
-                                                value={teacher.position.toLowerCase().replace(/\s+/g, '-')}
-                                            >
-                                                {teacher.position}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div> */}
-
-                                {/* Save Button */}
                                 <Button className="w-full bg-[#576086] text-white hover:bg-[#414d6b]"
                                 onClick={saveSubjectTeachers}
                                 >
@@ -748,7 +1054,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                                         <AiOutlineUser size={20} className="text-gray-500" />
                                         <span className="font-medium text-gray-700">{teacher.name}</span>
                                     </td>
-                                    <td className="p-3 text-gray-500">{teacher.position}</td>
+                                    <td className="p-3 text-gray-500">{teacher.position}  ( {teacher?.subject} )</td>
                                     <td className="p-3">
                                         <button
                                             className="text-gray-500 hover:text-gray-700 focus:outline-none"
