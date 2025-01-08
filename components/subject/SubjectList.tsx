@@ -37,7 +37,7 @@ const ITEMS_PER_PAGE = 8;
 
 const SubjectTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<"newest" | "oldest">("newest");
+  const [sortField] = useState<"newest" | "oldest">("newest");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
