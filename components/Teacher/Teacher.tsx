@@ -91,7 +91,7 @@ export default function Teachers() {
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [sortConfig, setSortConfig] = useState<{
+  const [sortConfig] = useState<{
     key: keyof Teacher;
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
