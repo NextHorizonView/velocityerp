@@ -153,7 +153,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
               isActive =
                 pathname === "/class" ||
                 pathname === "/addclass" ||
-                pathname.startsWith("/editteacher/");
+                pathname.startsWith("/editclass/");
             }
             // Default logic for other menu items
             else {
