@@ -1,5 +1,5 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth"; // Import the persistence method
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -42,29 +42,57 @@ const firebaseConfigs: FirebaseConfigs = {
   },
 };
 
-// Helper to extract the school ID from the URL
+// Helper to get the school ID from the path
 const getSchoolIdFromPath = (): string => {
   if (typeof window !== "undefined") {
-    const pathParts = window.location.pathname.split("/");
-    return pathParts[1]; // Assumes the structure is /school1, /school2, etc.
+    const { hostname, pathname } = window.location;
+
+    // Handle subdomain-based school identification (e.g., school1.vercel.app or www.school1.vercel.app)
+    const subdomainMatch = hostname.split(".")[0]; // Extract the first part of the hostname
+    if (subdomainMatch && subdomainMatch !== "localhost" && subdomainMatch !== "www") {
+      return subdomainMatch; // Assume the subdomain is the school ID
+    }
+
+    // Handle path-based school identification (e.g., localhost:3000/school1)
+    const pathParts = pathname.split("/");
+    if (pathParts[1]) {
+      return pathParts[1]; // Assume the first path segment is the school ID
+    }
   }
+
   return "default"; // Default config if no school ID is found
 };
 
-// Helper to get Firebase app based on the school ID
-const getFirebaseApp = (): FirebaseApp => {
-  const schoolId = getSchoolIdFromPath();
-  const configKey = firebaseConfigs[schoolId] ? schoolId : "default"; // Fallback to default if school ID not found
-  const config = firebaseConfigs[configKey];
+// Lazy initialization of Firebase
+let firebaseApp: FirebaseApp | null = null;
 
-  const existingApp = getApps().find((app) => app.name === configKey);
-  return existingApp || initializeApp(config, configKey);
+const getFirebaseApp = (): FirebaseApp => {
+  if (!firebaseApp) {
+    const schoolId = getSchoolIdFromPath();
+    const configKey = firebaseConfigs[schoolId] ? schoolId : "default"; // Fallback to default if school ID not found
+    const config = firebaseConfigs[configKey];
+
+    const existingApp = getApps().find((app) => app.name === configKey);
+    firebaseApp = existingApp || initializeApp(config, configKey);
+  }
+
+  return firebaseApp;
 };
 
 // Export Firebase services dynamically
 const getFirebaseServices = () => {
   const app = getFirebaseApp();
   const auth = getAuth(app);
+
+  // Ensure authentication persists
+  setPersistence(auth, browserLocalPersistence) // Add persistence setting here
+    .then(() => {
+      // Authentication persistence is set
+    })
+    .catch((error) => {
+      console.error("Error setting persistence:", error);
+    });
+
   const db = getFirestore(app);
   const storage = getStorage(app);
 

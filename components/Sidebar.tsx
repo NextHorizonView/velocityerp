@@ -24,21 +24,23 @@ import { FaUserGraduate } from "react-icons/fa";
 import withAdminAuth from '@/lib/withAdminAuth';
 import { signOut } from "firebase/auth";
 import { getFirebaseServices } from "@/lib/firebaseConfig"; 
+import { useRouter } from "next/navigation"; // Import useRouter
+
 
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
 }
-
 const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const pathname = usePathname() || "";
   const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(false);
+  const router = useRouter(); // Initialize the router
 
   const handleLogout = () => {
     // Show confirmation popup
     const userConfirmed = window.confirm("Are you sure you want to logout?");
     if (!userConfirmed) return; // Do nothing if the user clicks "Cancel"
-  
+    
     // Proceed with logout
     localStorage.clear(); // Clear localStorage
   
@@ -68,10 +70,10 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     signOut(auth)
       .then(() => {
         console.log("Logged out successfully");
-        // Redirect to home page after logout
-        window.location.href = '/'; // Option 1: Simple redirection
-        // OR
-        // router.push('/'); // Option 2: Using Next.js useRouter
+        
+        // Get saved domain URL from localStorage or another source
+        const savedDomain = sessionStorage.getItem("savedDomain") || "/"; // Default to '/' if not found
+        router.push(savedDomain);
       })
       .catch((error) => {
         console.error("Error logging out:", error);

@@ -57,17 +57,20 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
-      const domain = window.location.hostname;
+      const domain = window.location.href;
+      localStorage.setItem('savedDomain', domain);
+      sessionStorage.setItem("savedDomain", domain); 
+
   
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
         localStorage.setItem('userId', userId);
+        
   
         if (rememberMe) {
           localStorage.setItem('email', username);
           localStorage.setItem('userRole', role);
-          localStorage.setItem('userDomain', domain);
           localStorage.removeItem('userExpiry'); // Ensure expiry is cleared if Remember Me is active
         } else {
           const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 60 seconds for testing
@@ -104,14 +107,16 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const userCredential = await signInWithPopup(auth, provider);
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
-            // Get the domain (website name) dynamically
-      const domain = window.location.hostname; // e.g., "example.com"
+      // Get the domain (website name) dynamically
+      const domain = window.location.href;
+      localStorage.setItem('savedDomain', domain);
+      sessionStorage.setItem("savedDomain", domain); 
+            
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
         localStorage.setItem('userId', userCredential.user.uid);
         localStorage.setItem('userRole', role);
-        localStorage.setItem('userDomain', domain); // Store domain
         router.push('/dashboard');
       } else {
         console.error('User does not have admin role');
