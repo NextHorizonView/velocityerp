@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { IoIosCloudUpload, IoIosSearch } from "react-icons/io";
 import { FaTrash, FaPen } from "react-icons/fa";
-import {refreshClassList} from "../Student/uploadCsv";
-import { uploadCsv } from "../Student/uploadCsv";
+import {refreshClassList} from "./uploadCsv";
+import { uploadCsv } from "./uploadCsv";
 import { Button } from "@/components/ui/button";
 import { collection, getDocs } from "firebase/firestore";
 import useSWR from "swr";
@@ -144,14 +144,16 @@ const [classFList, setClassFList] = useState<ClassData[]>([]);
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
         setFile(e.target.files[0]);
+        console.log("File selected:", e.target.files[0]);  
       }
     };
     const handleUploadCsv = async () => {
       if (file) {
         try {
+          console.log("file is",file);
           await uploadCsv(file);
           alert("CSV file uploaded successfully!");
-          await refreshClassList(() => classFList);
+          await refreshClassList(() => currentClasses);
         } catch (error) {
           console.error("Error uploading CSV file: ", error);
           alert("Failed to upload CSV file.");
@@ -193,17 +195,15 @@ const [classFList, setClassFList] = useState<ClassData[]>([]);
         classItem.ClassTeacherId.join(", "),
         classItem.ClassSubjects.map(
           (subject) => `${subject.SubjectName} (${subject.SubjectId})`
-        ).join("\n"), // Display subjects as a list
+        ).join("\n"), 
       ]);
     
-      // Add table to PDF
 
-       // Disable TypeScript checking for autoTable
   // @ts-expect-error
       doc.autoTable({
         head: [columns],
         body: rows,
-        startY: 20, // Position the table below the title
+        startY: 20, 
       });
     
       // Save the PDF
@@ -225,7 +225,7 @@ const [classFList, setClassFList] = useState<ClassData[]>([]);
           >
             <IoIosCloudUpload className="h-10 w-10 text-black" />
           </Button>
-          <Dialog open={isImportExportDialogOpen} onOpenChange={setIsImportExportDialogOpen}>
+          {/* <Dialog open={isImportExportDialogOpen} onOpenChange={setIsImportExportDialogOpen}>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle className="text-base">Import/Export</DialogTitle>
@@ -237,7 +237,6 @@ const [classFList, setClassFList] = useState<ClassData[]>([]);
               </div>
 
               <div className="mt-4 flex flex-col space-y-4">
-                {/* File Upload */}
                 <label
                   htmlFor="file-upload"
                   className="flex items-center justify-center w-full px-4 py-2 bg-[#576086] hover:bg-[#474d6b] text-white h-10 text-sm cursor-pointer rounded-md"
@@ -252,7 +251,6 @@ const [classFList, setClassFList] = useState<ClassData[]>([]);
                   Upload CSV
                 </label>
 
-                {/* Conditionally Render "Upload this file" Button */}
                 {file && (
                   <Button
                     variant="default"
@@ -263,7 +261,6 @@ const [classFList, setClassFList] = useState<ClassData[]>([]);
                   </Button>
                 )}
 
-                {/* Download Buttons */}
                 <Button
                   variant="default"
                   className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
@@ -288,7 +285,7 @@ const [classFList, setClassFList] = useState<ClassData[]>([]);
                 </DialogClose>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
         </div>
         <div className="flex items-center space-x-6">
 

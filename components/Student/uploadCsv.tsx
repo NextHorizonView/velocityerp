@@ -4,7 +4,6 @@ import { getFirebaseServices } from '@/lib/firebaseConfig';
 
 const { app } = getFirebaseServices();
 import { Student } from './Students';
-import { ClassData } from '../class/ClassList';
 const db = getFirestore(app);
 
 export const uploadCsv = async (file: File) => {
@@ -22,7 +21,7 @@ export const uploadCsv = async (file: File) => {
         reject(new Error('Failed to read CSV file.'));
         return;
       }
-console.log("text is",text);
+
       try {
         // Send CSV data to the API route
         const response = await fetch('/api/uploadCsv', {
@@ -76,71 +75,3 @@ export const refreshStudentList = async (setStudents: React.Dispatch<React.SetSt
   }
 };
 
-// export const refreshClassList = async (
-//   setClasses: React.Dispatch<React.SetStateAction<ClassData[]>>
-// ) => {
-//   try {
-//     const classesCollection = collection(db, 'classes');
-//     const querySnapshot = await getDocs(classesCollection);
-
-//     if (querySnapshot.empty) {
-//       console.warn('No classes found in the database.');
-//       setClasses([]);
-//       return;
-//     }
-
-//     const classesData = querySnapshot.docs.map((doc) => ({
-//       classId: doc.id,
-//       ...doc.data(),
-//     } as ClassData));
-
-//     setClasses(classesData);
-//   } catch (error) {
-//     console.error('Error fetching classes:', error);
-//   }
-// };
-
-export const refreshClassList = async (
-  setClasses: React.Dispatch<React.SetStateAction<ClassData[]>>
-) => {
-  try {
-    const classesCollection = collection(db, 'classes');
-    const querySnapshot = await getDocs(classesCollection);
-
-    if (querySnapshot.empty) {
-      console.warn('No classes found in the database.');
-      setClasses([]);
-      return;
-    }
-
-    const classesData = querySnapshot.docs
-      .map((doc) => {
-        const data = doc.data();
-        if (
-          typeof data.ClassId === 'string' &&
-          typeof data.ClassName === 'string' &&
-          typeof data.ClassDivision === 'string' &&
-          Array.isArray(data.ClassTeacherId) &&
-          Array.isArray(data.ClassSubjects) &&
-          data.ClassSubjects.every((subject) =>
-            typeof subject.SubjectName === 'string' &&
-            typeof subject.SubjectId === 'string' &&
-            typeof subject.SubjectTeacherID === 'string'
-          )
-        ) {
-          return {
-            id: doc.id,
-            ...data,
-          } as ClassData;
-        } else {
-          console.warn('Invalid class data structure:', data);
-          return null; // Handle invalid data as needed
-        }
-      })
-      .filter((classData): classData is ClassData => classData !== null);
-
-    setClasses(classesData);
-  } catch (error) {
-    console.error('Error fetching classes:', error);
-  }
-};

@@ -9,7 +9,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { csvData } = req.body;
-console.log("csv data isss",csvData);
   if (!csvData) {
     return res.status(400).json({ message: 'No CSV data provided.' });
   }

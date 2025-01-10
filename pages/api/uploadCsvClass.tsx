@@ -41,12 +41,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Convert `ClassTeacherId` and `ClassSubjects` to their respective data types
       const teacherIds = classItem.ClassTeacherId.split(',').map((id) => id.trim());
-      let subjects: Array<{ SubjectName: string; SubjectId: string; SubjectTeacherID: string }>;
+      let subjects: { SubjectName: string; SubjectId: string; SubjectTeacherID: string }[] | string = [];
 
       try {
-        subjects = JSON.parse(classItem.ClassSubjects);
+        // Check if ClassSubjects is a valid JSON string or an object
+        if (typeof classItem.ClassSubjects === 'string') {
+          try {
+            // Try to parse as JSON if it's a string
+            subjects = JSON.parse(classItem.ClassSubjects);
+          } catch (err) {
+            // If it's a stringified object or invalid JSON, we keep it as a string
+            if (classItem.ClassSubjects.includes('[object Object]')) {
+              subjects = classItem.ClassSubjects;  // Keep it as stringified object
+            } else {
+              throw new Error('Invalid JSON string for ClassSubjects');
+            }
+          }
+        } else if (typeof classItem.ClassSubjects === 'object') {
+          subjects = classItem.ClassSubjects;  // Use the object directly if it's already an object
+        } else {
+          throw new Error('ClassSubjects is neither a valid string nor an object');
+        }
+
+        // Ensure subjects is an array and validate its structure
         if (
-          !Array.isArray(subjects) ||
+          Array.isArray(subjects) &&
           !subjects.every(
             (subject) =>
               typeof subject.SubjectName === 'string' &&
@@ -57,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           throw new Error('Invalid ClassSubjects structure');
         }
       } catch (err) {
-        console.error(`Invalid ClassSubjects JSON for class ${classItem.ClassId}:`, err);
+        console.error(`Invalid ClassSubjects for class ${classItem.ClassId}:`, err);
         continue;
       }
 
@@ -71,12 +90,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log(`Class with ID ${classItem.ClassId} already exists. Updating.`);
         const classDocRef = existingClass.docs[0].ref;
 
-        // Update the existing class
+        // Update only ClassName and ClassDivision, leave ClassSubjects untouched
         await classDocRef.update({
           ClassName: classItem.ClassName,
           ClassDivision: classItem.ClassDivision,
           ClassTeacherId: teacherIds,
-          ClassSubjects: subjects,
         });
         continue;
       }
@@ -88,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ClassName: classItem.ClassName,
         ClassDivision: classItem.ClassDivision,
         ClassTeacherId: teacherIds,
-        ClassSubjects: subjects,
+        ClassSubjects: subjects,  // Store ClassSubjects as it is
       });
       console.log(`Added new class with ID ${classItem.ClassId}`);
     }
