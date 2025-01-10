@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { IoIosCloudUpload, IoIosSearch } from "react-icons/io";
 import { FaTrash, FaPen } from "react-icons/fa";
-
+import {refreshClassList} from "../Student/uploadCsv";
+import { uploadCsv } from "../Student/uploadCsv";
 import { Button } from "@/components/ui/button";
 import { collection, getDocs } from "firebase/firestore";
 import useSWR from "swr";
@@ -19,7 +20,9 @@ import { doc, deleteDoc } from 'firebase/firestore';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
 import FilterModal, { FilterState } from "../Student/StudentsFilter";
 import { Filter } from "lucide-react";
-
+import Papa from "papaparse";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 const { db } = getFirebaseServices();
 export type Subject = {
   id: number;
@@ -51,14 +54,12 @@ const ITEMS_PER_PAGE = 10;
 const SubjectTable = () => {
 
   // Import/Export of csv
-  const handleImportExport = () => {
-    setIsImportExportDialogOpen(true);
-  };
+
 
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
     useState(false);
+const [classFList, setClassFList] = useState<ClassData[]>([]);
 
-  const [file] = useState<File | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -75,6 +76,7 @@ const SubjectTable = () => {
     console.log('Applied Filters:', newFilters);
     // Apply filtering logic here
   };
+  const [file, setFile] = useState<File | null>(null);
 
   // const [totalPages, setTotalPages] = useState(1);
 
@@ -132,8 +134,83 @@ const SubjectTable = () => {
     }
   };
 
-  console.log("fonal classes", currentClasses);
 
+  // upload functions
+  
+    const handleImportExport = () => {
+      setIsImportExportDialogOpen(true);
+    };
+  
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        setFile(e.target.files[0]);
+      }
+    };
+    const handleUploadCsv = async () => {
+      if (file) {
+        try {
+          await uploadCsv(file);
+          alert("CSV file uploaded successfully!");
+          await refreshClassList(() => classFList);
+        } catch (error) {
+          console.error("Error uploading CSV file: ", error);
+          alert("Failed to upload CSV file.");
+        }
+      } else {
+        alert("Please select a CSV file.");
+      }
+      setIsImportExportDialogOpen(false);
+    };
+  
+    const handleDownloadCsv = () => {
+      const csv = Papa.unparse(currentClasses);
+      console.log("csv is",csv);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "class.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setIsImportExportDialogOpen(false);
+    };
+
+    const handleDownloadPdf = () => {
+      const doc = new jsPDF();
+    
+      // Title
+      doc.text("Class List", 14, 10);
+    
+      // Table Columns
+      const columns = ["Class ID", "Class Name", "Division", "Teacher IDs", "Subjects"];
+    
+      // Table Rows
+      const rows = currentClasses.map((classItem) => [
+        classItem.ClassId,
+        classItem.ClassName,
+        classItem.ClassDivision,
+        classItem.ClassTeacherId.join(", "),
+        classItem.ClassSubjects.map(
+          (subject) => `${subject.SubjectName} (${subject.SubjectId})`
+        ).join("\n"), // Display subjects as a list
+      ]);
+    
+      // Add table to PDF
+
+       // Disable TypeScript checking for autoTable
+  // @ts-expect-error
+      doc.autoTable({
+        head: [columns],
+        body: rows,
+        startY: 20, // Position the table below the title
+      });
+    
+      // Save the PDF
+      doc.save("class_list.pdf");
+    
+      setIsImportExportDialogOpen(false);
+    };
   return (
     <div className="container mx-auto p-6">
       {/* Header Section */}
@@ -321,6 +398,71 @@ const SubjectTable = () => {
           </button>
         </div>
       </div>
+
+          <Dialog open={isImportExportDialogOpen} onOpenChange={setIsImportExportDialogOpen}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-base">Import/Export</DialogTitle>
+                </DialogHeader>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    Choose an action to import or export student data.
+                  </p>
+                </div>
+      
+                <div className="mt-4 flex flex-col space-y-4">
+                  {/* File Upload */}
+                  <label
+                    htmlFor="file-upload"
+                    className="flex items-center justify-center w-full px-4 py-2 bg-[#576086] hover:bg-[#474d6b] text-white h-10 text-sm cursor-pointer rounded-md"
+                  >
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    Upload CSV
+                  </label>
+      
+                  {/* Conditionally Render "Upload this file" Button */}
+                  {file && (
+                    <Button
+                      variant="default"
+                      className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+                      onClick={handleUploadCsv}
+                    >
+                      Upload this file
+                    </Button>
+                  )}
+      
+                  {/* Download Buttons */}
+                  <Button
+                    variant="default"
+                    className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+                    onClick={handleDownloadCsv}
+                  >
+                    Download CSV
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
+                    onClick={handleDownloadPdf}
+                  >
+                    Download PDF
+                  </Button>
+                </div>
+      
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline" size="sm">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
     </div>
   );
 };
