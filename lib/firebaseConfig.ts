@@ -45,16 +45,22 @@ const firebaseConfigs: FirebaseConfigs = {
 // Helper to get the school ID from the path or subdomain
 const getSchoolIdFromPath = (): string => {
   if (typeof window !== "undefined") {
-    const { hostname, pathname } = window.location;
+    const { hostname, pathname, href } = window.location;
 
-    // Handle subdomain-based school identification (e.g., school1.vercel.app or www.school1.vercel.app)
-    const subdomainMatch = hostname.split(".")[0]; // Extract the first part of the hostname
+    console.log("Full URL (href):", href); // Log the entire URL
+    console.log("Hostname:", hostname); // Log the hostname
+    console.log("Pathname:", pathname); // Log the pathname
+
+    const subdomainMatch = hostname.split(".")[0];
+    console.log("Subdomain Match:", subdomainMatch);
+
     if (subdomainMatch && subdomainMatch !== "localhost" && subdomainMatch !== "www") {
-      return subdomainMatch; // Assume the subdomain is the school ID
+      return subdomainMatch; // If we are on a subdomain like school1.velocityerp.vercel.app
     }
 
-    // Handle path-based school identification (e.g., localhost:3000/school1 or velocityerp.vercel.app/school1)
     const pathParts = pathname.split("/");
+    console.log("Path Parts:", pathParts); // Check what path parts look like
+
     if (pathParts[1] && pathParts[1] !== "") {
       return pathParts[1]; // Assume the first path segment is the school ID
     }
@@ -62,6 +68,7 @@ const getSchoolIdFromPath = (): string => {
 
   return "default"; // Default config if no school ID is found
 };
+
 
 // Lazy initialization of Firebase
 let firebaseApp: FirebaseApp | null = null;
