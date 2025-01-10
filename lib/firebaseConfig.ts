@@ -42,7 +42,7 @@ const firebaseConfigs: FirebaseConfigs = {
   },
 };
 
-// Helper to get the school ID from the path
+// Helper to get the school ID from the path or subdomain
 const getSchoolIdFromPath = (): string => {
   if (typeof window !== "undefined") {
     const { hostname, pathname } = window.location;
@@ -53,9 +53,9 @@ const getSchoolIdFromPath = (): string => {
       return subdomainMatch; // Assume the subdomain is the school ID
     }
 
-    // Handle path-based school identification (e.g., localhost:3000/school1)
+    // Handle path-based school identification (e.g., localhost:3000/school1 or velocityerp.vercel.app/school1)
     const pathParts = pathname.split("/");
-    if (pathParts[1]) {
+    if (pathParts[1] && pathParts[1] !== "") {
       return pathParts[1]; // Assume the first path segment is the school ID
     }
   }
