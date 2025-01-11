@@ -1,9 +1,5 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-<<<<<<< HEAD
-import { getAuth } from "firebase/auth";
-=======
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth"; // Import the persistence method
->>>>>>> b36b764e60d1702314fdeb821a075ae88b2dd979
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -46,25 +42,6 @@ const firebaseConfigs: FirebaseConfigs = {
   },
 };
 
-<<<<<<< HEAD
-// Helper to extract the school ID from the URL
-const getSchoolIdFromPath = (): string => {
-  if (typeof window !== "undefined") {
-    const pathParts = window.location.pathname.split("/");
-    return pathParts[1]; // Assumes the structure is /school1, /school2, etc.
-  }
-  return "default"; // Default config if no school ID is found
-};
-
-// Helper to get Firebase app based on the school ID
-const getFirebaseApp = (): FirebaseApp => {
-  const schoolId = getSchoolIdFromPath();
-  const configKey = firebaseConfigs[schoolId] ? schoolId : "default"; // Fallback to default if school ID not found
-  const config = firebaseConfigs[configKey];
-
-  const existingApp = getApps().find((app) => app.name === configKey);
-  return existingApp || initializeApp(config, configKey);
-=======
 // Helper to get the school ID from the path or subdomain
 const getSchoolIdFromPath = (): string => {
   if (typeof window !== "undefined") {
@@ -107,15 +84,12 @@ const getFirebaseApp = (): FirebaseApp => {
   }
 
   return firebaseApp;
->>>>>>> b36b764e60d1702314fdeb821a075ae88b2dd979
 };
 
 // Export Firebase services dynamically
 const getFirebaseServices = () => {
   const app = getFirebaseApp();
   const auth = getAuth(app);
-<<<<<<< HEAD
-=======
 
   // Ensure authentication persists
   setPersistence(auth, browserLocalPersistence) // Add persistence setting here
@@ -126,7 +100,6 @@ const getFirebaseServices = () => {
       console.error("Error setting persistence:", error);
     });
 
->>>>>>> b36b764e60d1702314fdeb821a075ae88b2dd979
   const db = getFirestore(app);
   const storage = getStorage(app);
 
