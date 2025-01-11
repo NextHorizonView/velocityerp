@@ -24,15 +24,65 @@ import { FaUserGraduate } from "react-icons/fa";
 import withAdminAuth from '@/lib/withAdminAuth';
 import { signOut } from "firebase/auth";
 import { getFirebaseServices } from "@/lib/firebaseConfig"; 
+<<<<<<< HEAD
+=======
+import { useRouter } from "next/navigation"; // Import useRouter
+
+>>>>>>> b36b764e60d1702314fdeb821a075ae88b2dd979
 
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
 }
-
 const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const pathname = usePathname() || "";
   const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(false);
+  const router = useRouter(); // Initialize the router
+
+  const handleLogout = () => {
+    // Show confirmation popup
+    const userConfirmed = window.confirm("Are you sure you want to logout?");
+    if (!userConfirmed) return; // Do nothing if the user clicks "Cancel"
+    
+    // Proceed with logout
+    localStorage.clear(); // Clear localStorage
+  
+    // Clear IndexedDB databases
+    const databasesToDelete = [
+      "firebase-heartbeat-database",
+      "firebaseLocalStorageDb",
+    ];
+  
+    databasesToDelete.forEach((dbName) => {
+      const request = indexedDB.deleteDatabase(dbName);
+      request.onsuccess = () => {
+        console.log(`Database "${dbName}" deleted successfully`);
+      };
+      request.onerror = (e) => {
+        console.error(`Error deleting database "${dbName}":`, e);
+      };
+      request.onblocked = () => {
+        console.warn(`Database "${dbName}" deletion is blocked`);
+      };
+    });
+  
+    // Get Firebase services (auth, db, etc.)
+    const { auth } = getFirebaseServices();
+  
+    // Sign out of Firebase
+    signOut(auth)
+      .then(() => {
+        console.log("Logged out successfully");
+        
+        // Get saved domain URL from localStorage or another source
+        const savedDomain = sessionStorage.getItem("savedDomain") || "/"; // Default to '/' if not found
+        router.push(savedDomain);
+      })
+      .catch((error) => {
+        console.error("Error logging out:", error);
+      });
+  };
+  
 
   const handleLogout = () => {
     // Show confirmation popup
