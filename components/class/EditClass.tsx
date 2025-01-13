@@ -381,12 +381,9 @@ setTeachers(
                 <div className="flex items-center space-x-2 mb-4">
 
                <h3 className="text-lg font-medium text-[#666666] ">Subject Teachers</h3>
-                    {/* <Dialog > */}
-                        {/* <DialogTrigger asChild> */}
                             <Button className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b]">
-                                Add Subject Teacher
+                                 Subject Teacher
                             </Button>
-                        {/* </DialogTrigger> */}
               </div>
               </div>
               <table className="w-full text-left border-collapse max-h-52 overflow-scroll overflow-x-hidden">
