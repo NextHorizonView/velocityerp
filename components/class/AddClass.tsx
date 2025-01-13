@@ -281,7 +281,7 @@ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
                 <button className="flex items-center space-x-2 text-black hover:text-[#414d6b]">
                     <MdEdit size={18} />
                     <span className="text-sm font-bold">Edit Class Form</span>
-                </button>
+                </button> 
             </div>
 
             {/* Title Section */}

@@ -11,8 +11,8 @@ import { FaGooglePlay } from 'react-icons/fa';
 import { AiOutlineApple } from "react-icons/ai";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
-
-const { auth } = getFirebaseServices();
+import { doc, setDoc, serverTimestamp} from 'firebase/firestore';
+const { auth, db } = getFirebaseServices();
 import withAuthentication from '@/lib/withAuthentication';
 
 interface LoginProps {
@@ -58,22 +58,33 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
       const domain = window.location.href;
-      localStorage.setItem('savedDomain', domain);
       sessionStorage.setItem("savedDomain", domain); 
 
-  
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
-        localStorage.setItem('userId', userId);
-        
+        const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
   
+        // Add user to Firestore LoggedInUsers collection
+        const loggedInDoc = doc(db, 'LoggedInUsers', userId);
+        await setDoc(loggedInDoc, {
+          LoggedInId: userId,
+          LoggedInUserId: userId,
+          LoggedInFCMToken: fcmToken,
+          LoggedInUserType: role,
+          LoggedInCreatedAt: serverTimestamp(),
+          IsLoggedIn: true,
+        });
+  
+        localStorage.setItem('userId', userId);
+        localStorage.setItem('userRole', role);
+
         if (rememberMe) {
           localStorage.setItem('email', username);
           localStorage.setItem('userRole', role);
           localStorage.removeItem('userExpiry'); // Ensure expiry is cleared if Remember Me is active
         } else {
-          const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 60 seconds for testing
+          const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 1 day expiry
           localStorage.setItem('userExpiry', expiryTime.toString());
         }
   
@@ -88,6 +99,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       alert('Error logging in: ' + authError.message);
     }
   };
+  
   
   // Auto-clear expired session on app load or refresh
   useEffect(() => {
@@ -111,11 +123,26 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const domain = window.location.href;
       localStorage.setItem('savedDomain', domain);
       sessionStorage.setItem("savedDomain", domain); 
-            
-
+      const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
+  
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
-        localStorage.setItem('userId', userCredential.user.uid);
+        const userId = userCredential.user.uid;
+        localStorage.setItem('userId', userId);
+        localStorage.setItem('userRole', role);
+  
+        // Add user to Firestore LoggedInUsers collection
+        const loggedInDoc = doc(db, 'LoggedInUsers', userId);
+        await setDoc(loggedInDoc, {
+          LoggedInId: userId,
+          LoggedInUserId: userId,
+          LoggedInFCMToken: fcmToken,
+          LoggedInUserType: role,
+          LoggedInCreatedAt: serverTimestamp(),
+          IsLoggedIn: true,
+        });
+  
+        localStorage.setItem('userId', userId);
         localStorage.setItem('userRole', role);
         router.push('/dashboard');
       } else {
@@ -128,6 +155,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       alert('Error signing in with Google: ' + authError.message);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex">

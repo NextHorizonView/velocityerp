@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { parse } from 'papaparse';
 import { getAdminServices } from '@/lib/firebaseAdmin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 const { adminFirestore } = getAdminServices();
 
@@ -22,20 +23,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ClassId: string;
       ClassName: string;
       ClassDivision: string;
-      ClassTeacherId: string; // Comma-separated string of teacher IDs
+      ClassTeacherId:  string; 
       ClassSubjects: string; // JSON string of subjects
       [key: string]: string;
     }>;
+    console.log('Parsed classes:', classes);
 
     for (const classItem of classes) {
       if (
         !classItem.ClassId ||
         !classItem.ClassName ||
         !classItem.ClassDivision ||
-        !classItem.ClassTeacherId ||
+        // !classItem.ClassTeacherId ||
         !classItem.ClassSubjects
       ) {
-        console.error(`Invalid class data: ${JSON.stringify(classItem)}`);
+        // console.error(`Invalid class data: ${JSON.stringify(classItem)}`);
         continue;
       }
 
@@ -44,13 +46,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let subjects: { SubjectName: string; SubjectId: string; SubjectTeacherID: string }[] | string = [];
 
       try {
-        // Check if ClassSubjects is a valid JSON string or an object
         if (typeof classItem.ClassSubjects === 'string') {
           try {
-            // Try to parse as JSON if it's a string
             subjects = JSON.parse(classItem.ClassSubjects);
           } catch (err) {
-            // If it's a stringified object or invalid JSON, we keep it as a string
+            console.log(err);
+            
             if (classItem.ClassSubjects.includes('[object Object]')) {
               subjects = classItem.ClassSubjects;  // Keep it as stringified object
             } else {
@@ -63,7 +64,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           throw new Error('ClassSubjects is neither a valid string nor an object');
         }
 
-        // Ensure subjects is an array and validate its structure
         if (
           Array.isArray(subjects) &&
           !subjects.every(
@@ -79,8 +79,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.error(`Invalid ClassSubjects for class ${classItem.ClassId}:`, err);
         continue;
       }
+      const timestamp = new Date();
 
-      // Check if the class already exists in Firestore
       const existingClass = await adminFirestore
         .collection('classes')
         .where('ClassId', '==', classItem.ClassId)
@@ -90,23 +90,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log(`Class with ID ${classItem.ClassId} already exists. Updating.`);
         const classDocRef = existingClass.docs[0].ref;
 
-        // Update only ClassName and ClassDivision, leave ClassSubjects untouched
         await classDocRef.update({
           ClassName: classItem.ClassName,
           ClassDivision: classItem.ClassDivision,
           ClassTeacherId: teacherIds,
+          ClassUpdatedAt: Timestamp.now(),
+
+
         });
         continue;
       }
 
-      // Add new class to Firestore
       const newClassRef = adminFirestore.collection('classes').doc();
       await newClassRef.set({
         ClassId: classItem.ClassId,
         ClassName: classItem.ClassName,
         ClassDivision: classItem.ClassDivision,
         ClassTeacherId: teacherIds,
-        ClassSubjects: subjects,  // Store ClassSubjects as it is
+        ClassSubjects: subjects,  
+  ClassCreatedAt: Timestamp.now(),
+        ClassUpdatedAt: Timestamp.now(),
       });
       console.log(`Added new class with ID ${classItem.ClassId}`);
     }

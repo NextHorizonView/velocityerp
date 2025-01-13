@@ -25,6 +25,7 @@ import withAdminAuth from '@/lib/withAdminAuth';
 import { signOut } from "firebase/auth";
 import { getFirebaseServices } from "@/lib/firebaseConfig"; 
 import { useRouter } from "next/navigation"; // Import useRouter
+import  trackLogout  from "@/components/TrackLogin";
 
 
 interface SidebarProps {
@@ -37,12 +38,11 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const router = useRouter(); // Initialize the router
 
   const handleLogout = () => {
-    // Show confirmation popup
     const userConfirmed = window.confirm("Are you sure you want to logout?");
-    if (!userConfirmed) return; // Do nothing if the user clicks "Cancel"
-    
-    // Proceed with logout
-    localStorage.clear(); // Clear localStorage
+    if (!userConfirmed) return;
+  
+    // Clear local storage
+    localStorage.clear();
   
     // Clear IndexedDB databases
     const databasesToDelete = [
@@ -52,32 +52,31 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   
     databasesToDelete.forEach((dbName) => {
       const request = indexedDB.deleteDatabase(dbName);
-      request.onsuccess = () => {
-        console.log(`Database "${dbName}" deleted successfully`);
-      };
-      request.onerror = (e) => {
-        console.error(`Error deleting database "${dbName}":`, e);
-      };
-      request.onblocked = () => {
-        console.warn(`Database "${dbName}" deletion is blocked`);
-      };
+      request.onsuccess = () => console.log(`Database "${dbName}" deleted successfully`);
+      request.onerror = (e) => console.error(`Error deleting database "${dbName}":`, e);
+      request.onblocked = () => console.warn(`Database "${dbName}" deletion is blocked`);
     });
   
-    // Get Firebase services (auth, db, etc.)
     const { auth } = getFirebaseServices();
+    const currentUser = auth.currentUser;
   
-    // Sign out of Firebase
-    signOut(auth)
-      .then(() => {
-        console.log("Logged out successfully");
-        
-        // Get saved domain URL from localStorage or another source
-        const savedDomain = sessionStorage.getItem("savedDomain") || "/"; // Default to '/' if not found
-        router.push(savedDomain);
-      })
-      .catch((error) => {
-        console.error("Error logging out:", error);
-      });
+    const savedDomain = sessionStorage.getItem("savedDomain") || "/";
+  
+    if (currentUser) {
+      // Track logout in Firestore
+      trackLogout(currentUser.uid)
+        .catch((error) => console.error("Error tracking logout:", error));
+  
+      signOut(auth)
+        .then(() => {
+          console.log("Logged out successfully");
+          router.push(savedDomain); // Ensure navigation happens here
+        })
+        .catch((error) => console.error("Error during sign-out:", error));
+    } else {
+      // If no current user, redirect immediately
+      router.push(savedDomain);
+    }
   };
   
 

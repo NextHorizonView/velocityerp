@@ -12,6 +12,7 @@ import FadeLoader from "../Loader";
 import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
 import { collection, getDocs } from "firebase/firestore";
 import { fetchClassDataById } from "../helper/firebaseHelper";
+import { Button } from "../ui/button";
 
 interface EditClassFormProps {
   classid: string;
@@ -375,7 +376,19 @@ setTeachers(
           </table>
           {selectedTeachers.length > 0 && (
             <>
-              <div>new teachers</div>
+            <div className="mb-6 pt-11">
+
+                <div className="flex items-center space-x-2 mb-4">
+
+               <h3 className="text-lg font-medium text-[#666666] ">Subject Teachers</h3>
+                    {/* <Dialog > */}
+                        {/* <DialogTrigger asChild> */}
+                            <Button className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b]">
+                                Add Subject Teacher
+                            </Button>
+                        {/* </DialogTrigger> */}
+              </div>
+              </div>
               <table className="w-full text-left border-collapse max-h-52 overflow-scroll overflow-x-hidden">
                 <thead></thead>
                 <tbody>

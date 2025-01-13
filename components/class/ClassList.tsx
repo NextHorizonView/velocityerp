@@ -23,6 +23,7 @@ import { Filter } from "lucide-react";
 import Papa from "papaparse";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
+import { fetchTeacherName } from "../helper/firebaseHelper";
 const { db } = getFirebaseServices();
 export type Subject = {
   id: number;
@@ -58,7 +59,6 @@ const SubjectTable = () => {
 
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
     useState(false);
-const [classFList, setClassFList] = useState<ClassData[]>([]);
 
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -163,54 +163,86 @@ const [classFList, setClassFList] = useState<ClassData[]>([]);
       }
       setIsImportExportDialogOpen(false);
     };
-  
-    const handleDownloadCsv = () => {
-      const csv = Papa.unparse(currentClasses);
-      console.log("csv is",csv);
+ 
+    const handleDownloadCsv = async () => {
+   
+    
+      // Prepare CSV rows
+      const csvData = await Promise.all(
+        currentClasses.map(async (classItem) => {
+          const teacherNames = await Promise.all(
+            classItem.ClassTeacherId.map((id) => fetchTeacherName(id))
+          );
+          return {
+            "Class Name": classItem.ClassName,
+            "Division": classItem.ClassDivision,
+            "Class Teacher": teacherNames.join(", "), // Combine teacher names into a string
+            "Subjects": classItem.ClassSubjects.map((subject) => subject.SubjectName).join(", "), // Combine subject names into a string
+          };
+        })
+      );
+    
+      // Generate CSV using PapaParse
+      const csv = Papa.unparse(csvData);
+    
+      // Download CSV
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", "class.csv");
+      link.setAttribute("download", "class_list.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    
       setIsImportExportDialogOpen(false);
     };
+    
 
-    const handleDownloadPdf = () => {
-      const doc = new jsPDF();
-    
-      // Title
-      doc.text("Class List", 14, 10);
-    
-      // Table Columns
-      const columns = ["Class ID", "Class Name", "Division", "Teacher IDs", "Subjects"];
-    
-      // Table Rows
-      const rows = currentClasses.map((classItem) => [
-        classItem.ClassId,
+
+
+    //
+
+const handleDownloadPdf = async () => {
+  const doc = new jsPDF();
+
+  // Title
+  doc.text("Class List", 14, 10);
+
+  // Table Columns (Remove "Class ID")
+  const columns = ["Class Name", "Division", "Class Teacher", "Subjects"];
+
+  // Table Rows (Remove "ClassId")
+  const rows = await Promise.all(
+    currentClasses.map(async (classItem) => {
+      const teacherNames = await Promise.all(
+        classItem.ClassTeacherId.map((id) => fetchTeacherName(id))
+      );
+      return [
         classItem.ClassName,
         classItem.ClassDivision,
-        classItem.ClassTeacherId.join(", "),
-        classItem.ClassSubjects.map(
-          (subject) => `${subject.SubjectName} (${subject.SubjectId})`
-        ).join("\n"), 
-      ]);
-    
+        teacherNames.join("\n"), // Join multiple teacher names
+        classItem.ClassSubjects.map((subject) => subject.SubjectName).join("\n"), // Join subject names
+      ];
+    })
+  );
 
-  // @ts-expect-error
-      doc.autoTable({
-        head: [columns],
-        body: rows,
-        startY: 20, 
-      });
-    
-      // Save the PDF
-      doc.save("class_list.pdf");
-    
-      setIsImportExportDialogOpen(false);
-    };
+  // Generate the table
+  // @ts-expect-error: autoTable is not recognized due to missing type definitions
+  doc.autoTable({
+    head: [columns],
+    body: rows,
+    startY: 20,
+  });
+
+  // Save the PDF
+  doc.save("class_list.pdf");
+
+  setIsImportExportDialogOpen(false);
+};
+
+
+
   return (
     <div className="container mx-auto p-6">
       {/* Header Section */}
