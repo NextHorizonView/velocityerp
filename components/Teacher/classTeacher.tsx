@@ -1,15 +1,24 @@
 'use client'
-'use client'
+
 import React, { useState } from 'react';
 import {
   ChevronLeft,
   X,
   Search,
   FileText,
-  Edit
+  Edit,
+  MoreVertical
 } from 'lucide-react';
 import { PieChart, Pie, Cell } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Student {
   id: string;
@@ -27,6 +36,20 @@ interface Student {
   };
 }
 
+interface StudentListItemProps {
+  student: Student;
+  onSelect: () => void;
+  isSelected?: boolean;
+  onViewChange: (view: 'details' | 'complaint' | 'message') => void;
+}
+
+interface StudentDetailsProps {
+  student: Student;
+  onClose: () => void;
+  view: 'details' | 'complaint' | 'message';
+  onViewChange: (view: 'details' | 'complaint' | 'message') => void;
+}
+
 const attendanceData = [
   { name: 'Mon', value: 85 },
   { name: 'Tue', value: 90 },
@@ -35,36 +58,40 @@ const attendanceData = [
   { name: 'Fri', value: 88 },
 ];
 
-const StudentListItem: React.FC<{
-  name: string;
-  avatar: string;
-  onSelect: () => void;
-  isSelected?: boolean;
-}> = ({ name, avatar, onSelect, isSelected }) => (
-  <div
-    onClick={onSelect}
-    className={`flex items-center px-6 py-4 hover:bg-gray-50 cursor-pointer ${isSelected ? 'bg-orange-50' : ''
-      }`}
-  >
-    <div className="w-10 h-10 rounded-full bg-orange-100 overflow-hidden flex-shrink-0">
-      <img src={avatar} alt={name} className="w-full h-full object-cover" />
-    </div>
-    <span className="ml-4 flex-grow font-medium text-gray-900">{name}</span>
-    <div className="flex items-center space-x-12">
-      <span className="w-24 text-sm text-gray-600">Homework</span>
-      <span className="w-24 text-sm text-gray-600">Attendance</span>
-      <span className="w-16 text-sm text-gray-600">Marks</span>
-      <div className="flex space-x-4">
-        <button className="text-gray-400 hover:text-gray-600">
+const StudentListItem: React.FC<StudentListItemProps> = ({
+  student,
+  onSelect,
+  isSelected,
+}) => {
+  return (
+    <div
+      className={`flex items-center px-6 py-4 hover:bg-gray-50 cursor-pointer ${isSelected ? 'bg-orange-50' : ''
+        }`}
+    >
+      <div onClick={onSelect} className="flex items-center flex-grow">
+        <div className="w-10 h-10 rounded-full bg-orange-100 overflow-hidden flex-shrink-0">
+          <img src={student.avatar} alt={student.name} className="w-full h-full object-cover" />
+        </div>
+        <span className="ml-4 flex-grow font-medium text-gray-900">{student.name}</span>
+        <div className="flex items-center space-x-12">
+          <span className="w-24 text-sm text-gray-600">Homework</span>
+          <span className="w-24 text-sm text-gray-600">Attendance</span>
+          <span className="w-16 text-sm text-gray-600">Marks</span>
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-4">
+        <button onClick={() => onSelect()} className="text-gray-400 hover:text-gray-600">
           <FileText className="w-5 h-5" />
         </button>
         <button className="text-gray-400 hover:text-gray-600">
           <Edit className="w-5 h-5" />
         </button>
+      
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const SearchBar: React.FC = () => (
   <div className="px-6 py-4 border-b border-gray-200">
@@ -81,16 +108,188 @@ const SearchBar: React.FC = () => (
   </div>
 );
 
-const StudentDetails: React.FC<{
-  student: Student;
-  onClose: () => void;
-}> = ({ student, onClose }) => {
+const StudentDetails: React.FC<StudentDetailsProps> = ({
+  student,
+  onClose,
+  view,
+  onViewChange
+}) => {
+  const [rating, setRating] = useState<number>(0);
+  const [messageRecipient, setMessageRecipient] = useState<{
+    student: boolean;
+    parent: boolean;
+  }>({
+    student: false,
+    parent: false
+  });
+
   const COLORS = ['#4338ca', '#fb923c', '#7c3aed'];
   const pieData = [
     { name: 'Completed', value: student.homeworkStats.completed },
     { name: 'Awaiting Edits', value: student.homeworkStats.awaitingEdits },
     { name: 'Unfinished', value: student.homeworkStats.unfinished }
   ];
+
+  const renderComplaintView = () => (
+    <div className="p-6 flex-1 overflow-auto">
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold">Complaint</h2>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-gray-500 mb-2">Please rate your experience below</p>
+            <div className="flex items-center space-x-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className={`text-2xl ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                >
+                  ★
+                </button>
+              ))}
+              <span className="ml-2 text-sm text-gray-500">{rating}/5 stars</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-2">Additional feedback</p>
+            <Textarea
+              placeholder="Enter your complaint here..."
+              className="w-full min-h-[120px]"
+            />
+          </div>
+          <Button className="w-full bg-[#576086]">
+            Submit feedback
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderMessageView = () => (
+    <div className="p-6 flex-1 overflow-auto">
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold">Message</h2>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-gray-500">Select recipient:</label>
+            <div className="space-y-2">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={messageRecipient.student}
+                  onChange={(e) => setMessageRecipient(prev => ({
+                    ...prev,
+                    student: e.target.checked
+                  }))}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm">Student</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={messageRecipient.parent}
+                  onChange={(e) => setMessageRecipient(prev => ({
+                    ...prev,
+                    parent: e.target.checked
+                  }))}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm">Parent</span>
+              </label>
+            </div>
+          </div>
+          <Textarea
+            placeholder="Type your message here..."
+            className="w-full min-h-[120px]"
+          />
+          <Button className="w-full bg-[#576086]">
+            Send Message
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderDetailsView = () => (
+    <div className="p-6 flex-1 overflow-auto">
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex items-center">
+            <span className="text-sm text-gray-500 w-20">Age:</span>
+            <span className="text-sm text-gray-900">{student.age}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-sm text-gray-500 w-20">Location:</span>
+            <span className="text-sm text-gray-900">{student.location}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-sm text-gray-500 w-20">Email:</span>
+            <span className="text-sm text-gray-900">{student.email}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-sm text-gray-500 w-20">Phone:</span>
+            <span className="text-sm text-gray-900">{student.phone}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-sm text-gray-500 w-20">Birthday:</span>
+            <span className="text-sm text-gray-900">{student.birthday}</span>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <div className="flex flex-col items-center">
+            <PieChart width={200} height={200}>
+              <Pie
+                data={pieData}
+                cx={100}
+                cy={100}
+                innerRadius={70}
+                outerRadius={90}
+                paddingAngle={2}
+                dataKey="value"
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                ))}
+              </Pie>
+            </PieChart>
+            <div className="mt-4 space-y-2">
+              {pieData.map((entry, index) => (
+                <div key={entry.name} className="flex items-center">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: COLORS[index] }}
+                  />
+                  <span className="ml-2 text-sm text-gray-600">
+                    {entry.name} ({entry.value}%)
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <h3 className="text-sm font-medium text-gray-900 mb-4">
+            Attendance in March
+          </h3>
+          <LineChart width={300} height={150} data={attendanceData}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="name" />
+            <YAxis hide={true} />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#fb923c"
+              strokeWidth={2}
+              dot={{ fill: '#fb923c', strokeWidth: 2 }}
+            />
+          </LineChart>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -103,89 +302,41 @@ const StudentDetails: React.FC<{
             <h2 className="text-xl font-semibold text-gray-900">{student.name}</h2>
           </div>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-          <X className="w-6 h-6" />
-        </button>
-      </div>
-
-      <div className="p-6 flex-1 overflow-auto">
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4">
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500 w-20">Age:</span>
-              <span className="text-sm text-gray-900">{student.age}</span>
-            </div>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500 w-20">Location:</span>
-              <span className="text-sm text-gray-900">{student.location}</span>
-            </div>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500 w-20">Email:</span>
-              <span className="text-sm text-gray-900">{student.email}</span>
-            </div>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500 w-20">Phone:</span>
-              <span className="text-sm text-gray-900">{student.phone}</span>
-            </div>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500 w-20">Birthday:</span>
-              <span className="text-sm text-gray-900">{student.birthday}</span>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <div className="flex flex-col items-center">
-              <PieChart width={200} height={200}>
-                <Pie
-                  data={pieData}
-                  cx={100}
-                  cy={100}
-                  innerRadius={70}
-                  outerRadius={90}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                  ))}
-                </Pie>
-              </PieChart>
-              <div className="mt-4 space-y-2">
-                {pieData.map((entry, index) => (
-                  <div key={entry.name} className="flex items-center">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index] }} />
-                    <span className="ml-2 text-sm text-gray-600">
-                      {entry.name} ({entry.value}%)
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <h3 className="text-sm font-medium text-gray-900 mb-4">Attendance in March</h3>
-            <LineChart width={300} height={150} data={attendanceData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" />
-              <YAxis hide={true} />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#fb923c"
-                strokeWidth={2}
-                dot={{ fill: '#fb923c', strokeWidth: 2 }}
-              />
-            </LineChart>
-          </div>
+        <div className="flex items-center space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <MoreVertical className="w-5 h-5 text-gray-400" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onViewChange('details')}>
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewChange('details')}>
+                Edit 
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewChange('complaint')}>
+                Add Complaint
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewChange('message')}>
+                Send Message
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <button onClick={onClose}>
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
         </div>
       </div>
+
+      {view === 'complaint' && renderComplaintView()}
+      {view === 'message' && renderMessageView()}
+      {view === 'details' && renderDetailsView()}
     </div>
   );
 };
-
 const TeacherClass: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [view, setView] = useState<'details' | 'complaint' | 'message'>('details');
 
   const students: Student[] = [
     {
@@ -254,10 +405,10 @@ const TeacherClass: React.FC = () => {
           {students.map(student => (
             <StudentListItem
               key={student.id}
-              name={student.name}
-              avatar={student.avatar}
+              student={student}
               onSelect={() => setSelectedStudent(student)}
               isSelected={selectedStudent?.id === student.id}
+              onViewChange={(newView) => setView(newView)}
             />
           ))}
         </div>
@@ -283,6 +434,8 @@ const TeacherClass: React.FC = () => {
           <StudentDetails
             student={selectedStudent}
             onClose={() => setSelectedStudent(null)}
+            view={view}
+            onViewChange={(newView) => setView(newView)}
           />
         </div>
       )}
