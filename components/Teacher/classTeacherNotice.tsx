@@ -1,10 +1,9 @@
 'use client';
 import React, { useState } from 'react';
-import { MoreVertical, Plus, Calendar, Paperclip, Image, Video, FileText } from 'lucide-react';
+import { MoreVertical, Plus,  Paperclip, Image, Video, FileText } from 'lucide-react';
 import {
   Card,
   CardContent,
-  CardTitle
 } from "@/components/ui/card";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
