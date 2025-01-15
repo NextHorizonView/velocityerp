@@ -79,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.error(`Invalid ClassSubjects for class ${classItem.ClassId}:`, err);
         continue;
       }
-      const timestamp = new Date();
+      // const timestamp = new Date();
 
       const existingClass = await adminFirestore
         .collection('classes')
