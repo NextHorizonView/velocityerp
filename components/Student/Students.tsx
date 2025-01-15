@@ -22,6 +22,7 @@ import Papa from "papaparse";
 import useSWR from "swr";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { getFirebaseServices } from '@/lib/firebaseConfig';
+import "jspdf-autotable";
 
 const { db } = getFirebaseServices();
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
@@ -29,6 +30,7 @@ import { mutate } from "swr";
 import StudentsTable from "./StudentTable";
 import { usePathname } from "next/navigation";
 import FadeLoader from "../Loader";
+import { jsPDF } from "jspdf";
 
 export type Student = {
   id: number;
@@ -221,6 +223,37 @@ export default function Students() {
     setIsImportExportDialogOpen(false);
   };
 
+
+  
+
+
+
+  const handleDownloadPdf = (students: Student[]) => {
+    const doc = new jsPDF();
+  
+    doc.text("Student List", 14, 10);
+  
+ 
+    const columns = students.length > 0 ? Object.keys(students[0]).filter(column => column !== 'id') : [];
+  
+    const rows = students.map((student) => {
+      return columns.map((column) => (student as Record<string, unknown>)[column] || "N/A");
+    });
+  
+  // @ts-expect-error: autoTable is not recognized due to missing type definitions
+
+    doc.autoTable({
+      head: [columns],
+      body: rows,
+      startY: 20,
+    });
+  
+    // Save the PDF
+    doc.save("students.pdf");
+  
+    setIsImportExportDialogOpen(false);
+  };
+  
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-start mb-6">
@@ -373,7 +406,8 @@ export default function Students() {
             <Button
               variant="default"
               className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
-              onClick={handleDownloadCsv}
+              // onClick={handleDownloadPdf}
+              onClick={() => handleDownloadPdf(students)}
             >
               Download PDF
             </Button>
