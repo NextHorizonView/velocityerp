@@ -3,8 +3,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
-import FilterModal from "./StudentsFilter";
-import { FilterState } from "./StudentsFilter";
+import FilterModal, { FilterState } from './StudentsFilter';
 import { IoIosCloudUpload } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
 import Link from "next/link";
@@ -76,8 +75,9 @@ export default function Students() {
   }, [path]);
 
   // filter states
-  const [,setFilters] = useState<FilterState | null>(null);
+  const [, setFilters] = useState<FilterState | null>(null);
   const [isFilterOpen, setFilterOpen] = useState(false);
+  
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -267,9 +267,11 @@ export default function Students() {
             </button>
             {/* Filter Modal */}
             <FilterModal
+              route="/students"
               onFilterChange={handleFilterChange}
               isOpen={isFilterOpen}
-              onClose={() => setFilterOpen(false)} initialFilters={null}
+              onClose={() => setFilterOpen(false)}
+              initialFilters={null}
             />
           </div>
         </div>

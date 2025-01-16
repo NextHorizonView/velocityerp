@@ -218,6 +218,7 @@ export default function Teachers() {
             </button>
             {/* Filter Modal */}
             <FilterModal
+              route="/teacher"
               onFilterChange={handleFilterChange}
               isOpen={isFilterOpen}
               onClose={() => setFilterOpen(false)} initialFilters={null}
