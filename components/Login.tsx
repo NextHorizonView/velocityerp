@@ -33,8 +33,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       authUser &&
       authUser.uid &&
       authUser.email &&
-      authUser.role &&
-      authUser.domain 
+      authUser.role 
     ) {
       router.push('/dashboard');
     }

@@ -1,5 +1,5 @@
 "use client";
-import React, { FC, useState } from "react";
+import React, { FC, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -26,6 +26,7 @@ import { signOut } from "firebase/auth";
 import { getFirebaseServices } from "@/lib/firebaseConfig"; 
 import { useRouter } from "next/navigation"; // Import useRouter
 import  trackLogout  from "@/components/TrackLogin";
+import { getDocs, collection, query, where } from "firebase/firestore";
 
 
 interface SidebarProps {
@@ -35,7 +36,72 @@ interface SidebarProps {
 const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const pathname = usePathname() || "";
   const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(false);
-  const router = useRouter(); // Initialize the router
+  const [allowedPaths, setAllowedPaths] = useState<Map<string, boolean>>(new Map()); // State for allowed paths as a Map
+  const router = useRouter();
+  useEffect(() => {
+    const fetchRolePermissions = async () => {
+      try {
+        const { db } = getFirebaseServices();
+        const userRole = localStorage.getItem("userRole");
+    
+        if (!userRole) {
+          console.log("User role not found in local storage");
+          return;
+        }
+    
+        const roleQuery = query(
+          collection(db, "Role"),
+          where("RoleName", "==", userRole)
+        );
+        const querySnapshot = await getDocs(roleQuery);
+    
+        if (!querySnapshot.empty) {
+          const roleDoc = querySnapshot.docs[0]; // Safe assumption: one document per role
+          const roleData = roleDoc.data();
+    
+          const rolePermissions = roleData?.RolePermissions || {};
+          if (typeof rolePermissions === "object") {
+            const permissionsMap = new Map<string, boolean>(
+              Object.entries(rolePermissions).map(([key, value]) => [
+                key,
+                value === true,
+              ])
+            );
+            setAllowedPaths(permissionsMap);
+          } else {
+            console.error("Invalid RolePermissions format in Firestore");
+          }
+        } else {
+          console.error(`No document found for role "${userRole}"`);
+        }
+      } catch (error) {
+        console.error("Error fetching role permissions:", error);
+      }
+    };
+    
+    fetchRolePermissions();
+  }, []);
+
+  useEffect(() => {
+    if (allowedPaths.size > 0) {
+      const isAllowed = allowedPaths.has(pathname) && allowedPaths.get(pathname);
+      if (!isAllowed) {
+        alert("You do not have permission to access this page.");
+  
+        const firstAllowedPath = Array.from(allowedPaths.entries()).find(
+          ([ value]) => value
+        )?.[0];
+  
+        if (firstAllowedPath) {
+          router.push(firstAllowedPath);
+        } else {
+          console.error("No allowed paths found for the user.");
+          router.push("/"); // Fallback redirect
+        }
+      }
+    }
+  }, [pathname, allowedPaths, router]);
+  
 
   const handleLogout = () => {
     const userConfirmed = window.confirm("Are you sure you want to logout?");
@@ -80,29 +146,21 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   };
   
 
-  const menuItems = [
-    {
-      icon: <RiDashboardLine size={20} />,
-      label: "Dashboard",
-      path: "/dashboard",
-    },
+  // Define the menu items
+  const allMenuItems = [
+    { icon: <RiDashboardLine size={20} />, label: "Dashboard", path: "/dashboard" },
     { icon: <RiUserLine size={20} />, label: "Students", path: "/students" },
     { icon: <RiTeamLine size={20} />, label: "Teacher", path: "/teacher" },
     { icon: <RiParentLine size={20} />, label: "Parents", path: "/parents" },
     { icon: <MdOutlineSubject size={20} />, label: "Subject", path: "/subjects" },
-    {
-      icon: <RiAccountCircleLine size={20} />,
-      label: "Account",
-      path: "/account",
-    },
+    { icon: <RiAccountCircleLine size={20} />, label: "Account", path: "/account" },
     { icon: <MdClass size={20} />, label: "Class", path: "/class" },
     { icon: <RiFileListLine size={20} />, label: "Exam", path: "/exam" },
-    {
-      icon: <RiNotificationLine size={20} />,
-      label: "Notice",
-      path: "/notice",
-    },
+    { icon: <RiNotificationLine size={20} />, label: "Notice", path: "/notice" },
   ];
+
+  // Filter menu items based on allowed paths
+  const menuItems = allMenuItems.filter((item) => allowedPaths.get(item.path));
 
   if (isCollapsed) {
     return (
@@ -160,6 +218,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             else {
               isActive = pathname === item.path;
             }
+
 
             return (
               <Link
