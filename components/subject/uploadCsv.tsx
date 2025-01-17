@@ -1,12 +1,31 @@
-
 import { getFirestore, collection, getDocs} from 'firebase/firestore';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
 
 const { app } = getFirebaseServices();
-import { ClassData } from './ClassList';
 const db = getFirestore(app);
 
-export const uploadCsv = async (file: File) => {
+export interface SubjectFile {
+  Name: string;
+  Url: string;
+}
+
+export interface SubjectTeacher {
+  SubjectTeacherID: string;
+  SubjectTeacherName: string;
+  SubjectTeacherPosition: string;
+}
+
+export interface SubjectData {
+  id: string;
+  SubjectId: string;
+  SubjectName: string;
+  SubjectFile: SubjectFile[];
+  SubjectTeachersId: SubjectTeacher[];
+  SubjectCreatedAt: any;
+  SubjectUpdatedAt: any;
+}
+
+export const uploadSubjectCsv = async (file: File) => {
   return new Promise<void>((resolve, reject) => {
     if (!file) {
       reject(new Error('No file provided.'));
@@ -21,10 +40,9 @@ export const uploadCsv = async (file: File) => {
         reject(new Error('Failed to read CSV file.'));
         return;
       }
-console.log("text is",text);
+
       try {
-        // Send CSV data to the API route
-        const response = await fetch('/api/uploadCsvClass', {
+        const response = await fetch('/api/uploadCsvSubject', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ csvData: text }),
@@ -53,48 +71,41 @@ console.log("text is",text);
   });
 };
 
-
-export const refreshClassList = async (
-  setClasses: React.Dispatch<React.SetStateAction<ClassData[]>>
+export const refreshSubjectList = async (
+  setSubjects: React.Dispatch<React.SetStateAction<SubjectData[]>>
 ) => {
   try {
-    const classesCollection = collection(db, 'classes');
-    const querySnapshot = await getDocs(classesCollection);
+    const subjectsCollection = collection(db, 'subjects');
+    const querySnapshot = await getDocs(subjectsCollection);
 
     if (querySnapshot.empty) {
-      console.warn('No classes found in the database.');
-      setClasses([]);
+      console.warn('No subjects found in the database.');
+      setSubjects([]);
       return;
     }
 
-    const classesData = querySnapshot.docs
+    const subjectsData = querySnapshot.docs
       .map((doc) => {
         const data = doc.data();
         if (
-          typeof data.ClassId === 'string' &&
-          typeof data.ClassName === 'string' &&
-          typeof data.ClassDivision === 'string' &&
-          Array.isArray(data.ClassTeacherId) &&
-          Array.isArray(data.ClassSubjects) &&
-          data.ClassSubjects.every((subject) =>
-            typeof subject.SubjectName === 'string' &&
-            typeof subject.SubjectId === 'string' &&
-            typeof subject.SubjectTeacherID === 'string'
-          )
+          typeof data.SubjectId === 'string' &&
+          typeof data.SubjectName === 'string' &&
+          Array.isArray(data.SubjectFile) &&
+          Array.isArray(data.SubjectTeachersId)
         ) {
           return {
             id: doc.id,
             ...data,
-          } as ClassData;
+          } as SubjectData;
         } else {
-          console.warn('Invalid class data structure:', data);
-          return null; // Handle invalid data as needed
+          console.warn('Invalid subject data structure:', data);
+          return null;
         }
       })
-      .filter((classData): classData is ClassData => classData !== null);
+      .filter((subjectData): subjectData is SubjectData => subjectData !== null);
 
-    setClasses(classesData);
+    setSubjects(subjectsData);
   } catch (error) {
-    console.error('Error fetching classes:', error);
+    console.error('Error fetching subjects:', error);
   }
 };

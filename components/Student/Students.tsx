@@ -47,6 +47,10 @@ export type Student = {
   studentId?: string;
 };
 
+export type StudentD = {
+  id: string;
+  [key: string]: any; // Allow dynamic keys
+};
 
 
 
@@ -133,25 +137,85 @@ export default function Students() {
     }
   };
 
+  // const filteredAndSortedStudents = useMemo(() => {
+  //   return [...(students || [])]
+  //     .filter(
+  //       (student) =>
+  //         searchTerm === "" ||
+  //         student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //         student.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //         student.phone?.includes(searchTerm) ||
+  //         student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  //     )
+  //     .sort((a, b) => {
+  //       if ((a[sortConfig.key] ?? "") < (b[sortConfig.key] ?? "")) {
+  //         return sortConfig.direction === "asc" ? -1 : 1;
+  //       }
+  //       if ((a[sortConfig.key] ?? "") > (b[sortConfig.key] ?? "")) {
+  //         return sortConfig.direction === "asc" ? 1 : -1;
+  //       }
+  //       return 0;
+  //     });
+
+  //     console.log("Sorted students:", filteredAndSortedStudents);
+
+  // }, [searchTerm, sortConfig, handleDelete,students]);
+
+
+
   const filteredAndSortedStudents = useMemo(() => {
-    return [...(students || [])]
-      .filter(
-        (student) =>
-          student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.phone?.includes(searchTerm) ||
-          student.email?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .sort((a, b) => {
-        if ((a[sortConfig.key] ?? "") < (b[sortConfig.key] ?? "")) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if ((a[sortConfig.key] ?? "") > (b[sortConfig.key] ?? "")) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-  }, [students, searchTerm, sortConfig, handleDelete]);
+    if (!students || students.length === 0) {
+      console.log("No students available");
+      return [];
+    }
+  
+    console.log("Students before filtering:", students);
+    console.log("Search term:", searchTerm);
+  
+    // Normalize the search term
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  
+    // Filter students based on search term
+    const filtered = students.filter((student) => {
+      // Normalize and check each field for matches
+      const name = student.name?.toLowerCase() || "";
+      const studentClass = student.class?.toLowerCase() || "";
+      const phone = student.phone || "";
+      const email = student.email?.toLowerCase() || "";
+  
+      return (
+        normalizedSearchTerm === "" || // Include all students if search term is empty
+        name.includes(normalizedSearchTerm) ||
+        studentClass.includes(normalizedSearchTerm) ||
+        phone.includes(normalizedSearchTerm) ||
+        email.includes(normalizedSearchTerm)
+      );
+    });
+  
+    console.log("Filtered students:", filtered);
+  
+    // Sorting logic remains unchanged
+    const validKey = students.some((student) => student.hasOwnProperty(sortConfig.key))
+      ? sortConfig.key
+      : "name";
+  
+    const sorted = filtered.sort((a, b) => {
+      const aValue = a[validKey] ?? "";
+      const bValue = b[validKey] ?? "";
+  
+      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  
+    console.log("Sorted students:", sorted);
+  
+    return sorted;
+  }, [students, searchTerm, sortConfig]);
+  
+
+  
+
 
   // const paginatedStudents = useMemo(
   //   () =>
@@ -173,6 +237,7 @@ export default function Students() {
     console.error("Error fetching fields:", fieldsError);
     return <div>Error loading form fields</div>;
   }
+
 
 
 
@@ -254,6 +319,12 @@ export default function Students() {
     setIsImportExportDialogOpen(false);
   };
   
+  console.log("search",searchTerm);
+  console.log("students",students);
+  console.log("Filtered",filteredAndSortedStudents);
+
+ 
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-start mb-6">

@@ -20,12 +20,16 @@ import {
   getDocs,
   Timestamp,
 } from "firebase/firestore";
+import { uploadSubjectCsv } from "./uploadCsv";
+import { refreshSubjectList } from "./uploadCsv";
 import { getFirebaseServices } from '@/lib/firebaseConfig';
-
+import "jspdf-autotable"; 
 const { db } = getFirebaseServices();
 import { DialogClose } from "@radix-ui/react-dialog";
 import FilterModal, { FilterState } from "../Student/StudentsFilter";
 import { Filter } from "lucide-react";
+import jsPDF from "jspdf";
+import Papa from "papaparse"; 
 
 export type Subject = {
   id: string;
@@ -33,12 +37,36 @@ export type Subject = {
   SubjectUpatedAt: Timestamp;
 };
 
+export type SubjectFile ={
+  Name: string;
+  Url: string;
+  SubjectId: string;
+}
+
+export type SubjectTeacher ={
+  SubjectTeacherID: string;
+  SubjectTeacherName: string;
+  SubjectTeacherPosition: string;
+}
+
+export type allSubjectsData ={
+  id: string; // Document ID
+  SubjectCreatedAt:Timestamp;
+  SubjectFile: SubjectFile[];
+  SubjectName: string;
+  SubjectTeachersId: SubjectTeacher[];
+  SubjectUpatedAt: Timestamp;
+}
+
+
 const ITEMS_PER_PAGE = 8;
 
 const SubjectTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField] = useState<"newest" | "oldest">("newest");
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [allSubjects,setAllSubjects]=useState<allSubjectsData[]>([]);
+  
   const [currentPage, setCurrentPage] = useState(1);
 
   const [,setFilters] = useState<FilterState | null>(null);
@@ -60,7 +88,7 @@ const SubjectTable = () => {
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
     useState(false);
 
-  const [file] = useState<File | null>(null);
+  const [file,setFile] = useState<File | null>(null);
 
   // Separate sorting logic for Firestore Timestamps
   const sortSubjects = (
@@ -68,8 +96,8 @@ const SubjectTable = () => {
     field: "newest" | "oldest"
   ) => {
     return [...subjectsToSort].sort((a, b) => {
-      const timeA = a.SubjectUpatedAt.toMillis();
-      const timeB = b.SubjectUpatedAt.toMillis();
+      const timeA = a.SubjectUpatedAt?.toMillis();
+      const timeB = b.SubjectUpatedAt?.toMillis();
 
       return field === "newest" ? timeB - timeA : timeA - timeB;
     });
@@ -102,6 +130,16 @@ const SubjectTable = () => {
     const fetchSubjects = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "subjects"));
+        const fetchedAllSubjectsData: allSubjectsData[] = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          SubjectCreatedAt: doc.data().SubjectCreatedAt as Timestamp, // Use Timestamp directly
+          SubjectFile: doc.data().SubjectFile || [], // Default to empty array if not present
+          SubjectName: doc.data().SubjectName,
+          SubjectTeachersId: doc.data().SubjectTeachersId || [], // Default to empty array if not present
+          SubjectUpatedAt: doc.data().SubjectUpatedAt as Timestamp // Use Timestamp directly
+        }));
+        setAllSubjects(fetchedAllSubjectsData);
+        
         const fetchedSubjects = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           name: doc.data()["SubjectName"],
@@ -147,6 +185,84 @@ const SubjectTable = () => {
   //   });
   // };
 
+  // download csv,pdf
+
+
+
+
+     const handleUploadCsv = async () => {
+        if (file) {
+          try {
+            console.log("file is",file);
+            await uploadSubjectCsv(file);
+            alert("CSV file uploaded successfully!");
+            await refreshSubjectList(() => currentSubjects);
+          } catch (error) {
+            console.error("Error uploading CSV file: ", error);
+            alert("Failed to upload CSV file.");
+          }
+        } else {
+          alert("Please select a CSV file.");
+        }
+        setIsImportExportDialogOpen(false);
+      };
+
+const handleDownloadCsv = () => {
+  const csvData = allSubjects.flatMap((subject) =>
+    subject.SubjectTeachersId.map((teacher) => ({
+      SubjectName: subject.SubjectName,
+      SubjectTeacherName: teacher.SubjectTeacherName,
+      SubjectTeacherPosition: teacher.SubjectTeacherPosition,
+      FileUrls: subject.SubjectFile.map((file) => file.Url).join(", "),
+    }))
+  );
+
+  // Use Papa.parse to convert the data into CSV format
+  const csv = Papa.unparse(csvData);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", "subjects.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  setIsImportExportDialogOpen(false); // Close dialog after download
+};
+
+const handleDownloadPdf = () => {
+  const doc = new jsPDF();
+
+  // Title of the PDF
+  doc.text("Subject Details", 14, 10);
+
+  // Define columns for the table in the PDF
+  const columns = ["SubjectName", "SubjectTeacher Name", "SubjectTeacher Position"];
+
+  // Create the rows using the data from allSubjects
+  const rows = allSubjects.flatMap((subject) =>
+    subject.SubjectTeachersId.map((teacher) => [
+      subject.SubjectName,
+      teacher.SubjectTeacherName,
+      teacher.SubjectTeacherPosition,
+      // subject.SubjectFile.map((file) => file.Url).join(", "), // Join URLs if multiple files
+    ])
+  );
+
+  // @ts-expect-error: autoTable is not recognized due to missing type definitions
+  doc.autoTable({
+    head: [columns],
+    body: rows,
+    startY: 20,
+  });
+
+  // Save the PDF
+  doc.save("subjects.pdf");
+
+  setIsImportExportDialogOpen(false); // Close dialog after download
+};
+
   return (
     <div className="container mx-auto p-6">
       {/* Header Section */}
@@ -182,7 +298,8 @@ const SubjectTable = () => {
                   <input
                     type="file"
                     accept=".csv"
-                    // onChange={handleFileChange}
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+
                     className="hidden"
                     id="file-upload"
                   />
@@ -194,7 +311,7 @@ const SubjectTable = () => {
                   <Button
                     variant="default"
                     className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
-                  // onClick={handleUploadCsv}
+                  onClick={handleUploadCsv}
                   >
                     Upload this file
                   </Button>
@@ -204,14 +321,14 @@ const SubjectTable = () => {
                 <Button
                   variant="default"
                   className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
-                // onClick={handleDownloadCsv}
+                onClick={handleDownloadCsv}
                 >
                   Download CSV
                 </Button>
                 <Button
                   variant="default"
                   className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
-                // onClick={handleDownloadCsv}
+                onClick={handleDownloadPdf}
                 >
                   Download PDF
                 </Button>
