@@ -3,8 +3,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
-import FilterModal from "./StudentsFilter";
-import { FilterState } from "./StudentsFilter";
+import FilterModal, { FilterState } from './StudentsFilter';
 import { IoIosCloudUpload } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
 import Link from "next/link";
@@ -20,8 +19,9 @@ import { Filter } from "lucide-react";
 
 import Papa from "papaparse";
 import useSWR from "swr";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection,getDocs } from "firebase/firestore";
 import { getFirebaseServices } from '@/lib/firebaseConfig';
+import "jspdf-autotable";
 
 const { db } = getFirebaseServices();
 import { fetchFormFields, FormField } from "../helper/firebaseHelper";
@@ -29,6 +29,7 @@ import { mutate } from "swr";
 import StudentsTable from "./StudentTable";
 import { usePathname } from "next/navigation";
 import FadeLoader from "../Loader";
+import { jsPDF } from "jspdf";
 
 export type Student = {
   id: number;
@@ -45,6 +46,10 @@ export type Student = {
   studentId?: string;
 };
 
+// export type StudentD = {
+//   id: string;
+//   [key: string]: any; // Allow dynamic keys
+// };
 
 
 
@@ -76,8 +81,9 @@ export default function Students() {
   }, [path]);
 
   // filter states
-  const [,setFilters] = useState<FilterState | null>(null);
+  const [, setFilters] = useState<FilterState | null>(null);
   const [isFilterOpen, setFilterOpen] = useState(false);
+  
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -102,54 +108,115 @@ export default function Students() {
     useState(false);
   const [file, setFile] = useState<File | null>(null);
 
-  const handleDelete = async (student: Student) => {
-    try {
-      const studentDocRef = doc(db, "students", student.id.toString());
+  // Temp no use
+  // const handleDelete = async (student: Student) => {
+  //   try {
+  //     const studentDocRef = doc(db, "students", student.id.toString());
 
-      // Check if the document exists
-      const studentDocSnap = await getDoc(studentDocRef);
-      if (!studentDocSnap.exists()) {
-        throw new Error(`Student with ID ${student.id} does not exist`);
-      }
+  //     // Check if the document exists
+  //     const studentDocSnap = await getDoc(studentDocRef);
+  //     if (!studentDocSnap.exists()) {
+  //       throw new Error(`Student with ID ${student.id} does not exist`);
+  //     }
 
-      // Call the API to delete the document and auth account
-      const response = await fetch("/api/deleteStudent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: student.id }), // Pass the student's uid
-      });
+  //     // Call the API to delete the document and auth account
+  //     const response = await fetch("/api/deleteStudent", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ uid: student.id }), // Pass the student's uid
+  //     });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to delete student.");
-      }
+  //     if (!response.ok) {
+  //       const error = await response.json();
+  //       throw new Error(error.message || "Failed to delete student.");
+  //     }
 
-      console.log(`Student with ID ${student.id} deleted successfully!`);
-      mutate("students"); // Refresh the student list
-    } catch (error) {
-      console.error("Error deleting student:", error);
-    }
-  };
+  //     console.log(`Student with ID ${student.id} deleted successfully!`);
+  //     mutate("students"); // Refresh the student list
+  //   } catch (error) {
+  //     console.error("Error deleting student:", error);
+  //   }
+  // };
+
+  // const filteredAndSortedStudents = useMemo(() => {
+  //   return [...(students || [])]
+  //     .filter(
+  //       (student) =>
+  //         searchTerm === "" ||
+  //         student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //         student.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //         student.phone?.includes(searchTerm) ||
+  //         student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  //     )
+  //     .sort((a, b) => {
+  //       if ((a[sortConfig.key] ?? "") < (b[sortConfig.key] ?? "")) {
+  //         return sortConfig.direction === "asc" ? -1 : 1;
+  //       }
+  //       if ((a[sortConfig.key] ?? "") > (b[sortConfig.key] ?? "")) {
+  //         return sortConfig.direction === "asc" ? 1 : -1;
+  //       }
+  //       return 0;
+  //     });
+
+  //     console.log("Sorted students:", filteredAndSortedStudents);
+
+  // }, [searchTerm, sortConfig, handleDelete,students]);
+
+
 
   const filteredAndSortedStudents = useMemo(() => {
-    return [...(students || [])]
-      .filter(
-        (student) =>
-          student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.phone?.includes(searchTerm) ||
-          student.email?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .sort((a, b) => {
-        if ((a[sortConfig.key] ?? "") < (b[sortConfig.key] ?? "")) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if ((a[sortConfig.key] ?? "") > (b[sortConfig.key] ?? "")) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-  }, [students, searchTerm, sortConfig, handleDelete]);
+    if (!students || students.length === 0) {
+      console.log("No students available");
+      return [];
+    }
+  
+    console.log("Students before filtering:", students);
+    console.log("Search term:", searchTerm);
+  
+    // Normalize the search term
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  
+    // Filter students based on search term
+    const filtered = students.filter((student) => {
+      // Normalize and check each field for matches
+      const name = student.name?.toLowerCase() || "";
+      const studentClass = student.class?.toLowerCase() || "";
+      const phone = student.phone || "";
+      const email = student.email?.toLowerCase() || "";
+  
+      return (
+        normalizedSearchTerm === "" || // Include all students if search term is empty
+        name.includes(normalizedSearchTerm) ||
+        studentClass.includes(normalizedSearchTerm) ||
+        phone.includes(normalizedSearchTerm) ||
+        email.includes(normalizedSearchTerm)
+      );
+    });
+  
+    console.log("Filtered students:", filtered);
+  
+    // Sorting logic remains unchanged
+    const validKey = students.some((student) => student.hasOwnProperty(sortConfig.key))
+      ? sortConfig.key
+      : "name";
+  
+    const sorted = filtered.sort((a, b) => {
+      const aValue = a[validKey] ?? "";
+      const bValue = b[validKey] ?? "";
+  
+      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  
+    console.log("Sorted students:", sorted);
+  
+    return sorted;
+  }, [students, searchTerm, sortConfig]);
+  
+
+  
+
 
   // const paginatedStudents = useMemo(
   //   () =>
@@ -171,6 +238,7 @@ export default function Students() {
     console.error("Error fetching fields:", fieldsError);
     return <div>Error loading form fields</div>;
   }
+
 
 
 
@@ -221,6 +289,43 @@ export default function Students() {
     setIsImportExportDialogOpen(false);
   };
 
+
+  
+
+
+
+  const handleDownloadPdf = (students: Student[]) => {
+    const doc = new jsPDF();
+  
+    doc.text("Student List", 14, 10);
+  
+ 
+    const columns = students.length > 0 ? Object.keys(students[0]).filter(column => column !== 'id') : [];
+  
+    const rows = students.map((student) => {
+      return columns.map((column) => (student as Record<string, unknown>)[column] || "N/A");
+    });
+  
+  // @ts-expect-error: autoTable is not recognized due to missing type definitions
+
+    doc.autoTable({
+      head: [columns],
+      body: rows,
+      startY: 20,
+    });
+  
+    // Save the PDF
+    doc.save("students.pdf");
+  
+    setIsImportExportDialogOpen(false);
+  };
+  
+  console.log("search",searchTerm);
+  console.log("students",students);
+  console.log("Filtered",filteredAndSortedStudents);
+
+ 
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-start mb-6">
@@ -267,9 +372,11 @@ export default function Students() {
             </button>
             {/* Filter Modal */}
             <FilterModal
+              route="/students"
               onFilterChange={handleFilterChange}
               isOpen={isFilterOpen}
-              onClose={() => setFilterOpen(false)} initialFilters={null}
+              onClose={() => setFilterOpen(false)}
+              initialFilters={null}
             />
           </div>
         </div>
@@ -373,7 +480,8 @@ export default function Students() {
             <Button
               variant="default"
               className="bg-[#576086] hover:bg-[#474d6b] text-white h-10 px-4 text-sm"
-              onClick={handleDownloadCsv}
+              // onClick={handleDownloadPdf}
+              onClick={() => handleDownloadPdf(students)}
             >
               Download PDF
             </Button>

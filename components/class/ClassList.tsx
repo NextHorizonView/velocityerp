@@ -147,6 +147,7 @@ const SubjectTable = () => {
         console.log("File selected:", e.target.files[0]);  
       }
     };
+    
     const handleUploadCsv = async () => {
       if (file) {
         try {
@@ -165,9 +166,7 @@ const SubjectTable = () => {
     };
  
     const handleDownloadCsv = async () => {
-   
-    
-      // Prepare CSV rows
+
       const csvData = await Promise.all(
         currentClasses.map(async (classItem) => {
           const teacherNames = await Promise.all(
@@ -242,7 +241,10 @@ const handleDownloadPdf = async () => {
 };
 
 
-
+const paginatedClasses = filteredClasses.slice(
+  (currentPage - 1) * ITEMS_PER_PAGE,
+  currentPage * ITEMS_PER_PAGE
+);
   return (
     <div className="container mx-auto p-6">
       {/* Header Section */}
@@ -331,7 +333,12 @@ const handleDownloadPdf = async () => {
             <input
               placeholder="Search"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              // onChange={(e) => setSearchTerm(e.target.value)}
+
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to the first page when searching
+              }}
               className="w-64 h-10 pl-10 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#576086]"
             />
             <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
@@ -347,9 +354,11 @@ const handleDownloadPdf = async () => {
             </button>
             {/* Filter Modal */}
             <FilterModal
+              route="/class"
               onFilterChange={handleFilterChange}
               isOpen={isFilterOpen}
-              onClose={() => setFilterOpen(false)} initialFilters={null}
+              onClose={() => setFilterOpen(false)}
+              initialFilters={null}
             />
         </div>
       </div>
@@ -365,7 +374,7 @@ const handleDownloadPdf = async () => {
             </tr>
           </thead>
           <tbody>
-            {currentClasses.map((classItem) => (
+            {paginatedClasses.map((classItem) => (
               <tr key={classItem.ClassId} className="border-b hover:bg-gray-100">
                 <td className="px-4 py-2">
                   {/* {classItem.classSubjects?.map((subject, index) => (

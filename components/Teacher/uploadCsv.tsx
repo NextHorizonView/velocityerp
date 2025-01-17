@@ -1,12 +1,21 @@
-
 import { getFirestore, collection, getDocs} from 'firebase/firestore';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
 
 const { app } = getFirebaseServices();
-import { ClassData } from './ClassList';
 const db = getFirestore(app);
 
-export const uploadCsv = async (file: File) => {
+export interface TeacherData {
+  id: string;
+  FirstName: string;
+  LastName: string;
+  Email: string;
+  Position: string;
+  City: string;
+  State: string;
+  Pincode: string;
+}
+
+export const uploadTeacherCsv = async (file: File) => {
   return new Promise<void>((resolve, reject) => {
     if (!file) {
       reject(new Error('No file provided.'));
@@ -21,10 +30,9 @@ export const uploadCsv = async (file: File) => {
         reject(new Error('Failed to read CSV file.'));
         return;
       }
-console.log("text is",text);
+
       try {
-        // Send CSV data to the API route
-        const response = await fetch('/api/uploadCsvClass', {
+        const response = await fetch('/api/uploadCsvTeacher', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ csvData: text }),
@@ -53,48 +61,44 @@ console.log("text is",text);
   });
 };
 
-
-export const refreshClassList = async (
-  setClasses: React.Dispatch<React.SetStateAction<ClassData[]>>
+export const refreshTeacherList = async (
+  setTeachers: React.Dispatch<React.SetStateAction<TeacherData[]>>
 ) => {
   try {
-    const classesCollection = collection(db, 'classes');
-    const querySnapshot = await getDocs(classesCollection);
+    const teachersCollection = collection(db, 'teachers');
+    const querySnapshot = await getDocs(teachersCollection);
 
     if (querySnapshot.empty) {
-      console.warn('No classes found in the database.');
-      setClasses([]);
+      console.warn('No teachers found in the database.');
+      setTeachers([]);
       return;
     }
 
-    const classesData = querySnapshot.docs
+    const teachersData = querySnapshot.docs
       .map((doc) => {
         const data = doc.data();
         if (
-          typeof data.ClassId === 'string' &&
-          typeof data.ClassName === 'string' &&
-          typeof data.ClassDivision === 'string' &&
-          Array.isArray(data.ClassTeacherId) &&
-          Array.isArray(data.ClassSubjects) &&
-          data.ClassSubjects.every((subject) =>
-            typeof subject.SubjectName === 'string' &&
-            typeof subject.SubjectId === 'string' &&
-            typeof subject.SubjectTeacherID === 'string'
-          )
+          typeof data.FirstName === 'string' &&
+          typeof data.LastName === 'string' &&
+          typeof data.Email === 'string' &&
+          typeof data.Position === 'string' &&
+          typeof data.City === 'string' &&
+          typeof data.State === 'string' &&
+          typeof data.Pincode === 'string'
         ) {
           return {
             id: doc.id,
             ...data,
-          } as ClassData;
+          } as TeacherData;
         } else {
-          console.warn('Invalid class data structure:', data);
-          return null; // Handle invalid data as needed
+          console.warn('Invalid teacher data structure:', data);
+          return null;
         }
       })
-      .filter((classData): classData is ClassData => classData !== null);
+      .filter((teacherData): teacherData is TeacherData => teacherData !== null);
 
-    setClasses(classesData);
+    setTeachers(teachersData);
   } catch (error) {
-    console.error('Error fetching classes:', error);
+    console.error('Error fetching teachers:', error);
   }
 };

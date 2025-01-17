@@ -1,28 +1,40 @@
+
 'use client';
 import React, { useState } from 'react';
-import { MoreVertical, Plus,  Paperclip, Image, Video, FileText } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { MoreVertical, Plus, Paperclip, Image, Video, FileText, Trash } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import RichTextEditor from '@/components/RichTextEditor';
+import { Descendant } from 'slate';
 
 type MediaItem = {
   name: string;
   type: 'image' | 'video' | 'document';
 };
 
-const ClassTeacherNoticeComponent = () => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+const ClassTeacherNoticeComponent: React.FC = () => {
+  const [title, setTitle] = useState<string>('');
+  const [,setContent] = useState<Descendant[]>([
+    {
+      type: 'paragraph',
+      children: [{ text: '' }],
+    },
+  ]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [medias, setMedias] = useState<MediaItem[]>([
     { name: 'Document name.png', type: 'image' },
@@ -50,6 +62,10 @@ const ClassTeacherNoticeComponent = () => {
 
       setMedias((prev) => [...prev, ...newFiles]);
     }
+  };
+
+  const handleDeleteMedia = (index: number): void => {
+    setMedias((prev) => prev.filter((_, i) => i !== index));
   };
 
   const getIconForType = (type: string) => {
@@ -82,11 +98,9 @@ const ClassTeacherNoticeComponent = () => {
             onChange={(e) => setTitle(e.target.value)}
           />
 
-          <textarea
+          <RichTextEditor
             placeholder="Write your content here..."
-            className="w-full h-32 p-3 border rounded-md outline-none resize-none bg-gray-50"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={setContent}
           />
 
           <div className="space-y-4">
@@ -101,7 +115,20 @@ const ClassTeacherNoticeComponent = () => {
                     {getIconForType(media.type)}
                     <span className="text-sm text-gray-700">{media.name}</span>
                   </div>
-                  <MoreVertical className="w-5 h-5 text-gray-400" />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="focus:outline-none">
+                      <MoreVertical className="w-5 h-5 text-gray-400 cursor-pointer" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                        onClick={() => handleDeleteMedia(index)}
+                      >
+                        <Trash className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))}
             </div>
@@ -123,24 +150,25 @@ const ClassTeacherNoticeComponent = () => {
               </button>
             </div>
           </div>
-
+          
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-            <DatePicker
-                  selected={selectedDate}
-                  onChange={(date) => setSelectedDate(date)}
-                  className="px-3 py-1.5 text-sm border rounded-lg text-gray-600"
-                  dateFormat="dd/MM/yyyy"
-                />
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => setSelectedDate(date)}
+                className="px-3 py-1.5 text-sm border rounded-lg text-gray-600"
+                dateFormat="dd/MM/yyyy"
+              />
               <Select>
-                <SelectTrigger className="w-[140px] bg-[#576086] text-white hover:bg-blue-700">
+                <SelectTrigger className="bg-[#576086] text-white hover:bg-blue-700">
                   <SelectValue placeholder="Assign" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="staff">Staff</SelectItem>
-                  <SelectItem value="parent">Parent</SelectItem>
+                  <SelectGroup>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="teacher">Teacher</SelectItem>
+                    <SelectItem value="parent">Parent</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
