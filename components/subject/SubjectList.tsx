@@ -370,6 +370,7 @@ const handleDownloadPdf = () => {
             </button>
             {/* Filter Modal */}
             <FilterModal
+            route="/class"
               onFilterChange={handleFilterChange}
               isOpen={isFilterOpen}
               onClose={() => setFilterOpen(false)} initialFilters={null}

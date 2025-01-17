@@ -7,9 +7,6 @@ import Link from "next/link";
 import TeachersTable from "./TeachersTable";
 import {
   collection,
-  deleteDoc,
-  doc,
-  getDoc,
   getDocs,
 } from "firebase/firestore";
 import { getFirebaseServices } from '@/lib/firebaseConfig';
@@ -87,8 +84,8 @@ export default function Teachers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] = useState(false);
-  const [allTeachers, setAllTeachers] = useState<Teacher[]>([]);
-  const [filters, setFilters] = useState<FilterState | null>(null);
+  // const [allTeachers, setAllTeachers] = useState<Teacher[]>([]);
+  const [, setFilters] = useState<FilterState | null>(null);
   const [isFilterOpen, setFilterOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
@@ -143,21 +140,22 @@ export default function Teachers() {
     console.log('Applied Filters:', newFilters);
   };
 
-  const handleDelete = async (teacher: Teacher) => {
-    try {
-      const teacherDocRef = doc(db, "teachers", teacher.id.toString());
-      const teacherDocSnap = await getDoc(teacherDocRef);
+  // Temp No use
+  // const handleDelete = async (teacher: Teacher) => {
+  //   try {
+  //     const teacherDocRef = doc(db, "teachers", teacher.id.toString());
+  //     const teacherDocSnap = await getDoc(teacherDocRef);
       
-      if (!teacherDocSnap.exists()) {
-        throw new Error(`Teacher with ID ${teacher.id} does not exist`);
-      }
+  //     if (!teacherDocSnap.exists()) {
+  //       throw new Error(`Teacher with ID ${teacher.id} does not exist`);
+  //     }
       
-      await deleteDoc(teacherDocRef);
-      mutate("teachers");
-    } catch (error) {
-      console.error("Error deleting teacher:", error);
-    }
-  };
+  //     await deleteDoc(teacherDocRef);
+  //     mutate("teachers");
+  //   } catch (error) {
+  //     console.error("Error deleting teacher:", error);
+  //   }
+  // };
 
 
 
@@ -335,18 +333,17 @@ console.log('teachers',teachers);
             className="w-64 h-10"
           />
           <button
-            onClick={() => setFilterOpen(true)}
-            className="flex space-x-3 px-4 py-2 justify-center bg-[#576086] text-white rounded-lg"
-          >
-            <Filter className="w-5 h-5 flex mt-1" />
-            Filter
-          </button>
-          <FilterModal
+              onClick={() => setFilterOpen(true)}
+              className=" flex space-x-3 px-4 py-2 justify-center bg-[#576086] text-white rounded-lg"
+            >
+              <Filter className="w-5 h-5 flex mt-1" />
+              Filter
+            </button>
+            {/* Filter Modal */}
+            <FilterModal
             onFilterChange={handleFilterChange}
             isOpen={isFilterOpen}
-            onClose={() => setFilterOpen(false)}
-            initialFilters={null}
-          />
+            onClose={() => setFilterOpen(false)} initialFilters={null} route={"/teacher"}            />
         </div>
       </div>
 

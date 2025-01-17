@@ -1,5 +1,6 @@
 import { getFirestore, collection, getDocs} from 'firebase/firestore';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
+import { Timestamp } from 'firebase-admin/firestore';
 
 const { app } = getFirebaseServices();
 const db = getFirestore(app);
@@ -21,8 +22,8 @@ export interface SubjectData {
   SubjectName: string;
   SubjectFile: SubjectFile[];
   SubjectTeachersId: SubjectTeacher[];
-  SubjectCreatedAt: any;
-  SubjectUpdatedAt: any;
+  SubjectCreatedAt: Timestamp;
+  SubjectUpdatedAt: Timestamp;
 }
 
 export const uploadSubjectCsv = async (file: File) => {

@@ -3,8 +3,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
-import FilterModal from "./StudentsFilter";
-import { FilterState } from "./StudentsFilter";
+import FilterModal, { FilterState } from './StudentsFilter';
 import { IoIosCloudUpload } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
 import Link from "next/link";
@@ -20,7 +19,7 @@ import { Filter } from "lucide-react";
 
 import Papa from "papaparse";
 import useSWR from "swr";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection,getDocs } from "firebase/firestore";
 import { getFirebaseServices } from '@/lib/firebaseConfig';
 import "jspdf-autotable";
 
@@ -47,10 +46,10 @@ export type Student = {
   studentId?: string;
 };
 
-export type StudentD = {
-  id: string;
-  [key: string]: any; // Allow dynamic keys
-};
+// export type StudentD = {
+//   id: string;
+//   [key: string]: any; // Allow dynamic keys
+// };
 
 
 
@@ -82,8 +81,9 @@ export default function Students() {
   }, [path]);
 
   // filter states
-  const [,setFilters] = useState<FilterState | null>(null);
+  const [, setFilters] = useState<FilterState | null>(null);
   const [isFilterOpen, setFilterOpen] = useState(false);
+  
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -108,34 +108,35 @@ export default function Students() {
     useState(false);
   const [file, setFile] = useState<File | null>(null);
 
-  const handleDelete = async (student: Student) => {
-    try {
-      const studentDocRef = doc(db, "students", student.id.toString());
+  // Temp no use
+  // const handleDelete = async (student: Student) => {
+  //   try {
+  //     const studentDocRef = doc(db, "students", student.id.toString());
 
-      // Check if the document exists
-      const studentDocSnap = await getDoc(studentDocRef);
-      if (!studentDocSnap.exists()) {
-        throw new Error(`Student with ID ${student.id} does not exist`);
-      }
+  //     // Check if the document exists
+  //     const studentDocSnap = await getDoc(studentDocRef);
+  //     if (!studentDocSnap.exists()) {
+  //       throw new Error(`Student with ID ${student.id} does not exist`);
+  //     }
 
-      // Call the API to delete the document and auth account
-      const response = await fetch("/api/deleteStudent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: student.id }), // Pass the student's uid
-      });
+  //     // Call the API to delete the document and auth account
+  //     const response = await fetch("/api/deleteStudent", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ uid: student.id }), // Pass the student's uid
+  //     });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to delete student.");
-      }
+  //     if (!response.ok) {
+  //       const error = await response.json();
+  //       throw new Error(error.message || "Failed to delete student.");
+  //     }
 
-      console.log(`Student with ID ${student.id} deleted successfully!`);
-      mutate("students"); // Refresh the student list
-    } catch (error) {
-      console.error("Error deleting student:", error);
-    }
-  };
+  //     console.log(`Student with ID ${student.id} deleted successfully!`);
+  //     mutate("students"); // Refresh the student list
+  //   } catch (error) {
+  //     console.error("Error deleting student:", error);
+  //   }
+  // };
 
   // const filteredAndSortedStudents = useMemo(() => {
   //   return [...(students || [])]
@@ -371,9 +372,11 @@ export default function Students() {
             </button>
             {/* Filter Modal */}
             <FilterModal
+              route="/students"
               onFilterChange={handleFilterChange}
               isOpen={isFilterOpen}
-              onClose={() => setFilterOpen(false)} initialFilters={null}
+              onClose={() => setFilterOpen(false)}
+              initialFilters={null}
             />
           </div>
         </div>
