@@ -58,6 +58,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const role = idTokenResult.claims.role;
       const domain = window.location.href;
       sessionStorage.setItem("savedDomain", domain); 
+      
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
@@ -77,6 +78,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
   
         localStorage.setItem('userId', userId);
         localStorage.setItem('userRole', role);
+        document.cookie = `userRole=${role}; path=/; SameSite=Strict; Secure`;
 
         if (rememberMe) {
           localStorage.setItem('email', username);
@@ -127,8 +129,6 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
         const userId = userCredential.user.uid;
-        localStorage.setItem('userId', userId);
-        localStorage.setItem('userRole', role);
   
         // Add user to Firestore LoggedInUsers collection
         const loggedInDoc = doc(db, 'LoggedInUsers', userId);
@@ -143,6 +143,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
   
         localStorage.setItem('userId', userId);
         localStorage.setItem('userRole', role);
+        document.cookie = `userRole=${role}; path=/; SameSite=Strict; Secure`;
         router.push('/dashboard');
       } else {
         console.error('User does not have admin role');
