@@ -11,9 +11,10 @@ import { FaGooglePlay } from 'react-icons/fa';
 import { AiOutlineApple } from "react-icons/ai";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
-import { doc, setDoc, serverTimestamp} from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 const { auth, db } = getFirebaseServices();
 import withAuthentication from '@/lib/withAuthentication';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginProps {
   authUser: { uid: string; email: string; role: string; domain: string } | null;
@@ -24,7 +25,11 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
-  
+
+  // Password show feature
+ 
+  const [showPassword, setShowPassword] = useState(false);
+
 
   // Auto-login if credentials exist in localStorage
   useEffect(() => {
@@ -33,7 +38,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       authUser &&
       authUser.uid &&
       authUser.email &&
-      authUser.role 
+      authUser.role
     ) {
       router.push('/dashboard');
     }
@@ -49,7 +54,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       console.log('userId cleared from localStorage after expiry time.');
     }
   }, []);
-  
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -57,14 +62,14 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
       const domain = window.location.href;
-      sessionStorage.setItem("savedDomain", domain); 
-      
+      sessionStorage.setItem("savedDomain", domain);
+
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
         const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
-  
+
         // Add user to Firestore LoggedInUsers collection
         const loggedInDoc = doc(db, 'LoggedInUsers', userId);
         await setDoc(loggedInDoc, {
@@ -75,7 +80,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
           LoggedInCreatedAt: serverTimestamp(),
           IsLoggedIn: true,
         });
-  
+
         localStorage.setItem('userId', userId);
         localStorage.setItem('userRole', role);
         document.cookie = `userRole=${role}; path=/; SameSite=Strict; Secure`;
@@ -88,7 +93,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
           const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 1 day expiry
           localStorage.setItem('userExpiry', expiryTime.toString());
         }
-  
+
         router.push('/dashboard');
       } else {
         console.error('User does not have the required role');
@@ -100,8 +105,8 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       alert('Error logging in: ' + authError.message);
     }
   };
-  
-  
+
+
   // Auto-clear expired session on app load or refresh
   useEffect(() => {
     const storedExpiryTime = localStorage.getItem('userExpiry');
@@ -112,7 +117,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       console.log('userId cleared after expiry time');
     }
   }, []);
-  
+
 
   const handleGoogleSignIn = async () => {
     try {
@@ -123,13 +128,13 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       // Get the domain (website name) dynamically
       const domain = window.location.href;
       localStorage.setItem('savedDomain', domain);
-      sessionStorage.setItem("savedDomain", domain); 
+      sessionStorage.setItem("savedDomain", domain);
       const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
-  
+
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
         const userId = userCredential.user.uid;
-  
+
         // Add user to Firestore LoggedInUsers collection
         const loggedInDoc = doc(db, 'LoggedInUsers', userId);
         await setDoc(loggedInDoc, {
@@ -140,7 +145,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
           LoggedInCreatedAt: serverTimestamp(),
           IsLoggedIn: true,
         });
-  
+
         localStorage.setItem('userId', userId);
         localStorage.setItem('userRole', role);
         document.cookie = `userRole=${role}; path=/; SameSite=Strict; Secure`;
@@ -155,7 +160,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       alert('Error signing in with Google: ' + authError.message);
     }
   };
-  
+
 
   return (
     <div className="min-h-screen flex">
@@ -217,17 +222,25 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <div className="mt-1">
+                <div className="mt-1 relative">
                   <input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-600"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
               </div>
             </div>

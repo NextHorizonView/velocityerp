@@ -84,32 +84,32 @@ const FilterModal: React.FC<FilterProps> = ({ route, onFilterChange, isOpen, onC
     }
 
     const handleInputChange = <
-    K extends keyof StudentFilterState | keyof TeacherFilterState | keyof ClassFilterState
->(
-    key: K,
-    value: K extends keyof StudentFilterState
-        ? StudentFilterState[K]
-        : K extends keyof TeacherFilterState
-        ? TeacherFilterState[K]
-        : K extends keyof ClassFilterState
-        ? ClassFilterState[K]
-        : never
-) => {
-    let updatedFilters: FilterState;
+        K extends keyof StudentFilterState | keyof TeacherFilterState | keyof ClassFilterState
+    >(
+        key: K,
+        value: K extends keyof StudentFilterState
+            ? StudentFilterState[K]
+            : K extends keyof TeacherFilterState
+            ? TeacherFilterState[K]
+            : K extends keyof ClassFilterState
+            ? ClassFilterState[K]
+            : never
+    ) => {
+        let updatedFilters: FilterState;
 
-    if (route === '/students') {
-        updatedFilters = { ...filters, [key]: value } as StudentFilterState;
-    } else if (route === '/teacher') {
-        updatedFilters = { ...filters, [key]: value } as TeacherFilterState;
-    } else if (route === '/class') {
-        updatedFilters = { ...filters, [key]: value } as ClassFilterState;
-    } else {
-        throw new Error('Invalid route');
-    }
+        if (route === '/students') {
+            updatedFilters = { ...filters, [key]: value } as StudentFilterState;
+        } else if (route === '/teacher') {
+            updatedFilters = { ...filters, [key]: value } as TeacherFilterState;
+        } else if (route === '/class') {
+            updatedFilters = { ...filters, [key]: value } as ClassFilterState;
+        } else {
+            throw new Error('Invalid route');
+        }
 
-    setFilters(updatedFilters);
-    onFilterChange(updatedFilters);
-};
+        setFilters(updatedFilters);
+        onFilterChange(updatedFilters);
+    };
 
 
 
@@ -339,7 +339,7 @@ const FilterModal: React.FC<FilterProps> = ({ route, onFilterChange, isOpen, onC
                 <div className="p-4 space-y-6">
                     {renderAcademicYearFilter()}
                     {renderRouteSpecificFilters()}
-                    {renderSortingControls()}
+                    {route === '/students' && renderSortingControls()}
 
                     <button
                         className="w-full py-2.5 bg-[#576086] text-white rounded-lg text-sm font-medium"
