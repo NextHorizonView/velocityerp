@@ -32,7 +32,7 @@ import FadeLoader from "../Loader";
 import { jsPDF } from "jspdf";
 
 export type Student = {
-  id: number;
+  id: string;
   name?: string;
   class?: string;
   phone?: string;
@@ -44,14 +44,49 @@ export type Student = {
   pincode?: string;
   religion?: string;
   studentId?: string;
+
+  [key: string]: string | undefined;
+
 };
+
+
+
+export interface DynamicFields {
+  City?: string;
+  Email?: string;
+  "First Name"?: string;
+  "Last Name"?: string;
+  Pincode?: string;
+  State?: string;
+  game?: string;
+  id: string;
+  undefined?: string; // Handling "undefined" key as a string key.
+  [key: string]: string | undefined; // Allows additional dynamic fields.
+}
 
 // export type StudentD = {
 //   id: string;
 //   [key: string]: any; // Allow dynamic keys
 // };
+const fetchStudent = async () => {
+  const querySnapshot = await getDocs(collection(db, "students"));
+  return querySnapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      "First Name": data["First Name"],
+      "Last Name": data["Last Name"],
+      Email: data["Email"],
+      Gender: data["Gender"],
+      City: data["City"],
+      State: data["State"],
+      Pincode: data["Pincode"],
+    } as DynamicFields;
+  });
+};
 
 
+// const { data: studentsPdf, error: studentsPdfError } = useSWR<DynamicFields[]>("students", fetchStudent);
 
 
 const fetchStudents = async () => {
@@ -164,58 +199,77 @@ export default function Students() {
 
 
 
-  const filteredAndSortedStudents = useMemo(() => {
-    if (!students || students.length === 0) {
-      console.log("No students available");
-      return [];
-    }
+  // const filteredAndSortedStudents = useMemo(() => {
+  //   if (!students || students.length === 0) {
+  //     console.log("No students available");
+  //     return [];
+  //   }
   
-    console.log("Students before filtering:", students);
-    console.log("Search term:", searchTerm);
+  //   console.log("Students before filtering:", students);
+  //   console.log("Search term:", searchTerm);
   
-    // Normalize the search term
-    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  //   // Normalize the search term
+  //   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
   
-    // Filter students based on search term
-    const filtered = students.filter((student) => {
-      // Normalize and check each field for matches
-      const name = student.name?.toLowerCase() || "";
-      const studentClass = student.class?.toLowerCase() || "";
-      const phone = student.phone || "";
-      const email = student.email?.toLowerCase() || "";
+  //   // Filter students based on search term
+  //   const filtered = students.filter((student) => {
+  //     // Normalize and check each field for matches
+  //     const name = student.name?.toLowerCase() || "";
+  //     const studentClass = student.class?.toLowerCase() || "";
+  //     const phone = student.phone || "";
+  //     const email = student.email?.toLowerCase() || "";
   
-      return (
-        normalizedSearchTerm === "" || // Include all students if search term is empty
-        name.includes(normalizedSearchTerm) ||
-        studentClass.includes(normalizedSearchTerm) ||
-        phone.includes(normalizedSearchTerm) ||
-        email.includes(normalizedSearchTerm)
-      );
-    });
+  //     return (
+  //       normalizedSearchTerm === "" || // Include all students if search term is empty
+  //       name.includes(normalizedSearchTerm) ||
+  //       studentClass.includes(normalizedSearchTerm) ||
+  //       phone.includes(normalizedSearchTerm) ||
+  //       email.includes(normalizedSearchTerm)
+  //     );
+  //   });
   
-    console.log("Filtered students:", filtered);
+  //   console.log("Filtered students:", filtered);
   
-    // Sorting logic remains unchanged
-    const validKey = students.some((student) => student.hasOwnProperty(sortConfig.key))
-      ? sortConfig.key
-      : "name";
+  //   // Sorting logic remains unchanged
+  //   const validKey = students.some((student) => student.hasOwnProperty(sortConfig.key))
+  //     ? sortConfig.key
+  //     : "name";
   
-    const sorted = filtered.sort((a, b) => {
-      const aValue = a[validKey] ?? "";
-      const bValue = b[validKey] ?? "";
+  //   const sorted = filtered.sort((a, b) => {
+  //     const aValue = a[validKey] ?? "";
+  //     const bValue = b[validKey] ?? "";
   
-      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-      return 0;
-    });
+  //     if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+  //     if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+  //     return 0;
+  //   });
   
-    console.log("Sorted students:", sorted);
+  //   console.log("Sorted students:", sorted);
   
-    return sorted;
-  }, [students, searchTerm, sortConfig]);
+  //   return sorted;
+  // }, [students, searchTerm, sortConfig]);
   
 
+  const filteredAndSortedStudents = useMemo(() => {
+    return [...(students || [])].filter((student: DynamicFields) => {
+      // Define the keys you want to search through
+      const searchFields = [
+        student["First Name"],
+        student["Last Name"],
+        student.Email,
+        student.City,
+        student.State,
+        student.Pincode,
+        student.game,
+      ].map((field) => (field || "").toLowerCase());
   
+      // Check if any field contains the search term
+      return searchFields.some((field) => field.includes(searchTerm.toLowerCase()));
+    });
+  }, [students, searchTerm]);
+  
+
+
 
 
   // const paginatedStudents = useMemo(
@@ -383,7 +437,10 @@ export default function Students() {
       </div>
 
       <div className="bg-[#FAFAF8] rounded-lg shadow-sm">
-        <StudentsTable students={students} formFields={formFields} />
+        <StudentsTable 
+        // students={students} 
+        students={filteredAndSortedStudents} 
+        formFields={formFields} />
 
         {/* table footer  */}
         <div className="flex items-center justify-between px-6 py-4 border-t">

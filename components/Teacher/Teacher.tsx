@@ -45,13 +45,13 @@ export type Teacher = {
   pincode?: string;
   religion?: string;
   studentId?: string;
-  [key: string]: string | undefined; // Add index signature for dynamic fields
+  [key: string]: string | undefined; 
 
 };
 
 
 export type TeacherFormat={
-    id: string; // Firebase ID, typically a string
+    id: string;
     "First Name": string;
     "Last Name": string;
     Email: string;
