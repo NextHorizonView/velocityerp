@@ -233,6 +233,8 @@ setTeachers(
         const updatedClassData = {
           ClassName: classData.ClassName || existingData?.ClassName || "",
           ClassDivision: classData.ClassDivision || existingData?.ClassDivision || "",
+          ClassYear: classData.ClassYear || existingData?.ClassYear || "",
+
           ClassTeacherId: classTeacherIds,
           ClassCreatedAt: existingData?.ClassCreatedAt, 
           ClassUpdatedAt: serverTimestamp(),
@@ -243,7 +245,7 @@ setTeachers(
         await updateDoc(classesRef, updatedClassData);
         
 
-        setClassData({ ClassId: classid, ClassName: "", ClassDivision: "", ClassTeacherId: [] });
+        setClassData({ ClassId: classid, ClassName: "", ClassDivision: "", ClassYear:"",ClassTeacherId: [] });
         router.push("/class");
 
         alert("Class updated successfully!");
@@ -322,6 +324,26 @@ setTeachers(
             value={classData.ClassDivision}
             onChange={(e) =>
               setClassData({ ...classData, ClassDivision: e.target.value })
+            }
+            required
+          />
+        </div>
+
+        <div className="mb-6 px-6">
+          <label
+            htmlFor="classYear"
+            className="block font-medium mb-2 text-gray-700"
+          >
+            Class Year
+          </label>
+          <input
+            type="text"
+            id="classYear"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+            placeholder="Enter Class Name"
+            value={classData.ClassYear}
+            onChange={(e) =>
+              setClassData({ ...classData, ClassYear: e.target.value })
             }
             required
           />
