@@ -48,6 +48,7 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
     ClassDivision: string;
     ClassTeacherId: ClassTeacherMap[];
     ClassCreatedAt?:Timestamp;
+    ClassYear?:string;
   }>({ ClassId: "", ClassName: "", ClassDivision: "", ClassTeacherId: [] });
   const [loading, setLoading] = useState(false);
 
@@ -76,6 +77,7 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
             ClassId: classid,
             ClassName: classData.ClassName || "",
             ClassDivision: classData.ClassDivision || "",
+            ClassYear:classData.ClassYear || "",
             // ClassTeacherId:
             //   classData.ClassTeacherId.map(
             //     (teacher: {

@@ -38,6 +38,7 @@ export interface ClassData {
   ClassDivision: string;
   ClassTeacherId: string[];
   ClassSubjects: { SubjectName: string; SubjectId: string; SubjectTeacherID: string }[];
+  ClassYear:string;
 }
 
 const fetcher = async (): Promise<ClassData[]> => {
@@ -370,6 +371,8 @@ const paginatedClasses = filteredClasses.slice(
             <tr className="border-b">
               <th className="px-4 text-gray-500 py-2">Class Name</th>
               <th className="px-4 text-gray-500 py-2">Div</th>
+              <th className="px-4 text-gray-500 py-2">Class Year</th>
+
               <th className="px-4 text-gray-500 py-2">Action</th>
             </tr>
           </thead>
@@ -386,6 +389,8 @@ const paginatedClasses = filteredClasses.slice(
                   {classItem.ClassName}
                 </td>
                 <td className="px-4 py-2">{classItem.ClassDivision}</td>
+                <td className="px-4 py-2">{classItem.ClassYear}</td>
+
                 <td className="px-4 py-2 flex space-x-2">
                   <button className="p-2">
                     <Link href={`/editclass/${classItem?.id}`} passHref>
