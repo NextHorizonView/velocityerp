@@ -390,7 +390,7 @@ const [selectedYear, setSelectedYear] = useState<string>("");
                     htmlFor="className"
                     className="block font-medium mb-2 text-[#666666]"
                 >
-                    Class Year
+                    Class Year (YYYY-YY)
                 </label>
                 <input
                     type="text"

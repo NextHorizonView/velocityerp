@@ -68,22 +68,23 @@ export interface DynamicFields {
 //   id: string;
 //   [key: string]: any; // Allow dynamic keys
 // };
-const fetchStudent = async () => {
-  const querySnapshot = await getDocs(collection(db, "students"));
-  return querySnapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      "First Name": data["First Name"],
-      "Last Name": data["Last Name"],
-      Email: data["Email"],
-      Gender: data["Gender"],
-      City: data["City"],
-      State: data["State"],
-      Pincode: data["Pincode"],
-    } as DynamicFields;
-  });
-};
+
+// const fetchStudent = async () => {
+//   const querySnapshot = await getDocs(collection(db, "students"));
+//   return querySnapshot.docs.map((doc) => {
+//     const data = doc.data();
+//     return {
+//       id: doc.id,
+//       "First Name": data["First Name"],
+//       "Last Name": data["Last Name"],
+//       Email: data["Email"],
+//       Gender: data["Gender"],
+//       City: data["City"],
+//       State: data["State"],
+//       Pincode: data["Pincode"],
+//     } as DynamicFields;
+//   });
+// };
 
 
 // const { data: studentsPdf, error: studentsPdfError } = useSWR<DynamicFields[]>("students", fetchStudent);
@@ -134,10 +135,11 @@ export default function Students() {
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [sortConfig] = useState<{
-    key: keyof Student;
-    direction: "asc" | "desc";
-  }>({ key: "name", direction: "asc" });
+  // Temp
+  // const [sortConfig] = useState<{
+  //   key: keyof Student;
+  //   direction: "asc" | "desc";
+  // }>({ key: "name", direction: "asc" });
 
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
     useState(false);
