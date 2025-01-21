@@ -25,6 +25,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
+  const [loading, setLoading] = useState(false); // Loading state
 
   // Password show feature
  
@@ -40,7 +41,11 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       authUser.email &&
       authUser.role
     ) {
+
       router.push('/dashboard');
+      setTimeout(() => {
+        window.location.reload(); // Auto-reload the page
+      }, 1000); // Delay for smooth transition
     }
   }, [authUser, router]);
 
@@ -57,6 +62,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true); // Start loading
     try {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       const idTokenResult = await userCredential.user.getIdTokenResult();
@@ -95,6 +101,9 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
         }
 
         router.push('/dashboard');
+        setTimeout(() => {
+          window.location.reload(); // Auto-reload the page
+        }, 1000); // Delay for smooth transition
       } else {
         console.error('User does not have the required role');
         alert('You do not have admin privileges.');
@@ -103,6 +112,8 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const authError = error as AuthError;
       console.error('Error logging in:', authError.message);
       alert('Error logging in: ' + authError.message);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
@@ -120,6 +131,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
 
 
   const handleGoogleSignIn = async () => {
+    setLoading(true); // Start loading
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
@@ -150,6 +162,9 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
         localStorage.setItem('userRole', role);
         document.cookie = `userRole=${role}; path=/; SameSite=Strict; Secure`;
         router.push('/dashboard');
+        setTimeout(() => {
+          window.location.reload(); // Auto-reload the page
+        }, 1000);
       } else {
         console.error('User does not have admin role');
         alert('You do not have admin privileges');
@@ -158,11 +173,15 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const authError = error as AuthError;
       console.error('Error signing in with Google:', authError.message);
       alert('Error signing in with Google: ' + authError.message);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
+    
 
 
   return (
+    
     <div className="min-h-screen flex">
       {/* Left Section */}
       <div className="hidden md:flex md:w-1/3 relative">
@@ -190,7 +209,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
               className="w-24 h-24 object-contain"
             />
           </div>
-
+          {loading && <div className="loading">Loading...</div>} {/* Add a loading spinner or message */}
           {/* Title */}
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Login account</h2>
@@ -198,6 +217,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
           </div>
 
           {/* Form */}
+
           <form onSubmit={handleLogin} className="mt-8 space-y-6">
             <div className="space-y-5">
               <div>

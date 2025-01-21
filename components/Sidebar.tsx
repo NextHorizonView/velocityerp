@@ -41,6 +41,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const router = useRouter();
 
   // Fetch role permissions on mount
+
   useEffect(() => {
     const fetchRolePermissions = async () => {
       try {
@@ -81,27 +82,42 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
       } catch (error) {
         console.error("Error fetching role permissions:", error);
       } finally {
-        setLoading(false);
+        setLoading(false); // Finish loading
       }
     };
 
     fetchRolePermissions();
   }, []);
 
-  // Redirect if the current path is not allowed
   useEffect(() => {
     if (!loading) {
-      const isAllowed = allowedPaths.has(pathname) && allowedPaths.get(pathname);
+      // Function to check if the current path is allowed
+      const isPathAllowed = (currentPath: string): boolean => {
+        for (const [allowedPath, isAllowed] of allowedPaths.entries()) {
+          if (isAllowed && currentPath.startsWith(allowedPath)) {
+            return true; // Allowed if the current path starts with any allowed path
+          }
+        }
+        return false; // Not allowed if no matching prefix
+      };
+  
+      const isAllowed = isPathAllowed(pathname);
       if (!isAllowed) {
-        router.push("/dashboard"); // Redirect before rendering
+        router.push("/dashboard"); // Redirect to a safe path if unauthorized
       }
     }
   }, [pathname, allowedPaths, loading, router]);
-  if (loading) {
-    // Render a loading spinner or nothing while permissions are being checked
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
 
+  if (loading) {
+    // Render a loading spinner while permissions are fetched
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
   // Logout handler
   const handleLogout = () => {
     const userConfirmed = window.confirm("Are you sure you want to logout?");
