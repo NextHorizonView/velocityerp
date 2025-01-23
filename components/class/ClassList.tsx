@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { IoIosCloudUpload, IoIosSearch } from "react-icons/io";
 import { FaTrash, FaPen } from "react-icons/fa";
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { doc, deleteDoc } from 'firebase/firestore';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
-import FilterModal, { FilterState } from "../Student/StudentsFilter";
+import FilterModal, { FilterState  , ClassFilterState} from "../Student/StudentsFilter";
 import { Filter } from "lucide-react";
 import Papa from "papaparse";
 import { jsPDF } from "jspdf";
@@ -49,6 +49,7 @@ const fetcher = async (): Promise<ClassData[]> => {
   })) as ClassData[];
 };
 
+const route = '/class' as const;
 
 
 const ITEMS_PER_PAGE = 10;
@@ -56,10 +57,21 @@ const ITEMS_PER_PAGE = 10;
 const SubjectTable = () => {
 
   // Import/Export of csv
+// const [filters, setFilters] = useState<ClassFilterState>({
+//     academicYear: '',
+//     subject: '',
+//     sortBy: 'name',
+//     sortOrder: 'asc'
+//   });
 
+  const [isImportExportDialogOpen, setIsImportExportDialogOpen] = useState(false);
 
-  const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
-    useState(false);
+    const [filters, setFilters] = useState<ClassFilterState>({
+      academicYear: '',
+      subject: '',
+      sortBy: 'name',
+      sortOrder: 'asc'
+    });
 
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,15 +80,15 @@ const SubjectTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [classList, setClassList] = useState<ClassData[]>([]);
 
-  const [,setFilters] = useState<FilterState | null>(null);
+  // const [,setFileFilters] = useState<FilterState | null>(null);
   const [isFilterOpen, setFilterOpen] = useState(false);
 
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-    // Don't close the modal automatically
-    console.log('Applied Filters:', newFilters);
-    // Apply filtering logic here
-  };
+  // const handleFilterChange = (newFilters: FilterState) => {
+  //   setFileFilters(newFilters);
+  //   // Don't close the modal automatically
+  //   console.log('Applied Filters:', newFilters);
+  //   // Apply filtering logic here
+  // };
   const [file, setFile] = useState<File | null>(null);
 
   // const [totalPages, setTotalPages] = useState(1);
@@ -123,6 +135,223 @@ const SubjectTable = () => {
     classItem.ClassName?.toLowerCase().includes(searchTerm?.toLowerCase())
   );
 
+  console.log("filteredd classs",filteredClasses);
+
+
+  
+// const filteredClass = useMemo(() => {
+//     if (!filteredClasses) return []; // Fallback for undefined `filteredClasses`
+//     const safeSearchTerm = searchTerm || ''; // Fallback for `searchTerm`
+//     const safeFilters = filters || {}; // Fallback for `filters`
+
+//     return filteredClasses.filter(classItem => {
+//         // Safely access `ClassName`
+//         const className = classItem.ClassName?.toLowerCase() || '';
+//         const matchesSearch = className.includes(safeSearchTerm.toLowerCase());
+
+//         // Safely access `ClassYear`
+//         const matchesYear = !safeFilters.academicYear || classItem.ClassYear === safeFilters.academicYear;
+
+//         // Safely access `ClassSubjects`
+//         const matchesSubject = !safeFilters.subject || (classItem.ClassSubjects || []).some(subject => {
+//             const subjectName = subject.SubjectName?.toLowerCase() || '';
+//             const subjectId = subject.SubjectId?.toLowerCase() || '';
+//             return subjectName === safeFilters.subject.toLowerCase() || subjectId === safeFilters.subject.toLowerCase();
+//         });
+
+//         return matchesSearch && matchesYear && matchesSubject;
+//     }).sort((a, b) => {
+//         switch (safeFilters.sortBy) {
+//             case 'name':
+//                 return safeFilters.sortOrder === 'asc' 
+//                     ? a.ClassName.localeCompare(b.ClassName)
+//                     : b.ClassName.localeCompare(a.ClassName);
+//             case 'subject':
+//                 const aSubjects = (a.ClassSubjects || []).map(s => s.SubjectName).join(',');
+//                 const bSubjects = (b.ClassSubjects || []).map(s => s.SubjectName).join(',');
+//                 return safeFilters.sortOrder === 'asc'
+//                     ? aSubjects.localeCompare(bSubjects)
+//                     : bSubjects.localeCompare(aSubjects);
+//             default:
+//                 return 0;
+//         }
+//     });
+// }, [filteredClasses, searchTerm, filters]); // Include `filters` in dependencies
+
+
+
+
+// const [filteredClass, setFilteredClass] = useState<ClassData[]>([]);
+
+// useEffect(() => {
+//     if (!filteredClasses) {
+//         setFilteredClass([]); // Set to empty array if `filteredClasses` is undefined
+//         return;
+//     }
+
+//     const safeSearchTerm = searchTerm || '';
+//     const safeFilters = filters || {};
+
+//     const result = filteredClasses
+//         .filter(classItem => {
+//             // Safely access `ClassName`
+//             const className = classItem.ClassName?.toLowerCase() || '';
+//             const matchesSearch = className.includes(safeSearchTerm.toLowerCase());
+
+//             // Safely access `ClassYear`
+//             const matchesYear = !safeFilters.academicYear || classItem.ClassYear === safeFilters.academicYear;
+
+//             // Safely access `ClassSubjects`
+//             const matchesSubject = !safeFilters.subject || (classItem.ClassSubjects || []).some(subject => {
+//                 const subjectName = subject.SubjectName?.toLowerCase() || '';
+//                 const subjectId = subject.SubjectId?.toLowerCase() || '';
+//                 return (
+//                     subjectName === safeFilters.subject.toLowerCase() ||
+//                     subjectId === safeFilters.subject.toLowerCase()
+//                 );
+//             });
+
+//             return matchesSearch && matchesYear && matchesSubject;
+//         })
+//         .sort((a, b) => {
+//             switch (safeFilters.sortBy) {
+//                 case 'name':
+//                     return safeFilters.sortOrder === 'asc'
+//                         ? a.ClassName.localeCompare(b.ClassName)
+//                         : b.ClassName.localeCompare(a.ClassName);
+//                 case 'subject':
+//                     const aSubjects = (a.ClassSubjects || []).map(s => s.SubjectName).join(',');
+//                     const bSubjects = (b.ClassSubjects || []).map(s => s.SubjectName).join(',');
+//                     return safeFilters.sortOrder === 'asc'
+//                         ? aSubjects.localeCompare(bSubjects)
+//                         : bSubjects.localeCompare(aSubjects);
+//                 default:
+//                     return 0;
+//             }
+//         });
+
+//     setFilteredClass(result); // Update the filtered and sorted data
+// }, [filteredClasses, searchTerm, filters]); // Add all dependencies
+
+
+
+// const filteredClass = useMemo(() => {
+//   if (!fetchedClasses) return [];
+
+//   return fetchedClasses.filter(classItem => {
+//     const matchesSearch = classItem.ClassName?.toLowerCase().includes(
+//       (searchTerm || '').toLowerCase()
+//     );
+    
+//     const matchesYear = !filters.academicYear || 
+//       classItem.ClassYear === filters.academicYear;
+    
+//     const matchesSubject = !filters.subject || 
+//       classItem.ClassSubjects.some(subject => 
+//         subject.SubjectName.toLowerCase() === (filters.subject || '').toLowerCase()
+//       );
+
+//     return matchesSearch && matchesYear && matchesSubject;
+//   }).sort((a, b) => {
+//     switch (filters.sortBy) {
+//       case 'name':
+//         return filters.sortOrder === 'asc' 
+//           ? (a.ClassName || '').localeCompare(b.ClassName || '')
+//           : (b.ClassName || '').localeCompare(a.ClassName || '');
+//       default:
+//         return 0;
+//     }
+//   });
+// }, [fetchedClasses, searchTerm, JSON.stringify(filters)]);
+
+
+
+
+// var safeSearchTerm = searchTerm || ''; // Fallback for `searchTerm`
+//     var safeFilters = filters || {}; // Fallback for `filters`
+
+//     const filteredClass = filteredClasses
+//         .filter(classItem => {
+//             // Safely access `ClassName`
+//             const className = classItem.ClassName?.toLowerCase() || '';
+//             const matchesSearch = className.includes(safeSearchTerm.toLowerCase());
+
+//             // Safely access `ClassYear`
+//             const matchesYear = !safeFilters.academicYear || classItem.ClassYear === safeFilters.academicYear;
+
+//             // Safely access `ClassSubjects`
+//             const matchesSubject = !safeFilters.subject || (classItem.ClassSubjects || []).some(subject => {
+//                 const subjectName = subject.SubjectName?.toLowerCase() || '';
+//                 const subjectId = subject.SubjectId?.toLowerCase() || '';
+//                 return subjectName === safeFilters.subject.toLowerCase() || subjectId === safeFilters.subject.toLowerCase();
+//             });
+
+//             return matchesSearch && matchesYear && matchesSubject;
+//         })
+//         .sort((a, b) => {
+//             switch (safeFilters.sortBy) {
+//                 case 'name':
+//                     return safeFilters.sortOrder === 'asc'
+//                         ? a.ClassName.localeCompare(b.ClassName)
+//                         : b.ClassName.localeCompare(a.ClassName);
+//                 case 'subject':
+//                     const aSubjects = (a.ClassSubjects || []).map(s => s.SubjectName).join(',');
+//                     const bSubjects = (b.ClassSubjects || []).map(s => s.SubjectName).join(',');
+//                     return safeFilters.sortOrder === 'asc'
+//                         ? aSubjects.localeCompare(bSubjects)
+//                         : bSubjects.localeCompare(aSubjects);
+//                 default:
+//                     return 0;
+//             }
+//         });
+
+
+console.log("fill tets",{ filteredClasses, searchTerm, filters });
+
+
+
+const filteredClass = fetchedClasses
+  ? filteredClasses.filter(classItem => {
+      const matchesSearch = classItem.ClassName?.toLowerCase().includes(
+        (searchTerm || '').toLowerCase()
+      );
+      
+      const matchesYear = !filters.academicYear || 
+        classItem.ClassYear === filters.academicYear;
+      
+      const matchesSubject = !filters.subject || 
+        classItem.ClassSubjects.some(subject => 
+          subject.SubjectName.toLowerCase() === (filters.subject || '').toLowerCase()
+        );
+
+      return matchesSearch && matchesYear && matchesSubject;
+    }).sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'name':
+          return filters.sortOrder === 'asc' 
+            ? (a.ClassName || '').localeCompare(b.ClassName || '')
+            : (b.ClassName || '').localeCompare(a.ClassName || '');
+        case 'subject':
+          const aSubjects = a.ClassSubjects.map(s => s.SubjectName).join(',');
+          const bSubjects = b.ClassSubjects.map(s => s.SubjectName).join(',');
+          return filters.sortOrder === 'asc'
+            ? aSubjects.localeCompare(bSubjects)
+            : bSubjects.localeCompare(aSubjects);
+        default:
+          return 0;
+      }
+    })
+  : [];
+
+
+
+
+
+
+    const paginatedClasses = filteredClass.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
   const totalPages = Math.ceil(fetchedClasses.length / ITEMS_PER_PAGE);
   const currentClasses = fetchedClasses.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -176,6 +405,7 @@ const SubjectTable = () => {
           return {
             "Class Name": classItem.ClassName,
             "Division": classItem.ClassDivision,
+            "Class Year":classItem.ClassYear,
             "Class Teacher": teacherNames.join(", "), // Combine teacher names into a string
             "Subjects": classItem.ClassSubjects.map((subject) => subject.SubjectName).join(", "), // Combine subject names into a string
           };
@@ -210,7 +440,7 @@ const handleDownloadPdf = async () => {
   doc.text("Class List", 14, 10);
 
   // Table Columns (Remove "Class ID")
-  const columns = ["Class Name", "Division", "Class Teacher", "Subjects"];
+  const columns = ["Class Name", "Division", "Class Year","Class Teacher", "Subjects"];
 
   // Table Rows (Remove "ClassId")
   const rows = await Promise.all(
@@ -221,6 +451,7 @@ const handleDownloadPdf = async () => {
       return [
         classItem.ClassName,
         classItem.ClassDivision,
+        classItem.ClassYear,
         teacherNames.join("\n"), // Join multiple teacher names
         classItem.ClassSubjects.map((subject) => subject.SubjectName).join("\n"), // Join subject names
       ];
@@ -242,10 +473,68 @@ const handleDownloadPdf = async () => {
 };
 
 
-const paginatedClasses = filteredClasses.slice(
-  (currentPage - 1) * ITEMS_PER_PAGE,
-  currentPage * ITEMS_PER_PAGE
-);
+
+// filters
+ const handleFilterChange = (newFilters: FilterState) => {
+    // setFilters(newFilters);
+    
+    if (route === '/class') {
+      setFilters(newFilters as ClassFilterState);
+console.log("new filters",newFilters);
+      setCurrentPage(1);
+    }
+
+
+    // setCurrentPage(1); // Reset to first page when filters change
+  };
+
+
+
+
+
+
+// const filteredClass = useMemo(() => {
+//     if (!filteredClasses) return [];
+    
+//     return filteredClasses.filter(classItem => {
+//       // Apply search term filter
+//       const matchesSearch = classItem.ClassName.toLowerCase().includes(searchTerm.toLowerCase());
+      
+//       // Apply academic year filter
+//       const matchesYear = !filters.academicYear || classItem.ClassYear === filters.academicYear;
+      
+//       // Enhanced subject filtering
+//       const matchesSubject = !filters?.subject || classItem.ClassSubjects.some(subject => {
+//         const subjectNameMatch = subject.SubjectName.toLowerCase() === filters?.subject.toLowerCase();
+//         const subjectIdMatch = subject.SubjectId.toLowerCase() === filters?.subject.toLowerCase();
+//         return subjectNameMatch || subjectIdMatch;
+//       });
+      
+//       return matchesSearch && matchesYear && matchesSubject;
+//     }).sort((a, b) => {
+//       switch (filters.sortBy) {
+//         case 'name':
+//           return filters.sortOrder === 'asc' 
+//             ? a.ClassName.localeCompare(b.ClassName)
+//             : b.ClassName.localeCompare(a.ClassName);
+//         case 'subject':
+//           const aSubjects = a.ClassSubjects.map(s => s.SubjectName).join(',');
+//           const bSubjects = b.ClassSubjects.map(s => s.SubjectName).join(',');
+//           return filters.sortOrder === 'asc'
+//             ? aSubjects.localeCompare(bSubjects)
+//             : bSubjects.localeCompare(aSubjects);
+//         default:
+//           return 0;
+//       }
+//     });
+//   }, [filteredClasses, searchTerm]);
+
+
+
+
+
+
+  
   return (
     <div className="container mx-auto p-6">
       {/* Header Section */}
@@ -360,6 +649,8 @@ const paginatedClasses = filteredClasses.slice(
               isOpen={isFilterOpen}
               onClose={() => setFilterOpen(false)}
               initialFilters={null}
+
+
             />
         </div>
       </div>
@@ -380,11 +671,7 @@ const paginatedClasses = filteredClasses.slice(
             {paginatedClasses.map((classItem) => (
               <tr key={classItem.ClassId} className="border-b hover:bg-gray-100">
                 <td className="px-4 py-2">
-                  {/* {classItem.classSubjects?.map((subject, index) => (
-                  <div key={index}>
-                    {subject.subjectName}
-                  </div>
-                ))} */}
+                
 
                   {classItem.ClassName}
                 </td>

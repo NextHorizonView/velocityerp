@@ -62,11 +62,20 @@ const defaultClassFilters: ClassFilterState = {
 const FilterModal: React.FC<FilterProps> = ({ route, onFilterChange, isOpen, onClose, initialFilters }) => {
     const [filters, setFilters] = useState<FilterState>(getDefaultFilters(route));
 
+    // useEffect(() => {
+    //     if (initialFilters) {
+    //         setFilters(initialFilters);
+    //     } else {
+    //         setFilters(getDefaultFilters(route));
+    //     }
+    // }, [initialFilters, route]);
+
     useEffect(() => {
-        if (initialFilters) {
-            setFilters(initialFilters);
+        const defaultFilters = getDefaultFilters(route);
+        if (initialFilters && route) {
+            setFilters({ ...defaultFilters, ...initialFilters }); // Merge with defaults
         } else {
-            setFilters(getDefaultFilters(route));
+            setFilters(defaultFilters);
         }
     }, [initialFilters, route]);
 
@@ -128,7 +137,7 @@ const FilterModal: React.FC<FilterProps> = ({ route, onFilterChange, isOpen, onC
                 className="w-full p-2.5 border rounded-lg bg-white text-sm"
             >
                 <option value="">Select year</option>
-                <option value="2023-24">2023-24</option>
+                <option value="2019-20">2019-20</option>
                 <option value="2024-25">2024-25</option>
             </select>
         </div>
@@ -303,12 +312,15 @@ const FilterModal: React.FC<FilterProps> = ({ route, onFilterChange, isOpen, onC
                             <option value="science">Science</option>
                             <option value="english">English</option>
                             <option value="history">History</option>
+                            <option value="aaa">aaa</option>
+
                         </select>
                     </div>
                 );
 
-            default:
-                return null;
+     
+                default:
+            return <div>No filters available</div>;
         }
     };
 
@@ -343,7 +355,11 @@ const FilterModal: React.FC<FilterProps> = ({ route, onFilterChange, isOpen, onC
 
                     <button
                         className="w-full py-2.5 bg-[#576086] text-white rounded-lg text-sm font-medium"
-                        onClick={() => onFilterChange(filters)}
+                        onClick={() =>{ onFilterChange(filters)
+
+                            onClose();
+                        }
+                        }
                     >
                         Apply Filter
                     </button>
