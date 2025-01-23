@@ -1,5 +1,6 @@
-import { collection, getDocs, query, where, addDoc, doc,updateDoc,getDoc, setDoc} from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc,doc,updateDoc,getDoc, setDoc} from "firebase/firestore";
 import { getFirebaseServices } from '@/lib/firebaseConfig';
+// import { doc } from "firebase/firestore";
 
 const { db } = getFirebaseServices();
 
@@ -63,6 +64,22 @@ export const fetchEnquiryDetails = async (enquiryType: string, userId: string): 
   });
 };
 
+
+export const fetchTeacherName = async (teacherId:string) => {
+  try {
+    const teacherRef = doc(db, "teachers", String(teacherId)); 
+    const teacherDoc = await getDoc(teacherRef);
+    if (teacherDoc.exists()) {
+      return teacherDoc.data()['First Name'] || "N/A";
+    } else {
+      console.error(`No teacher found for ID: ${teacherId}`);
+      return "Unknown"; 
+    }
+  } catch (error) {
+    console.error(`Error fetching teacher ${teacherId}:`, error);
+    return "Error"; 
+  }
+};
 
 export const fetchStudentDataById = async (studentId: string) => {
   try {

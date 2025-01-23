@@ -27,7 +27,7 @@ const withAdminAuth = <P extends object>(WrappedComponent: ComponentType<P>) => 
 
             if (role !== 'admin' && role !== 'schoolAdmin' && role !== 'superAdmin' && role !== 'student') {
               console.error('User does not have the required role');
-              const savedDomain = localStorage.getItem('savedDomain');
+              const savedDomain = sessionStorage.getItem('savedDomain');
               if (savedDomain) {
                 router.push(`${savedDomain}`);
               } else {
@@ -39,7 +39,7 @@ const withAdminAuth = <P extends object>(WrappedComponent: ComponentType<P>) => 
           } catch (error: unknown) {
             const err = error as Error;
             console.error('Error checking role:', err.message);
-            const savedDomain = localStorage.getItem('savedDomain');
+            const savedDomain = sessionStorage.getItem('savedDomain');
             if (savedDomain) {
               router.push(`${savedDomain}`);
             } else {
@@ -47,7 +47,7 @@ const withAdminAuth = <P extends object>(WrappedComponent: ComponentType<P>) => 
             }
           }
         } else {
-          const savedDomain = localStorage.getItem('savedDomain');
+          const savedDomain = sessionStorage.getItem('savedDomain');
           if (savedDomain) {
             router.push(`${savedDomain}`);
           } else {

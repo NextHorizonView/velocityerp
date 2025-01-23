@@ -11,9 +11,10 @@ import { FaGooglePlay } from 'react-icons/fa';
 import { AiOutlineApple } from "react-icons/ai";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
-
-const { auth } = getFirebaseServices();
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+const { auth, db } = getFirebaseServices();
 import withAuthentication from '@/lib/withAuthentication';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginProps {
   authUser: { uid: string; email: string; role: string; domain: string } | null;
@@ -24,7 +25,12 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
-  
+  const [loading, setLoading] = useState(false); // Loading state
+
+  // Password show feature
+ 
+  const [showPassword, setShowPassword] = useState(false);
+
 
   // Auto-login if credentials exist in localStorage
   useEffect(() => {
@@ -33,10 +39,13 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       authUser &&
       authUser.uid &&
       authUser.email &&
-      authUser.role &&
-      authUser.domain 
+      authUser.role
     ) {
+
       router.push('/dashboard');
+      setTimeout(() => {
+        window.location.reload(); // Auto-reload the page
+      }, 1000); // Delay for smooth transition
     }
   }, [authUser, router]);
 
@@ -50,34 +59,51 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       console.log('userId cleared from localStorage after expiry time.');
     }
   }, []);
-  
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true); // Start loading
     try {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
       const domain = window.location.href;
-      localStorage.setItem('savedDomain', domain);
-      sessionStorage.setItem("savedDomain", domain); 
+      sessionStorage.setItem("savedDomain", domain);
 
-  
+
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
+        const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
+
+        // Add user to Firestore LoggedInUsers collection
+        const loggedInDoc = doc(db, 'LoggedInUsers', userId);
+        await setDoc(loggedInDoc, {
+          LoggedInId: userId,
+          LoggedInUserId: userId,
+          LoggedInFCMToken: fcmToken,
+          LoggedInUserType: role,
+          LoggedInCreatedAt: serverTimestamp(),
+          IsLoggedIn: true,
+        });
+
         localStorage.setItem('userId', userId);
-        
-  
+        localStorage.setItem('userRole', role);
+        document.cookie = `userRole=${role}; path=/; SameSite=Strict; Secure`;
+
         if (rememberMe) {
           localStorage.setItem('email', username);
           localStorage.setItem('userRole', role);
           localStorage.removeItem('userExpiry'); // Ensure expiry is cleared if Remember Me is active
         } else {
-          const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 60 seconds for testing
+          const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 1 day expiry
           localStorage.setItem('userExpiry', expiryTime.toString());
         }
-  
+
         router.push('/dashboard');
+        setTimeout(() => {
+          window.location.reload(); // Auto-reload the page
+        }, 1000); // Delay for smooth transition
       } else {
         console.error('User does not have the required role');
         alert('You do not have admin privileges.');
@@ -86,9 +112,12 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const authError = error as AuthError;
       console.error('Error logging in:', authError.message);
       alert('Error logging in: ' + authError.message);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
-  
+
+
   // Auto-clear expired session on app load or refresh
   useEffect(() => {
     const storedExpiryTime = localStorage.getItem('userExpiry');
@@ -99,9 +128,10 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       console.log('userId cleared after expiry time');
     }
   }, []);
-  
+
 
   const handleGoogleSignIn = async () => {
+    setLoading(true); // Start loading
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
@@ -110,14 +140,31 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       // Get the domain (website name) dynamically
       const domain = window.location.href;
       localStorage.setItem('savedDomain', domain);
-      sessionStorage.setItem("savedDomain", domain); 
-            
+      sessionStorage.setItem("savedDomain", domain);
+      const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
-        localStorage.setItem('userId', userCredential.user.uid);
+        const userId = userCredential.user.uid;
+
+        // Add user to Firestore LoggedInUsers collection
+        const loggedInDoc = doc(db, 'LoggedInUsers', userId);
+        await setDoc(loggedInDoc, {
+          LoggedInId: userId,
+          LoggedInUserId: userId,
+          LoggedInFCMToken: fcmToken,
+          LoggedInUserType: role,
+          LoggedInCreatedAt: serverTimestamp(),
+          IsLoggedIn: true,
+        });
+
+        localStorage.setItem('userId', userId);
         localStorage.setItem('userRole', role);
+        document.cookie = `userRole=${role}; path=/; SameSite=Strict; Secure`;
         router.push('/dashboard');
+        setTimeout(() => {
+          window.location.reload(); // Auto-reload the page
+        }, 1000);
       } else {
         console.error('User does not have admin role');
         alert('You do not have admin privileges');
@@ -126,10 +173,15 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const authError = error as AuthError;
       console.error('Error signing in with Google:', authError.message);
       alert('Error signing in with Google: ' + authError.message);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
+    
+
 
   return (
+    
     <div className="min-h-screen flex">
       {/* Left Section */}
       <div className="hidden md:flex md:w-1/3 relative">
@@ -157,7 +209,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
               className="w-24 h-24 object-contain"
             />
           </div>
-
+          {loading && <div className="loading">Loading...</div>} {/* Add a loading spinner or message */}
           {/* Title */}
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Login account</h2>
@@ -165,6 +217,7 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
           </div>
 
           {/* Form */}
+
           <form onSubmit={handleLogin} className="mt-8 space-y-6">
             <div className="space-y-5">
               <div>
@@ -189,17 +242,25 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <div className="mt-1">
+                <div className="mt-1 relative">
                   <input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-600"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
               </div>
             </div>

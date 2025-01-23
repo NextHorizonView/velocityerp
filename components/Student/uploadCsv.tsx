@@ -4,7 +4,6 @@ import { getFirebaseServices } from '@/lib/firebaseConfig';
 
 const { app } = getFirebaseServices();
 import { Student } from './Students';
-
 const db = getFirestore(app);
 
 export const uploadCsv = async (file: File) => {
@@ -75,3 +74,4 @@ export const refreshStudentList = async (setStudents: React.Dispatch<React.SetSt
     console.error('Error fetching students:', error);
   }
 };
+

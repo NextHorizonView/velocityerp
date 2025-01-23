@@ -29,7 +29,7 @@ import {
 import Link from "next/link";
 
 export type Teacher = {
-  id: number;
+  id:string;
   name?: string;
   class?: string;
   phone?: string;
@@ -41,6 +41,8 @@ export type Teacher = {
   pincode?: string;
   religion?: string;
   studentId?: string;
+  [key: string]: string | undefined; // Add index signature for dynamic fields
+
 };
 
 interface TeachersTableProps {
@@ -56,7 +58,9 @@ const TeachersTable: React.FC<TeachersTableProps> = ({
 
   const handleDelete = async (teacher: Teacher) => {
     try {
-      const teacherDocRef = doc(db, "teachers", teacher.id.toString());
+      // const teacherDocRef = doc(db, "teachers", teacher.id.toString());
+      const teacherDocRef = doc(db, "teachers", teacher.id);
+
 
       // Check if the document exists
       const teacherDocSnap = await getDoc(teacherDocRef);
@@ -73,6 +77,11 @@ const TeachersTable: React.FC<TeachersTableProps> = ({
     }
   };
 
+  formFields.forEach((field: FormField) => {
+    console.log("field",field.FieldName);
+  });
+
+  
   return (
     <Table className="border-b">
       <TableHeader>

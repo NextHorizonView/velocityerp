@@ -1,5 +1,5 @@
 "use client";
-import React, { FC, useState } from "react";
+import React, { FC, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -25,86 +25,159 @@ import withAdminAuth from '@/lib/withAdminAuth';
 import { signOut } from "firebase/auth";
 import { getFirebaseServices } from "@/lib/firebaseConfig"; 
 import { useRouter } from "next/navigation"; // Import useRouter
-
+import  trackLogout  from "@/components/TrackLogin";
+import { getDocs, collection, query, where } from "firebase/firestore";
 
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
 const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const pathname = usePathname() || "";
   const [isEnquiryExpanded, setIsEnquiryExpanded] = useState(false);
-  const router = useRouter(); // Initialize the router
+  const [allowedPaths, setAllowedPaths] = useState<Map<string, boolean>>(new Map());
+  const [loading, setLoading] = useState(true); // Added loading state
+  const router = useRouter();
 
-  const handleLogout = () => {
-    // Show confirmation popup
-    const userConfirmed = window.confirm("Are you sure you want to logout?");
-    if (!userConfirmed) return; // Do nothing if the user clicks "Cancel"
-    
-    // Proceed with logout
-    localStorage.clear(); // Clear localStorage
+  // Fetch role permissions on mount
+
+  useEffect(() => {
+    const fetchRolePermissions = async () => {
+      try {
+        const { db } = getFirebaseServices();
+        const userRole = localStorage.getItem("userRole");
+
+        if (!userRole) {
+          console.error("User role not found in local storage");
+          setLoading(false);
+          return;
+        }
+
+        const roleQuery = query(
+          collection(db, "Role"),
+          where("RoleName", "==", userRole)
+        );
+        const querySnapshot = await getDocs(roleQuery);
+
+        if (!querySnapshot.empty) {
+          const roleDoc = querySnapshot.docs[0];
+          const roleData = roleDoc.data();
+          const rolePermissions = roleData?.RolePermissions || {};
+
+          if (typeof rolePermissions === "object") {
+            const permissionsMap = new Map<string, boolean>(
+              Object.entries(rolePermissions).map(([key, value]) => [
+                key,
+                value === true,
+              ])
+            );
+            setAllowedPaths(permissionsMap);
+          } else {
+            console.error("Invalid RolePermissions format in Firestore");
+          }
+        } else {
+          console.error(`No document found for role "${userRole}"`);
+        }
+      } catch (error) {
+        console.error("Error fetching role permissions:", error);
+      } finally {
+        setLoading(false); // Finish loading
+      }
+    };
+
+    fetchRolePermissions();
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      // Function to check if the current path is allowed
+      const isPathAllowed = (currentPath: string): boolean => {
+        for (const [allowedPath, isAllowed] of allowedPaths.entries()) {
+          if (isAllowed && currentPath.startsWith(allowedPath)) {
+            return true; // Allowed if the current path starts with any allowed path
+          }
+        }
+        return false; // Not allowed if no matching prefix
+      };
   
+      const isAllowed = isPathAllowed(pathname);
+      if (!isAllowed) {
+        router.push("/dashboard"); // Redirect to a safe path if unauthorized
+      }
+    }
+  }, [pathname, allowedPaths, loading, router]);
+
+  if (loading) {
+    // Render a loading spinner while permissions are fetched
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  // Logout handler
+  const handleLogout = () => {
+    const userConfirmed = window.confirm("Are you sure you want to logout?");
+    if (!userConfirmed) return;
+
+    localStorage.clear();
+
     // Clear IndexedDB databases
     const databasesToDelete = [
       "firebase-heartbeat-database",
       "firebaseLocalStorageDb",
     ];
-  
+
     databasesToDelete.forEach((dbName) => {
       const request = indexedDB.deleteDatabase(dbName);
-      request.onsuccess = () => {
+      request.onsuccess = () =>
         console.log(`Database "${dbName}" deleted successfully`);
-      };
-      request.onerror = (e) => {
+      request.onerror = (e) =>
         console.error(`Error deleting database "${dbName}":`, e);
-      };
-      request.onblocked = () => {
+      request.onblocked = () =>
         console.warn(`Database "${dbName}" deletion is blocked`);
-      };
     });
-  
-    // Get Firebase services (auth, db, etc.)
-    const { auth } = getFirebaseServices();
-  
-    // Sign out of Firebase
-    signOut(auth)
-      .then(() => {
-        console.log("Logged out successfully");
-        
-        // Get saved domain URL from localStorage or another source
-        const savedDomain = sessionStorage.getItem("savedDomain") || "/"; // Default to '/' if not found
-        router.push(savedDomain);
-      })
-      .catch((error) => {
-        console.error("Error logging out:", error);
-      });
-  };
-  
 
-  const menuItems = [
-    {
-      icon: <RiDashboardLine size={20} />,
-      label: "Dashboard",
-      path: "/dashboard",
-    },
+    const { auth } = getFirebaseServices();
+    const savedDomain = sessionStorage.getItem("savedDomain") || "/";
+
+    if (auth.currentUser) {
+      trackLogout(auth.currentUser.uid)
+        .catch((error) => console.error("Error tracking logout:", error));
+
+      signOut(auth)
+        .then(() => {
+          console.log("Logged out successfully");
+          router.push(savedDomain);
+        })
+        .catch((error) => console.error("Error during sign-out:", error));
+    } else {
+      router.push(savedDomain);
+    }
+  };
+
+  // Menu items
+  const allMenuItems = [
+    { icon: <RiDashboardLine size={20} />, label: "Dashboard", path: "/dashboard" },
     { icon: <RiUserLine size={20} />, label: "Students", path: "/students" },
     { icon: <RiTeamLine size={20} />, label: "Teacher", path: "/teacher" },
     { icon: <RiParentLine size={20} />, label: "Parents", path: "/parents" },
     { icon: <MdOutlineSubject size={20} />, label: "Subject", path: "/subjects" },
-    {
-      icon: <RiAccountCircleLine size={20} />,
-      label: "Account",
-      path: "/account",
-    },
+    { icon: <RiAccountCircleLine size={20} />, label: "Account", path: "/account" },
     { icon: <MdClass size={20} />, label: "Class", path: "/class" },
     { icon: <RiFileListLine size={20} />, label: "Exam", path: "/exam" },
-    {
-      icon: <RiNotificationLine size={20} />,
-      label: "Notice",
-      path: "/notice",
-    },
+    { icon: <RiNotificationLine size={20} />, label: "Notice", path: "/notice" },
   ];
 
+  // Filter menu items based on permissions
+  const menuItems = allMenuItems.filter((item) => allowedPaths.get(item.path));
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
   if (isCollapsed) {
     return (
       <div
@@ -161,6 +234,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             else {
               isActive = pathname === item.path;
             }
+
 
             return (
               <Link
