@@ -91,20 +91,7 @@ const SubjectTable = () => {
   // };
   const [file, setFile] = useState<File | null>(null);
 
-  // const [totalPages, setTotalPages] = useState(1);
 
-  // const handleSort = (field: keyof Subject | "newest") => {
-  //   setSortField(field);
-  //   if (field !== "newest") {
-  //     const sortedSubjects = [...subjects].sort((a, b) =>
-  //       String(a[field]).localeCompare(String(b[field]))
-  //     );
-  //     setSubjects(sortedSubjects);
-  //   } else {
-  //     setSubjects(mockSubjects);
-  //   }
-  // };
-  //
   console.log(classList);
 
 
@@ -181,129 +168,7 @@ const SubjectTable = () => {
 
 
 
-// const [filteredClass, setFilteredClass] = useState<ClassData[]>([]);
 
-// useEffect(() => {
-//     if (!filteredClasses) {
-//         setFilteredClass([]); // Set to empty array if `filteredClasses` is undefined
-//         return;
-//     }
-
-//     const safeSearchTerm = searchTerm || '';
-//     const safeFilters = filters || {};
-
-//     const result = filteredClasses
-//         .filter(classItem => {
-//             // Safely access `ClassName`
-//             const className = classItem.ClassName?.toLowerCase() || '';
-//             const matchesSearch = className.includes(safeSearchTerm.toLowerCase());
-
-//             // Safely access `ClassYear`
-//             const matchesYear = !safeFilters.academicYear || classItem.ClassYear === safeFilters.academicYear;
-
-//             // Safely access `ClassSubjects`
-//             const matchesSubject = !safeFilters.subject || (classItem.ClassSubjects || []).some(subject => {
-//                 const subjectName = subject.SubjectName?.toLowerCase() || '';
-//                 const subjectId = subject.SubjectId?.toLowerCase() || '';
-//                 return (
-//                     subjectName === safeFilters.subject.toLowerCase() ||
-//                     subjectId === safeFilters.subject.toLowerCase()
-//                 );
-//             });
-
-//             return matchesSearch && matchesYear && matchesSubject;
-//         })
-//         .sort((a, b) => {
-//             switch (safeFilters.sortBy) {
-//                 case 'name':
-//                     return safeFilters.sortOrder === 'asc'
-//                         ? a.ClassName.localeCompare(b.ClassName)
-//                         : b.ClassName.localeCompare(a.ClassName);
-//                 case 'subject':
-//                     const aSubjects = (a.ClassSubjects || []).map(s => s.SubjectName).join(',');
-//                     const bSubjects = (b.ClassSubjects || []).map(s => s.SubjectName).join(',');
-//                     return safeFilters.sortOrder === 'asc'
-//                         ? aSubjects.localeCompare(bSubjects)
-//                         : bSubjects.localeCompare(aSubjects);
-//                 default:
-//                     return 0;
-//             }
-//         });
-
-//     setFilteredClass(result); // Update the filtered and sorted data
-// }, [filteredClasses, searchTerm, filters]); // Add all dependencies
-
-
-
-// const filteredClass = useMemo(() => {
-//   if (!fetchedClasses) return [];
-
-//   return fetchedClasses.filter(classItem => {
-//     const matchesSearch = classItem.ClassName?.toLowerCase().includes(
-//       (searchTerm || '').toLowerCase()
-//     );
-    
-//     const matchesYear = !filters.academicYear || 
-//       classItem.ClassYear === filters.academicYear;
-    
-//     const matchesSubject = !filters.subject || 
-//       classItem.ClassSubjects.some(subject => 
-//         subject.SubjectName.toLowerCase() === (filters.subject || '').toLowerCase()
-//       );
-
-//     return matchesSearch && matchesYear && matchesSubject;
-//   }).sort((a, b) => {
-//     switch (filters.sortBy) {
-//       case 'name':
-//         return filters.sortOrder === 'asc' 
-//           ? (a.ClassName || '').localeCompare(b.ClassName || '')
-//           : (b.ClassName || '').localeCompare(a.ClassName || '');
-//       default:
-//         return 0;
-//     }
-//   });
-// }, [fetchedClasses, searchTerm, JSON.stringify(filters)]);
-
-
-
-
-// var safeSearchTerm = searchTerm || ''; // Fallback for `searchTerm`
-//     var safeFilters = filters || {}; // Fallback for `filters`
-
-//     const filteredClass = filteredClasses
-//         .filter(classItem => {
-//             // Safely access `ClassName`
-//             const className = classItem.ClassName?.toLowerCase() || '';
-//             const matchesSearch = className.includes(safeSearchTerm.toLowerCase());
-
-//             // Safely access `ClassYear`
-//             const matchesYear = !safeFilters.academicYear || classItem.ClassYear === safeFilters.academicYear;
-
-//             // Safely access `ClassSubjects`
-//             const matchesSubject = !safeFilters.subject || (classItem.ClassSubjects || []).some(subject => {
-//                 const subjectName = subject.SubjectName?.toLowerCase() || '';
-//                 const subjectId = subject.SubjectId?.toLowerCase() || '';
-//                 return subjectName === safeFilters.subject.toLowerCase() || subjectId === safeFilters.subject.toLowerCase();
-//             });
-
-//             return matchesSearch && matchesYear && matchesSubject;
-//         })
-//         .sort((a, b) => {
-//             switch (safeFilters.sortBy) {
-//                 case 'name':
-//                     return safeFilters.sortOrder === 'asc'
-//                         ? a.ClassName.localeCompare(b.ClassName)
-//                         : b.ClassName.localeCompare(a.ClassName);
-//                 case 'subject':
-//                     const aSubjects = (a.ClassSubjects || []).map(s => s.SubjectName).join(',');
-//                     const bSubjects = (b.ClassSubjects || []).map(s => s.SubjectName).join(',');
-//                     return safeFilters.sortOrder === 'asc'
-//                         ? aSubjects.localeCompare(bSubjects)
-//                         : bSubjects.localeCompare(aSubjects);
-//                 default:
-//                     return 0;
-//             }
-//         });
 
 
 console.log("fill tets",{ filteredClasses, searchTerm, filters });
@@ -489,45 +354,6 @@ console.log("new filters",newFilters);
   };
 
 
-
-
-
-
-// const filteredClass = useMemo(() => {
-//     if (!filteredClasses) return [];
-    
-//     return filteredClasses.filter(classItem => {
-//       // Apply search term filter
-//       const matchesSearch = classItem.ClassName.toLowerCase().includes(searchTerm.toLowerCase());
-      
-//       // Apply academic year filter
-//       const matchesYear = !filters.academicYear || classItem.ClassYear === filters.academicYear;
-      
-//       // Enhanced subject filtering
-//       const matchesSubject = !filters?.subject || classItem.ClassSubjects.some(subject => {
-//         const subjectNameMatch = subject.SubjectName.toLowerCase() === filters?.subject.toLowerCase();
-//         const subjectIdMatch = subject.SubjectId.toLowerCase() === filters?.subject.toLowerCase();
-//         return subjectNameMatch || subjectIdMatch;
-//       });
-      
-//       return matchesSearch && matchesYear && matchesSubject;
-//     }).sort((a, b) => {
-//       switch (filters.sortBy) {
-//         case 'name':
-//           return filters.sortOrder === 'asc' 
-//             ? a.ClassName.localeCompare(b.ClassName)
-//             : b.ClassName.localeCompare(a.ClassName);
-//         case 'subject':
-//           const aSubjects = a.ClassSubjects.map(s => s.SubjectName).join(',');
-//           const bSubjects = b.ClassSubjects.map(s => s.SubjectName).join(',');
-//           return filters.sortOrder === 'asc'
-//             ? aSubjects.localeCompare(bSubjects)
-//             : bSubjects.localeCompare(aSubjects);
-//         default:
-//           return 0;
-//       }
-//     });
-//   }, [filteredClasses, searchTerm]);
 
 
 
