@@ -152,7 +152,7 @@ const FilterModal: React.FC<FilterProps> = ({ route, onFilterChange, isOpen, onC
                     onChange={(e) => handleInputChange('sortBy', e.target.value)}
                     className="w-full p-2.5 border rounded-lg bg-white text-sm"
                 >
-                    <option value="name">Name</option>
+                    <option value="First Name">Name</option>
                     <option value="class">Class</option>
                     <option value="date">Date</option>
                 </select>

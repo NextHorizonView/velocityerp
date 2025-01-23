@@ -125,7 +125,7 @@ export default function Students() {
     academicYear: '',
     class: [0, 12], // Example: Grade range
     gender: null,   // Male, Female, or null
-    sortBy: 'name',
+    sortBy: 'First Name',
     sortOrder: 'asc',
     disability: false, // Add missing property
   specialStudent: false,
@@ -370,7 +370,7 @@ const filteredSortedStudents = filteredAndSortedStudents
         };
 
         // Use the provided filters.sortBy value (e.g., "First Name", "Last Name", etc.)
-        const key = sortKeyMap[filters?.sortBy as keyof typeof sortKeyMap] || "First Name";
+        const key = sortKeyMap[filters?.sortBy as keyof typeof sortKeyMap];
 
         const direction = filters.sortOrder === "asc" ? 1 : -1;
 
