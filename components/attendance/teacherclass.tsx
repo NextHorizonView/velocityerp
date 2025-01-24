@@ -15,7 +15,7 @@ export default function Class() {
                     <span>Timetable</span>
                     <span>→</span>
                 </Link>
-                <Link href="/lorem"
+                <Link href="marks"
                     className="p-4 bg-[#DADEEB] rounded-lg hover:bg-gray-200 transition-colors flex justify-between items-center border border-[#576086] text-[#576086]">
                     <span>Marks</span>
                     <span>→</span>
