@@ -36,7 +36,7 @@ export default function AttendanceMarkingPage() {
         <div className="p-6 max-w-4xl mx-auto bg-gray-50">
             {/* Back Navigation */}
             <div className="flex items-center mb-6">
-                <Link href="/attendance" className="flex items-center text-[#576086]">
+                <Link href="/attendance " className="flex items-center text-[#576086]">
                     <ChevronLeft className="w-5 h-5" />
                     <span className="text-lg text-[#576086]">Attendance</span>
                 </Link>

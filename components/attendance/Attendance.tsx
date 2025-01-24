@@ -66,7 +66,7 @@ export default function AttendanceView() {
         <div className="p-10 max-w-3xl mx-auto rounded-2xl bg-gray-50 min-h-screen">
             {/* Header with back button */}
             <div className="flex items-center mb-8 pt-2">
-                <Link href="/" className="text-[#576086] mr-3 flex items-center">
+                <Link href="/teacherclass" className="text-[#576086] mr-3 flex items-center">
                     <ChevronLeft size={24} />
                 </Link>
                 <h1 className="text-xl font-semibold text-[#576086]">Attendance</h1>
