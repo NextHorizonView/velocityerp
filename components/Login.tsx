@@ -11,43 +11,32 @@ import { FaGooglePlay } from 'react-icons/fa';
 import { AiOutlineApple } from "react-icons/ai";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
 const { auth, db } = getFirebaseServices();
 import withAuthentication from '@/lib/withAuthentication';
 import { Eye, EyeOff } from 'lucide-react';
+import { ReloadIcon } from '@radix-ui/react-icons';
+
 
 interface LoginProps {
   authUser: { uid: string; email: string; role: string; domain: string } | null;
 }
 
-const Login: React.FC<LoginProps> = ({ authUser }) => {
+const Login: React.FC<LoginProps> = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
   const [loading, setLoading] = useState(false); // Loading state
-
-  // Password show feature
- 
   const [showPassword, setShowPassword] = useState(false);
 
-
   // Auto-login if credentials exist in localStorage
-  useEffect(() => {
-    console.log("AuthUser:", authUser);
-    if (
-      authUser &&
-      authUser.uid &&
-      authUser.email &&
-      authUser.role
-    ) {
-
-      router.push('/dashboard');
-      setTimeout(() => {
-        window.location.reload(); // Auto-reload the page
-      }, 1000); // Delay for smooth transition
-    }
-  }, [authUser, router]);
+  // useEffect(() => {
+  //   console.log("AuthUser:", authUser);
+  //   if (authUser && authUser.uid && authUser.email && authUser.role) {
+  //     router.push('/dashboard');
+  //   }
+  // }, [authUser, router]);
 
   useEffect(() => {
     // Check and clear expired user data on page load
@@ -70,7 +59,6 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const domain = window.location.href;
       sessionStorage.setItem("savedDomain", domain);
 
-
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
@@ -87,23 +75,28 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
           IsLoggedIn: true,
         });
 
+        // Fetch role permissions from Firestore
+        const roleQuery = query(collection(db, "Role"), where("RoleName", "==", role));
+        const querySnapshot = await getDocs(roleQuery);
+
+        if (!querySnapshot.empty) {
+          const roleDoc = querySnapshot.docs[0];
+          const rolePermissions = roleDoc.data().RolePermissions || {};
+          localStorage.setItem('rolePermissions', JSON.stringify(rolePermissions)); // Store permissions
+        }
+
         localStorage.setItem('userId', userId);
         localStorage.setItem('userRole', role);
         document.cookie = `userRole=${role}; path=/; SameSite=Strict; Secure`;
 
         if (rememberMe) {
           localStorage.setItem('email', username);
-          localStorage.setItem('userRole', role);
           localStorage.removeItem('userExpiry'); // Ensure expiry is cleared if Remember Me is active
         } else {
           const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 1 day expiry
           localStorage.setItem('userExpiry', expiryTime.toString());
         }
-
         router.push('/dashboard');
-        setTimeout(() => {
-          window.location.reload(); // Auto-reload the page
-        }, 1000); // Delay for smooth transition
       } else {
         console.error('User does not have the required role');
         alert('You do not have admin privileges.');
@@ -117,19 +110,6 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
     }
   };
 
-
-  // Auto-clear expired session on app load or refresh
-  useEffect(() => {
-    const storedExpiryTime = localStorage.getItem('userExpiry');
-    if (storedExpiryTime && Date.now() > parseInt(storedExpiryTime)) {
-      localStorage.removeItem('userId');
-      localStorage.removeItem('authId');
-      localStorage.removeItem('userExpiry');
-      console.log('userId cleared after expiry time');
-    }
-  }, []);
-
-
   const handleGoogleSignIn = async () => {
     setLoading(true); // Start loading
     try {
@@ -137,34 +117,28 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       const userCredential = await signInWithPopup(auth, provider);
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
-      // Get the domain (website name) dynamically
       const domain = window.location.href;
       localStorage.setItem('savedDomain', domain);
       sessionStorage.setItem("savedDomain", domain);
-      const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
 
       if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
         const userId = userCredential.user.uid;
 
-        // Add user to Firestore LoggedInUsers collection
-        const loggedInDoc = doc(db, 'LoggedInUsers', userId);
-        await setDoc(loggedInDoc, {
-          LoggedInId: userId,
-          LoggedInUserId: userId,
-          LoggedInFCMToken: fcmToken,
-          LoggedInUserType: role,
-          LoggedInCreatedAt: serverTimestamp(),
-          IsLoggedIn: true,
-        });
+        // Fetch role permissions from Firestore
+        const roleQuery = query(collection(db, "Role"), where("RoleName", "==", role));
+        const querySnapshot = await getDocs(roleQuery);
+
+        if (!querySnapshot.empty) {
+          const roleDoc = querySnapshot.docs[0];
+          const rolePermissions = roleDoc.data().RolePermissions || {};
+          localStorage.setItem('rolePermissions', JSON.stringify(rolePermissions)); // Store permissions
+        }
 
         localStorage.setItem('userId', userId);
         localStorage.setItem('userRole', role);
         document.cookie = `userRole=${role}; path=/; SameSite=Strict; Secure`;
         router.push('/dashboard');
-        setTimeout(() => {
-          window.location.reload(); // Auto-reload the page
-        }, 1000);
       } else {
         console.error('User does not have admin role');
         alert('You do not have admin privileges');
@@ -177,11 +151,8 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
       setLoading(false); // Stop loading
     }
   };
-    
-
 
   return (
-    
     <div className="min-h-screen flex">
       {/* Left Section */}
       <div className="hidden md:flex md:w-1/3 relative">
@@ -209,7 +180,6 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
               className="w-24 h-24 object-contain"
             />
           </div>
-          {loading && <div className="loading">Loading...</div>} {/* Add a loading spinner or message */}
           {/* Title */}
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Login account</h2>
@@ -217,7 +187,6 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
           </div>
 
           {/* Form */}
-
           <form onSubmit={handleLogin} className="mt-8 space-y-6">
             <div className="space-y-5">
               <div>
@@ -302,16 +271,33 @@ const Login: React.FC<LoginProps> = ({ authUser }) => {
 
             {/* Login and Google Sign-In Buttons */}
             <div className="space-y-4">
-              <Button type="submit" className="w-full bg-orange-400 hover:bg-orange-500 text-white">
-                Sign In
+              <Button type="submit" className="w-full bg-orange-400 hover:bg-orange-500 text-white" disabled={loading}>
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Signing In...
+                  </div>
+                ) : (
+                  'Sign In'
+                )}
               </Button>
               <Button
                 onClick={handleGoogleSignIn}
                 type="button"
                 className="w-full bg-white border border-gray-300 text-gray-800 flex items-center justify-center space-x-2"
+                disabled={loading}
               >
-                <FcGoogle />
-                <span>Sign in with Google</span>
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Signing In...
+                  </div>
+                ) : (
+                  <>
+                    <FcGoogle />
+                    <span>Sign in with Google</span>
+                  </>
+                )}
               </Button>
             </div>
           </form>

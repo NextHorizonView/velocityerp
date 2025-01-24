@@ -41,57 +41,57 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const router = useRouter();
 
   // Fetch role permissions on mount
-
+  // Fetch role permissions from localStorage on mount
   useEffect(() => {
-    const fetchRolePermissions = async () => {
-      try {
-        const { db } = getFirebaseServices();
-        const userRole = localStorage.getItem("userRole");
+    const storedPermissions = localStorage.getItem('rolePermissions');
+    if (storedPermissions) {
+      const permissionsMap = new Map<string, boolean>(Object.entries(JSON.parse(storedPermissions)));
+      setAllowedPaths(permissionsMap);
+      setLoading(false); // Stop loading
+    } else {
+      // Fallback to fetching permissions if not found in localStorage
+      const fetchRolePermissions = async () => {
+        try {
+          const { db } = getFirebaseServices();
+          const userRole = localStorage.getItem("userRole");
 
-        if (!userRole) {
-          console.error("User role not found in local storage");
-          setLoading(false);
-          return;
-        }
+          if (!userRole) {
+            console.error("User role not found in local storage");
+            setLoading(false);
+            return;
+          }
 
-        const roleQuery = query(
-          collection(db, "Role"),
-          where("RoleName", "==", userRole)
-        );
-        const querySnapshot = await getDocs(roleQuery);
+          const roleQuery = query(
+            collection(db, "Role"),
+            where("RoleName", "==", userRole)
+          );
+          const querySnapshot = await getDocs(roleQuery);
 
-        if (!querySnapshot.empty) {
-          const roleDoc = querySnapshot.docs[0];
-          const roleData = roleDoc.data();
-          const rolePermissions = roleData?.RolePermissions || {};
-
-          if (typeof rolePermissions === "object") {
+          if (!querySnapshot.empty) {
+            const roleDoc = querySnapshot.docs[0];
+            const rolePermissions = roleDoc.data().RolePermissions || {};
             const permissionsMap = new Map<string, boolean>(
-              Object.entries(rolePermissions).map(([key, value]) => [
-                key,
-                value === true,
-              ])
+              Object.entries(rolePermissions).map(([key, value]) => [key, value === true])
             );
             setAllowedPaths(permissionsMap);
+            localStorage.setItem('rolePermissions', JSON.stringify(rolePermissions)); // Store in localStorage
           } else {
-            console.error("Invalid RolePermissions format in Firestore");
+            console.error(`No document found for role "${userRole}"`);
           }
-        } else {
-          console.error(`No document found for role "${userRole}"`);
+        } catch (error) {
+          console.error("Error fetching role permissions:", error);
+        } finally {
+          setLoading(false); // Finish loading
         }
-      } catch (error) {
-        console.error("Error fetching role permissions:", error);
-      } finally {
-        setLoading(false); // Finish loading
-      }
-    };
+      };
 
-    fetchRolePermissions();
+      fetchRolePermissions();
+    }
   }, []);
 
+  // Redirect if the current path is not allowed
   useEffect(() => {
     if (!loading) {
-      // Function to check if the current path is allowed
       const isPathAllowed = (currentPath: string): boolean => {
         for (const [allowedPath, isAllowed] of allowedPaths.entries()) {
           if (isAllowed && currentPath.startsWith(allowedPath)) {
@@ -100,7 +100,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
         }
         return false; // Not allowed if no matching prefix
       };
-  
+
       const isAllowed = isPathAllowed(pathname);
       if (!isAllowed) {
         router.push("/dashboard"); // Redirect to a safe path if unauthorized
@@ -108,16 +108,6 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     }
   }, [pathname, allowedPaths, loading, router]);
 
-  if (loading) {
-    // Render a loading spinner while permissions are fetched
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
   // Logout handler
   const handleLogout = () => {
     const userConfirmed = window.confirm("Are you sure you want to logout?");

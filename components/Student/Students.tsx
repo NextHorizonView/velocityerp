@@ -323,14 +323,12 @@ export default function Students() {
     });
   
   // @ts-expect-error: autoTable is not recognized due to missing type definitions
-
-    doc.autoTable({
+ doc.autoTable({
       head: [columns],
       body: rows,
       startY: 20,
     });
   
-    // Save the PDF
     doc.save("students.pdf");
   
     setIsImportExportDialogOpen(false);
@@ -369,25 +367,21 @@ const filteredSortedStudents = filteredAndSortedStudents
           "Gender": "gender",
         };
 
-        // Use the provided filters.sortBy value (e.g., "First Name", "Last Name", etc.)
         const key = sortKeyMap[filters?.sortBy as keyof typeof sortKeyMap];
 
         const direction = filters.sortOrder === "asc" ? 1 : -1;
 
-        const aValue = String(a[key] || "").toLowerCase(); // Fallback to empty string if key is missing
+        const aValue = String(a[key] || "").toLowerCase(); 
         const bValue = String(b[key] || "").toLowerCase();
 
-        // If the values are strings, use localeCompare for alphabetical sorting
         if (typeof aValue === "string" && typeof bValue === "string") {
           return aValue.localeCompare(bValue) * direction;
         }
         
-        // If the values are numbers, sort numerically
         if (typeof aValue === "number" && typeof bValue === "number") {
           return (aValue - bValue) * direction;
         }
         
-        // Default return if neither condition matches
         return 0;
       })
   : [];

@@ -293,6 +293,9 @@ const FilterModal: React.FC<FilterProps> = ({ route, onFilterChange, isOpen, onC
                                 <option value="vice-principal">Vice Principal</option>
                                 <option value="senior-teacher">Senior Teacher</option>
                                 <option value="teacher">Teacher</option>
+                                <option value="Professor">Professor</option>
+                                <option value="HOD">HOD</option>
+
                             </select>
                         </div>
                     </>

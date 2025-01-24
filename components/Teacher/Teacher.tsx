@@ -21,7 +21,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import FilterModal, { FilterState } from "../Student/StudentsFilter";
+import FilterModal, { TeacherFilterState } from "../Student/StudentsFilter";
 import { Filter } from "lucide-react";
 import { fetchFormFieldsTeacher, FormField } from "../helper/firebaseHelper";
 import useSWR, { mutate } from "swr";
@@ -59,6 +59,8 @@ export type TeacherFormat={
     City: string;
     State: string;
     Pincode: string;
+  [key: string]: string | undefined; 
+
 }
 
 const convertTeacherFormat = (teachers: TeacherFormat[]): Teacher[] => {
@@ -85,7 +87,6 @@ export default function Teachers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] = useState(false);
   // const [allTeachers, setAllTeachers] = useState<Teacher[]>([]);
-  const [, setFilters] = useState<FilterState | null>(null);
   const [isFilterOpen, setFilterOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
@@ -134,11 +135,21 @@ export default function Teachers() {
 
  
 
+
+  const [filters, setFilters] = useState<TeacherFilterState>({
+    academicYear: '',
+    gender: null,
+    position: '',
+    sortBy: 'First Name',
+    sortOrder: 'asc'
+  });
+
+
   // Event handlers
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-    console.log('Applied Filters:', newFilters);
-  };
+  // const handleFilterChange = (newFilters: FilterState) => {
+  //   setFilters(newFilters);
+  //   console.log('Applied Filters:', newFilters);
+  // };
 
   // Temp No use
   // const handleDelete = async (teacher: Teacher) => {
@@ -258,23 +269,7 @@ export default function Teachers() {
 
 console.log('teachers',teachers);
 
-  // const filteredAndSortedTeachers = useMemo(() => {
-  //   return [...(teachersPdf || [])].filter((teacher) => {
-  //     const name = teacher["First Name"]?.toLowerCase() || "";
-  //     const lastname = teacher["Last Name"]?.toLowerCase() || "";
-  //     const className = teacher.Position?.toLowerCase() || "";
-  //     const phone = teacher["Last Name"] || "";
-  //     const email = teacher.Email?.toLowerCase() || "";
-  
-  //     return (
-  //       name.includes(searchTerm.toLowerCase()) ||
-  //       lastname.includes(searchTerm.toLowerCase()) ||
-  //       className.includes(searchTerm.toLowerCase()) ||
-  //       phone.includes(searchTerm) ||
-  //       email.includes(searchTerm.toLowerCase())
-  //     );
-  //   });
-  // }, [teachers, searchTerm]);
+
   
   const filteredAndSortedTeachers = useMemo(() => {
     return [...(teachersPdf || [])].filter((teacher) => {
@@ -289,6 +284,65 @@ console.log('teachers',teachers);
     });
   }, [teachersPdf, searchTerm]);
 
+
+  const filteredSortedTeachers = filteredAndSortedTeachers
+  ? filteredAndSortedTeachers
+      .filter((teacher) => {
+        const matchesSearch = searchTerm
+          ? teacher["First Name"]?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            teacher["Last Name"]?.toLowerCase().includes(searchTerm.toLowerCase()) // Check both names
+          : true;
+
+        // const matchesAcademicYear =
+        //   !filters.academicYear || teacher["Academic Year"] === filters.academicYear;
+
+        const matchesPosition =
+          !filters.position || teacher["Position"]?.toLowerCase().includes(filters.position.toLowerCase());
+
+        // const matchesGender = !filters.gender || teacher["Gender"] === filters.gender;
+
+        return matchesSearch && matchesPosition
+        //  &&
+        //  matchesGender && matchesAcademicYear
+         ;
+      })
+      .sort((a, b) => {
+        const sortKeyMap = {
+          "First Name": "First Name", // Correct mapping for First Name
+          "Last Name": "Last Name", // Correct mapping for Last Name
+          "Position": "Position", // Position field to sort by
+          "Gender": "Gender", // Gender field to sort by
+        };
+
+        // Use the provided filters.sortBy value (e.g., "First Name", "Last Name", etc.)
+        const key = sortKeyMap[filters?.sortBy as keyof typeof sortKeyMap] || "First Name";
+
+        const direction = filters.sortOrder === "asc" ? 1 : -1;
+
+        // Ensure correct reference to the sort key in teacher data
+        const aValue = String(a[key] || "").toLowerCase(); // Fallback to empty string if key is missing
+        const bValue = String(b[key] || "").toLowerCase();
+
+        // If the values are strings, use localeCompare for alphabetical sorting
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return aValue.localeCompare(bValue) * direction;
+        }
+
+        // If the values are numbers, sort numerically
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return (aValue - bValue) * direction;
+        }
+
+        // Default return if neither condition matches
+        return 0;
+      })
+  : [];
+
+
+    
+
+    
+
   // Error and loading states
   if (error) return <div>Error loading teachers</div>;
   if (teachersPdfError) return <div>Error loading teachers for PDF</div>;
@@ -302,7 +356,7 @@ console.log('teachers',teachers);
   const formFields = fields[0]?.FormFields || [];
 
 
-  console.log("converted teachers",convertTeacherFormat(filteredAndSortedTeachers));
+  // console.log("converted teachers",convertTeacherFormat(filteredAndSortedTeachers));
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-start mb-6">
@@ -340,10 +394,18 @@ console.log('teachers',teachers);
               Filter
             </button>
             {/* Filter Modal */}
+          
+
             <FilterModal
-            onFilterChange={handleFilterChange}
+            route="/teacher"
+            onFilterChange={(newFilters) => {
+              setFilters(newFilters as TeacherFilterState);
+              console.log("Applied Filters:", newFilters);
+            }}
             isOpen={isFilterOpen}
-            onClose={() => setFilterOpen(false)} initialFilters={null} route={"/teacher"}            />
+            onClose={() => setFilterOpen(false)}
+            initialFilters={filters}
+          />
         </div>
       </div>
 
@@ -351,9 +413,8 @@ console.log('teachers',teachers);
         <TeachersTable 
         // teachers={teachers} 
 
-        teachers={filteredAndSortedTeachers} 
-        // teachers={convertTeacherFormat(filteredAndSortedTeachers)} 
-        // formFields={formFields}
+        teachers={filteredSortedTeachers} 
+
         
         formFields={formFields.map(field => ({
           ...field,
