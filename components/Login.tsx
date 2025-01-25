@@ -59,7 +59,7 @@ const Login: React.FC<LoginProps> = () => {
       const domain = window.location.href;
       sessionStorage.setItem("savedDomain", domain);
 
-      if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
+      if (role === 'admin' || role === 'teacher' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
         const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
@@ -121,7 +121,7 @@ const Login: React.FC<LoginProps> = () => {
       localStorage.setItem('savedDomain', domain);
       sessionStorage.setItem("savedDomain", domain);
 
-      if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
+      if (role === 'admin' || role === 'teacher' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
         const userId = userCredential.user.uid;
 

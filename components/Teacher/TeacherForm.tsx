@@ -8,7 +8,6 @@ import {
   fetchFormFieldsTeacher,
   deleteFormFieldTeacher,
   updateFormFieldTeacher,
-  saveTeacherData,
 } from "@/components/helper/firebaseHelper";
 import {
   FormField,
@@ -25,6 +24,7 @@ const TeacherForm: React.FC = () => {
   const [newFieldOptions, setNewFieldOptions] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false); // Track if we're in edit mode
+  const [successMessage, setSuccessMessage] = useState<string | null>(null); // State for success message
 
   // Define a type for allowed field names
   type FieldNameType =
@@ -334,10 +334,43 @@ const TeacherForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+  
     try {
-      await saveTeacherData(formData);
-      console.log(formData);
-      setFormData({});
+      const response = await fetch("/api/createTeacher", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ formData }),
+      });
+  
+      const result = await response.json();
+      if (response.ok) {
+        console.log(result.message);
+        setSuccessMessage("Teacher data saved successfully!"); // Set success message
+  
+        // Reset form data and dropdowns
+        const resetFormData: FormData = {};
+        fields?.forEach((field) => {
+          if (field.FormFields) {
+            field.FormFields.forEach((f) => {
+              if (f.FieldType === FieldType.SELECT) {
+                resetFormData[f.FieldName] = ""; // Reset dropdown to initial state
+              } else {
+                resetFormData[f.FieldName] = ""; // Reset other fields
+              }
+            });
+          }
+        });
+  
+        setFormData(resetFormData); // Clear form data
+        setNewFieldName(""); // Clear new field name
+        setNewFieldType(FieldType.TEXT); // Reset field type
+        setNewFieldOptions(""); // Clear options
+      } else {
+        console.error(result.message);
+        alert("Failed to save teacher data.");
+      }
     } catch (error) {
       console.error("Error saving teacher data:", error);
       alert("Failed to save teacher data.");
@@ -367,6 +400,12 @@ const TeacherForm: React.FC = () => {
           Please enter teacher Details
         </h2>
       </div>
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+          {successMessage}
+        </div>
+      )}
 
       <form>
         {fields?.map((field) => (

@@ -25,7 +25,7 @@ const withAdminAuth = <P extends object>(WrappedComponent: ComponentType<P>) => 
             const idTokenResult = await getIdTokenResult(user);
             const role = idTokenResult.claims.role;
 
-            if (role !== 'admin' && role !== 'schoolAdmin' && role !== 'superAdmin' && role !== 'student') {
+            if (role !== 'admin' && role !== 'teacher' && role !== 'superAdmin' && role !== 'student') {
               console.error('User does not have the required role');
               const savedDomain = sessionStorage.getItem('savedDomain');
               if (savedDomain) {
