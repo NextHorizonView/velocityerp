@@ -56,6 +56,7 @@ const Login: React.FC<LoginProps> = () => {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
+      console.log('Role:', role);
       const domain = window.location.href;
       sessionStorage.setItem("savedDomain", domain);
 
@@ -96,7 +97,13 @@ const Login: React.FC<LoginProps> = () => {
           const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 1 day expiry
           localStorage.setItem('userExpiry', expiryTime.toString());
         }
+        if (role === 'teacher') {
+          console.log("Redirecting to /teacherdashboard"); // Debug log
+        router.push('/teacher/teacherdashboard');
+        } else {
+          console.log("Redirecting to /dashboard"); // Debug log
         router.push('/dashboard');
+        }
       } else {
         console.error('User does not have the required role');
         alert('You do not have admin privileges.');
