@@ -150,8 +150,14 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   };
 
   // Menu items
+  const userRole = localStorage.getItem("userRole"); // Get the user's role from localStorage
+
   const allMenuItems = [
-    { icon: <RiDashboardLine size={20} />, label: "Dashboard", path: "/dashboard" },
+    { 
+      icon: <RiDashboardLine size={20} />, 
+      label: "Dashboard", 
+      path: userRole === "teacher" ? "/teacher/teacherdashboard" : "/dashboard"
+    },
     { icon: <RiUserLine size={20} />, label: "Students", path: "/students" },
     { icon: <RiTeamLine size={20} />, label: "Teacher", path: "/teacher" },
     { icon: <RiParentLine size={20} />, label: "Parents", path: "/parents" },
@@ -196,8 +202,14 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             // Check active condition
             let isActive = false;
 
+            // Custom logic for "Dashboard"
+            if (item.label === "Dashboard") {
+              isActive =
+                pathname === "/dashboard" ||
+                pathname === "/teacher/teacherdashboard";
+            }
             // Custom logic for "Subjects"
-            if (item.label === "Subject") {
+            else if (item.label === "Subject") {
               isActive =
                 pathname === "/subjects" ||
                 pathname === "/addsubject" ||
@@ -209,12 +221,16 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                 pathname === "/students" ||
                 pathname === "/studentform" ||
                 pathname.startsWith("/editstudent/");
-            } else if (item.label === "Teacher") {
+            }
+            // Custom logic for "Teacher"
+            else if (item.label === "Teacher") {
               isActive =
                 pathname === "/teacher" ||
                 pathname === "/teacherform" ||
                 pathname.startsWith("/editteacher/");
-            } else if (item.label === "Class") {
+            }
+            // Custom logic for "Class"
+            else if (item.label === "Class") {
               isActive =
                 pathname === "/class" ||
                 pathname === "/addclass" ||
