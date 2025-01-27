@@ -26,7 +26,7 @@ import { getFirebaseServices } from '@/lib/firebaseConfig';
 import "jspdf-autotable"; 
 const { db } = getFirebaseServices();
 import { DialogClose } from "@radix-ui/react-dialog";
-import FilterModal, { FilterState,ClassFilterState } from "../Student/StudentsFilter";
+import FilterModal, {ClassFilterState } from "../Student/StudentsFilter";
 import { Filter } from "lucide-react";
 import jsPDF from "jspdf";
 import Papa from "papaparse"; 

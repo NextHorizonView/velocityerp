@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
-import FilterModal, { FilterState } from './StudentsFilter';
+import FilterModal from './StudentsFilter';
 import { IoIosCloudUpload } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
 import Link from "next/link";

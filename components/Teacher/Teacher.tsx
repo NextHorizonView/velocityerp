@@ -63,18 +63,21 @@ export type TeacherFormat={
 
 }
 
-const convertTeacherFormat = (teachers: TeacherFormat[]): Teacher[] => {
-  return teachers.map((teacher) => ({
-    id: teacher.id, // Convert ID to number if necessary
-    name: teacher["First Name"],
-    email: teacher.Email || "",
-    position: teacher.Position || "",
-    lastname: teacher["Last Name"] || "",
-    city: teacher.City || "",
-    state: teacher.State || "",
-    pincode: teacher.Pincode || "",
-  }));
-};
+
+// Temp no use
+
+// const convertTeacherFormat = (teachers: TeacherFormat[]): Teacher[] => {
+//   return teachers.map((teacher) => ({
+//     id: teacher.id, // Convert ID to number if necessary
+//     name: teacher["First Name"],
+//     email: teacher.Email || "",
+//     position: teacher.Position || "",
+//     lastname: teacher["Last Name"] || "",
+//     city: teacher.City || "",
+//     state: teacher.State || "",
+//     pincode: teacher.Pincode || "",
+//   }));
+// };
 
 const ITEMS_PER_PAGE = 8;
 
