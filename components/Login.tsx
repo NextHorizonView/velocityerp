@@ -56,10 +56,11 @@ const Login: React.FC<LoginProps> = () => {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const role = idTokenResult.claims.role;
+      console.log('Role:', role);
       const domain = window.location.href;
       sessionStorage.setItem("savedDomain", domain);
 
-      if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
+      if (role === 'admin' || role === 'teacher' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
         const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
@@ -96,7 +97,13 @@ const Login: React.FC<LoginProps> = () => {
           const expiryTime = Date.now() + 24 * 60 * 60 * 1000; // 1 day expiry
           localStorage.setItem('userExpiry', expiryTime.toString());
         }
+        if (role === 'teacher') {
+          console.log("Redirecting to /teacherdashboard"); // Debug log
+        router.push('/teacher/teacherdashboard');
+        } else {
+          console.log("Redirecting to /dashboard"); // Debug log
         router.push('/dashboard');
+        }
       } else {
         console.error('User does not have the required role');
         alert('You do not have admin privileges.');
@@ -121,7 +128,7 @@ const Login: React.FC<LoginProps> = () => {
       localStorage.setItem('savedDomain', domain);
       sessionStorage.setItem("savedDomain", domain);
 
-      if (role === 'admin' || role === 'schoolAdmin' || role === 'superAdmin' || role === 'student') {
+      if (role === 'admin' || role === 'teacher' || role === 'superAdmin' || role === 'student') {
         console.log('User signed in with Google');
         const userId = userCredential.user.uid;
 

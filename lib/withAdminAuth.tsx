@@ -25,7 +25,20 @@ const withAdminAuth = <P extends object>(WrappedComponent: ComponentType<P>) => 
             const idTokenResult = await getIdTokenResult(user);
             const role = idTokenResult.claims.role;
 
-            if (role !== 'admin' && role !== 'schoolAdmin' && role !== 'superAdmin' && role !== 'student') {
+            // Redirect users based on their role
+            if (role === 'teacher' && window.location.pathname === '/dashboard') {
+              // Teachers should not access /dashboard
+              router.push('/teacher/teacherdashboard');
+              return;
+            }
+
+            // Check if the user has a valid role
+            if (
+              role !== 'admin' &&
+              role !== 'teacher' &&
+              role !== 'superAdmin' &&
+              role !== 'student'
+            ) {
               console.error('User does not have the required role');
               const savedDomain = sessionStorage.getItem('savedDomain');
               if (savedDomain) {
@@ -47,6 +60,7 @@ const withAdminAuth = <P extends object>(WrappedComponent: ComponentType<P>) => 
             }
           }
         } else {
+          // No user is logged in
           const savedDomain = sessionStorage.getItem('savedDomain');
           if (savedDomain) {
             router.push(`${savedDomain}`);
