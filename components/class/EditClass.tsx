@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { getFirebaseServices } from '@/lib/firebaseConfig';
 
 const { db } = getFirebaseServices();
-import { doc, getDoc, serverTimestamp,Timestamp,updateDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, Timestamp, updateDoc } from "firebase/firestore";
 import FadeLoader from "../Loader";
 import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
 import { collection, getDocs } from "firebase/firestore";
@@ -47,14 +47,10 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
     ClassName: string;
     ClassDivision: string;
     ClassTeacherId: ClassTeacherMap[];
-    ClassCreatedAt?:Timestamp;
-    ClassYear?:string;
-  }>({ ClassId: "", ClassName: "", ClassDivision: "",ClassYear:"", ClassTeacherId: [] });
+    ClassCreatedAt?: Timestamp;
+    ClassYear?: string;
+  }>({ ClassId: "", ClassName: "", ClassDivision: "", ClassYear: "", ClassTeacherId: [] });
   const [loading, setLoading] = useState(false);
-
-
-
-
 
   useEffect(() => {
     if (classid) {
@@ -72,12 +68,12 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
             id: doc.id,
             ...doc.data(),
           }));
-          
+
           setClassData({
             ClassId: classid,
             ClassName: classData.ClassName || "",
             ClassDivision: classData.ClassDivision || "",
-            ClassYear:classData.ClassYear || "",
+            ClassYear: classData.ClassYear || "",
             // ClassTeacherId:
             //   classData.ClassTeacherId.map(
             //     (teacher: {
@@ -90,12 +86,12 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
             //       position: teacher.position,
             //     })
             //   ) || [],
-            ClassTeacherId:teachers,
+            ClassTeacherId: teachers,
             ClassCreatedAt: classData.ClassCreatedAt || "",
 
           });
           // console.log("Class Dataaa:", classData);
-          
+
         } catch (error) {
           console.error("Error fetching class data:", error);
         } finally {
@@ -109,7 +105,7 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
 
   useEffect(() => {
     // console.log("Selected class id:", classid);
-    
+
     const fetchTeachers = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "teachers"));
@@ -130,39 +126,39 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
 
 
   const handleRemoveNewTeacher = (index: number) => {
-    setSelectedTeachers((prevSelectedTeachers) => 
-        prevSelectedTeachers.filter((_, i) => i !== index)
+    setSelectedTeachers((prevSelectedTeachers) =>
+      prevSelectedTeachers.filter((_, i) => i !== index)
     );
-};
+  };
 
-const handleRemoveOtherTeacher = (index:number | string) => {
-  setClassData((prevClassData) => ({
-    ...prevClassData,
-    ClassTeacherId: prevClassData.ClassTeacherId.filter((_, i) => i !== index),
-  }));
-};
+  const handleRemoveOtherTeacher = (index: number | string) => {
+    setClassData((prevClassData) => ({
+      ...prevClassData,
+      ClassTeacherId: prevClassData.ClassTeacherId.filter((_, i) => i !== index),
+    }));
+  };
 
 
-  const handleAddTeacher = async() => {
+  const handleAddTeacher = async () => {
     if (!newTeacherName || !newTeacherPosition) {
-        alert("Please select a teacher and enter a position!");
-        return;
+      alert("Please select a teacher and enter a position!");
+      return;
     }
 
     const teacherToAdd = selectedTeachers.find(
-        (teacher) => teacher.name === newTeacherName
+      (teacher) => teacher.name === newTeacherName
     );
 
     if (!teacherToAdd) {
-        alert("Selected teacher not found!");
-        return;
+      alert("Selected teacher not found!");
+      return;
     }
     const teacherRef = doc(db, "teachers", teacherToAdd.id);
     await updateDoc(teacherRef, {
       name: teacherToAdd.name,
       Position: newTeacherPosition || "Default Position",
     });
-    
+
 
     // Update the local state for the teacher
     setTeachers({
@@ -172,90 +168,90 @@ const handleRemoveOtherTeacher = (index:number | string) => {
     });
 
     console.log("Teacher to add:", Teachers);
-    
+
 
     setClassData((prevClassData) => ({
-        ...prevClassData,
-        ClassTeacherId: [
-            ...prevClassData.ClassTeacherId,
-            {
-              id: teacherToAdd.id,
-              "First Name": teacherToAdd.name,
-              "Last Name": teacherToAdd.name,
-              Position: newTeacherPosition,
-              City:"",
-          },
-        ],
+      ...prevClassData,
+      ClassTeacherId: [
+        ...prevClassData.ClassTeacherId,
+        {
+          id: teacherToAdd.id,
+          "First Name": teacherToAdd.name,
+          "Last Name": teacherToAdd.name,
+          Position: newTeacherPosition,
+          City: "",
+        },
+      ],
     }));
-setTeachers(
-  {
-      id: teacherToAdd.id,
-      name: teacherToAdd.name,
-      position: newTeacherPosition,
-  });
+    setTeachers(
+      {
+        id: teacherToAdd.id,
+        name: teacherToAdd.name,
+        position: newTeacherPosition,
+      });
 
     setNewTeacherName("");
     setNewTeacherPosition("");
     setIsAddTeacherModalOpen(false);
-};
+  };
 
   const handleUpdate = async () => {
     try {
-        setLoading(true);
+      setLoading(true);
 
-        if (!classid) {
-            throw new Error("Class ID is not defined");
-        }
+      if (!classid) {
+        throw new Error("Class ID is not defined");
+      }
 
-        const classesRef = doc(db, "classes", classid?.toString());
-        const docSnapshot = await getDoc(classesRef);
+      const classesRef = doc(db, "classes", classid?.toString());
+      const docSnapshot = await getDoc(classesRef);
 
 
 
-        if (!docSnapshot.exists()) {
-            throw new Error("Class not found!");
-        }
+      if (!docSnapshot.exists()) {
+        throw new Error("Class not found!");
+      }
 
-        const existingData = docSnapshot.data();
+      const existingData = docSnapshot.data();
 
-        // Ensure existingData and classData are properly defined
-        // console.log("Existing Data:", existingData);
-        // console.log("Class Data:", classData);
+      // Ensure existingData and classData are properly defined
+      // console.log("Existing Data:", existingData);
+      // console.log("Class Data:", classData);
 
-        // Ensure selectedTeachers is an array
-        if (!Array.isArray(selectedTeachers)) {
-            throw new Error("selectedTeachers is not an array");
-        }
-        const classTeacherIds = classData.ClassTeacherId.map(teacher => teacher.id);
+      // Ensure selectedTeachers is an array
+      if (!Array.isArray(selectedTeachers)) {
+        throw new Error("selectedTeachers is not an array");
+      }
+      const classTeacherIds = classData.ClassTeacherId.map(teacher => teacher.id);
 
-    
 
-        const updatedClassData = {
-          ClassName: classData.ClassName || existingData?.ClassName || "",
-          ClassDivision: classData.ClassDivision || existingData?.ClassDivision || "",
-          ClassYear: classData.ClassYear || existingData?.ClassYear || "",
 
-          ClassTeacherId: classTeacherIds,
-          ClassCreatedAt: existingData?.ClassCreatedAt, 
-          ClassUpdatedAt: serverTimestamp(),
+      const updatedClassData = {
+        ClassName: classData.ClassName || existingData?.ClassName || "",
+        ClassDivision: classData.ClassDivision || existingData?.ClassDivision || "",
+        ClassYear: classData.ClassYear || existingData?.ClassYear || "",
+
+        ClassTeacherId: classTeacherIds,
+        ClassCreatedAt: existingData?.ClassCreatedAt,
+        ClassUpdatedAt: serverTimestamp(),
       };
 
-        // console.log("Updated Class Data:", updatedClassData);
+      // console.log("Updated Class Data:", updatedClassData);
 
-        await updateDoc(classesRef, updatedClassData);
-        
+      await updateDoc(classesRef, updatedClassData);
 
-        setClassData({ ClassId: classid, ClassName: "", ClassDivision: "", ClassYear:"",ClassTeacherId: [] });
-        router.push("/class");
 
-        alert("Class updated successfully!");
+      setClassData({ ClassId: classid, ClassName: "", ClassDivision: "", ClassYear: "", ClassTeacherId: [] });
+      router.push("/class");
+
+      alert("Class updated successfully!");
     } catch (error) {
-        console.error("Error updating class: ", error);
-        alert("Failed to update class. Please try again.");
+      console.error("Error updating class: ", error);
+      alert("Failed to update class. Please try again.");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
 
 
@@ -391,7 +387,7 @@ setTeachers(
                         handleRemoveOtherTeacher(index)
                       } // Edit teacher action
                     >
-                     <AiOutlineClose size={20} />
+                      <AiOutlineClose size={20} />
                     </button>
                   </td>
                 </tr>
@@ -400,15 +396,15 @@ setTeachers(
           </table>
           {selectedTeachers.length > 0 && (
             <>
-            <div className="mb-6 pt-11">
+              <div className="mb-6 pt-11">
 
                 <div className="flex items-center space-x-2 mb-4">
 
-               <h3 className="text-lg font-medium text-[#666666] ">Subject Teachers</h3>
-                            <Button className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b]">
-                                 Subject Teacher
-                            </Button>
-              </div>
+                  <h3 className="text-lg font-medium text-[#666666] ">Subject Teachers</h3>
+                  <Button className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b]">
+                    Subject Teacher
+                  </Button>
+                </div>
               </div>
               <table className="w-full text-left border-collapse max-h-52 overflow-scroll overflow-x-hidden">
                 <thead></thead>
@@ -472,35 +468,31 @@ setTeachers(
                 />
               </div>
 
-          
-
-
-
-{newTeacherName.length > 0 && filteredTeachers.length > 0 ? (
-    <>
-        <p className="font-medium text-gray-700 mb-2">
-            Select a Teacher:
-        </p>
-        <div className="mb-4 bg-gray-50 p-1 rounded-lg shadow max-h-52 overflow-scroll overflow-x-hidden">
-            {filteredTeachers.map((teacher) => (
-                <div
-                    key={teacher.id}
-                    className="cursor-pointer hover:bg-gray-200 bg-white p-2 m-2 rounded-md"
-                    onClick={() =>
-                        setNewTeacherName(teacher.name)
-                    }
-                >
-                    {teacher.name}
-                </div>
-            ))}
-        </div>
-    </>
-) : (
-    <p className="font-medium text-gray-700 mb-2 bg-gray-50 p-2 rounded-full text-center">
-        Sorry, No teacher found Named = &quot;{`${newTeacherName}`}{" "}
-        &quot;
-    </p>
-)}
+              {newTeacherName.length > 0 && filteredTeachers.length > 0 ? (
+                <>
+                  <p className="font-medium text-gray-700 mb-2">
+                    Select a Teacher:
+                  </p>
+                  <div className="mb-4 bg-gray-50 p-1 rounded-lg shadow max-h-52 overflow-scroll overflow-x-hidden">
+                    {filteredTeachers.map((teacher) => (
+                      <div
+                        key={teacher.id}
+                        className="cursor-pointer hover:bg-gray-200 bg-white p-2 m-2 rounded-md"
+                        onClick={() =>
+                          setNewTeacherName(teacher.name)
+                        }
+                      >
+                        {teacher.name}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="font-medium text-gray-700 mb-2 bg-gray-50 p-2 rounded-full text-center">
+                  Sorry, No teacher found Named = &quot;{`${newTeacherName}`}{" "}
+                  &quot;
+                </p>
+              )}
 
               {/* Add Teacher Form */}
               <div className="mb-6">
