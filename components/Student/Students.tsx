@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadCsv, refreshStudentList } from "./uploadCsv";
-import FilterModal, { FilterState } from './StudentsFilter';
+import FilterModal from './StudentsFilter';
 import { IoIosCloudUpload } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
 import Link from "next/link";
@@ -30,9 +30,10 @@ import StudentsTable from "./StudentTable";
 import { usePathname } from "next/navigation";
 import FadeLoader from "../Loader";
 import { jsPDF } from "jspdf";
+import { StudentFilterState } from './StudentsFilter';
 
 export type Student = {
-  id: number;
+  id: string;
   name?: string;
   class?: string;
   phone?: string;
@@ -44,14 +45,50 @@ export type Student = {
   pincode?: string;
   religion?: string;
   studentId?: string;
+
+  [key: string]: string | undefined;
+
 };
+
+
+
+export interface DynamicFields {
+  City?: string;
+  Email?: string;
+  "First Name"?: string;
+  "Last Name"?: string;
+  Pincode?: string;
+  State?: string;
+  game?: string;
+  id: string;
+  undefined?: string; // Handling "undefined" key as a string key.
+  [key: string]: string | undefined; // Allows additional dynamic fields.
+}
 
 // export type StudentD = {
 //   id: string;
 //   [key: string]: any; // Allow dynamic keys
 // };
 
+// const fetchStudent = async () => {
+//   const querySnapshot = await getDocs(collection(db, "students"));
+//   return querySnapshot.docs.map((doc) => {
+//     const data = doc.data();
+//     return {
+//       id: doc.id,
+//       "First Name": data["First Name"],
+//       "Last Name": data["Last Name"],
+//       Email: data["Email"],
+//       Gender: data["Gender"],
+//       City: data["City"],
+//       State: data["State"],
+//       Pincode: data["Pincode"],
+//     } as DynamicFields;
+//   });
+// };
 
+
+// const { data: studentsPdf, error: studentsPdfError } = useSWR<DynamicFields[]>("students", fetchStudent);
 
 
 const fetchStudents = async () => {
@@ -81,16 +118,25 @@ export default function Students() {
   }, [path]);
 
   // filter states
-  const [, setFilters] = useState<FilterState | null>(null);
+  // const [, setFilters] = useState<FilterState | null>(null);
   const [isFilterOpen, setFilterOpen] = useState(false);
   
-
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-    // Don't close the modal automatically
-    console.log('Applied Filters:', newFilters);
-    // Apply filtering logic here
-  };
+  const [filters, setFilters] = useState<StudentFilterState>({
+    academicYear: '',
+    class: [0, 12], // Example: Grade range
+    gender: null,   // Male, Female, or null
+    sortBy: 'First Name',
+    sortOrder: 'asc',
+    disability: false, // Add missing property
+  specialStudent: false,
+  });
+  
+  // const handleFilterChange = (newFilters: FilterState) => {
+  //   setFilters(newFilters);
+  //   // Don't close the modal automatically
+  //   console.log('Applied Filters:', newFilters);
+  //   // Apply filtering logic here
+  // };
 
 
   const formFields = fields[0]?.FormFields || [];
@@ -99,10 +145,11 @@ export default function Students() {
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [sortConfig] = useState<{
-    key: keyof Student;
-    direction: "asc" | "desc";
-  }>({ key: "name", direction: "asc" });
+  // Temp
+  // const [sortConfig] = useState<{
+  //   key: keyof Student;
+  //   direction: "asc" | "desc";
+  // }>({ key: "name", direction: "asc" });
 
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] =
     useState(false);
@@ -164,58 +211,27 @@ export default function Students() {
 
 
 
+
   const filteredAndSortedStudents = useMemo(() => {
-    if (!students || students.length === 0) {
-      console.log("No students available");
-      return [];
-    }
+    return [...(students || [])].filter((student: DynamicFields) => {
+      // Define the keys you want to search through
+      const searchFields = [
+        student["First Name"],
+        student["Last Name"],
+        student.Email,
+        student.City,
+        student.State,
+        student.Pincode,
+        student.game,
+      ].map((field) => (field || "").toLowerCase());
   
-    console.log("Students before filtering:", students);
-    console.log("Search term:", searchTerm);
-  
-    // Normalize the search term
-    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
-  
-    // Filter students based on search term
-    const filtered = students.filter((student) => {
-      // Normalize and check each field for matches
-      const name = student.name?.toLowerCase() || "";
-      const studentClass = student.class?.toLowerCase() || "";
-      const phone = student.phone || "";
-      const email = student.email?.toLowerCase() || "";
-  
-      return (
-        normalizedSearchTerm === "" || // Include all students if search term is empty
-        name.includes(normalizedSearchTerm) ||
-        studentClass.includes(normalizedSearchTerm) ||
-        phone.includes(normalizedSearchTerm) ||
-        email.includes(normalizedSearchTerm)
-      );
+      // Check if any field contains the search term
+      return searchFields.some((field) => field.includes(searchTerm.toLowerCase()));
     });
-  
-    console.log("Filtered students:", filtered);
-  
-    // Sorting logic remains unchanged
-    const validKey = students.some((student) => student.hasOwnProperty(sortConfig.key))
-      ? sortConfig.key
-      : "name";
-  
-    const sorted = filtered.sort((a, b) => {
-      const aValue = a[validKey] ?? "";
-      const bValue = b[validKey] ?? "";
-  
-      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-  
-    console.log("Sorted students:", sorted);
-  
-    return sorted;
-  }, [students, searchTerm, sortConfig]);
+  }, [students, searchTerm]);
   
 
-  
+
 
 
   // const paginatedStudents = useMemo(
@@ -307,24 +323,87 @@ export default function Students() {
     });
   
   // @ts-expect-error: autoTable is not recognized due to missing type definitions
-
-    doc.autoTable({
+ doc.autoTable({
       head: [columns],
       body: rows,
       startY: 20,
     });
   
-    // Save the PDF
     doc.save("students.pdf");
   
     setIsImportExportDialogOpen(false);
   };
   
+
+
+
+
+
+const filteredSortedStudents = filteredAndSortedStudents
+  ? filteredAndSortedStudents
+      .filter((student) => {
+        const matchesSearch = searchTerm
+          ? student.name?.toLowerCase().includes(searchTerm.toLowerCase())
+          : true;
+
+        const matchesYear =
+          !filters.academicYear || student.academicYear === filters.academicYear;
+
+        const matchesClass =
+          !filters.class ||
+          (student.class &&
+            parseInt(student.class) >= filters.class[0] &&
+            parseInt(student.class) <= filters.class[1]);
+
+        const matchesGender = !filters.gender || student.gender === filters.gender;
+
+        return matchesSearch && matchesClass && matchesGender || matchesYear;
+      })
+      .sort((a, b) => {
+        const sortKeyMap = {
+          "First Name": "First Name", 
+          "Last Name": "lastName",
+          "Class": "class",
+          "Gender": "gender",
+        };
+
+        const key = sortKeyMap[filters?.sortBy as keyof typeof sortKeyMap];
+
+        const direction = filters.sortOrder === "asc" ? 1 : -1;
+
+        const aValue = String(a[key] || "").toLowerCase(); 
+        const bValue = String(b[key] || "").toLowerCase();
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return aValue.localeCompare(bValue) * direction;
+        }
+        
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return (aValue - bValue) * direction;
+        }
+        
+        return 0;
+      })
+  : [];
+
+
+
+
+
+
+
+
+
   console.log("search",searchTerm);
   console.log("students",students);
   console.log("Filtered",filteredAndSortedStudents);
+  console.log("Filtered after",filteredSortedStudents);
 
- 
+
+  console.log("Filtered students before sorting:", filteredAndSortedStudents);
+  console.log("Sorting key:", filters.sortBy, "Sort order:", filters.sortOrder);
+  console.log("Student sample for sorting:", filteredAndSortedStudents[0]);
+  
 
   return (
     <div className="container mx-auto p-6">
@@ -371,19 +450,34 @@ export default function Students() {
               Filter
             </button>
             {/* Filter Modal */}
-            <FilterModal
+            {/* <FilterModal
               route="/students"
               onFilterChange={handleFilterChange}
               isOpen={isFilterOpen}
               onClose={() => setFilterOpen(false)}
               initialFilters={null}
-            />
+            /> */}
+
+
+<FilterModal
+  route="/students"
+  onFilterChange={(newFilters) => {
+    setFilters(newFilters as StudentFilterState); // Update the filters
+    console.log("Applied Filters:", newFilters);
+  }}
+  isOpen={isFilterOpen}
+  onClose={() => setFilterOpen(false)}
+  initialFilters={filters} // Pass the current filter state
+/>
           </div>
         </div>
       </div>
 
       <div className="bg-[#FAFAF8] rounded-lg shadow-sm">
-        <StudentsTable students={students} formFields={formFields} />
+        <StudentsTable 
+        // students={students} 
+        students={filteredSortedStudents} 
+        formFields={formFields} />
 
         {/* table footer  */}
         <div className="flex items-center justify-between px-6 py-4 border-t">

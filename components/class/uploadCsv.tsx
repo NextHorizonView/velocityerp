@@ -74,6 +74,8 @@ export const refreshClassList = async (
           typeof data.ClassId === 'string' &&
           typeof data.ClassName === 'string' &&
           typeof data.ClassDivision === 'string' &&
+          typeof data.ClassYear === 'string' &&
+
           Array.isArray(data.ClassTeacherId) &&
           Array.isArray(data.ClassSubjects) &&
           data.ClassSubjects.every((subject) =>

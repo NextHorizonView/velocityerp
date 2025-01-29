@@ -26,7 +26,7 @@ import { getFirebaseServices } from '@/lib/firebaseConfig';
 import "jspdf-autotable"; 
 const { db } = getFirebaseServices();
 import { DialogClose } from "@radix-ui/react-dialog";
-import FilterModal, { FilterState } from "../Student/StudentsFilter";
+import FilterModal, {ClassFilterState } from "../Student/StudentsFilter";
 import { Filter } from "lucide-react";
 import jsPDF from "jspdf";
 import Papa from "papaparse"; 
@@ -69,15 +69,24 @@ const SubjectTable = () => {
   
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [,setFilters] = useState<FilterState | null>(null);
+  // const [,setFilters] = useState<FilterState | null>(null);
   const [isFilterOpen, setFilterOpen] = useState(false);
 
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-    // Don't close the modal automatically
-    console.log('Applied Filters:', newFilters);
-    // Apply filtering logic here
-  };
+  // const handleFilterChange = (newFilters: FilterState) => {
+  //   setFilters(newFilters);
+  //   // Don't close the modal automatically
+  //   console.log('Applied Filters:', newFilters);
+  //   // Apply filtering logic here
+  // };
+
+
+
+  const [filters, setFilters] = useState<ClassFilterState>({
+    academicYear: "",
+    subject: "",
+    sortBy: "name",
+    sortOrder: "asc",
+  });
 
 
   // Import/Export
@@ -160,8 +169,30 @@ const SubjectTable = () => {
     subject?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredSubjects.length / ITEMS_PER_PAGE);
-  const currentSubjects = filteredSubjects.slice(
+
+const filterSubjects = filteredSubjects
+  .filter((subject) => {
+    const matchesSearch = subject.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesYear = !filters.academicYear || subject.SubjectUpatedAt?.toDate().getFullYear().toString() === filters.academicYear;
+    const matchesSubject = !filters.subject || subject.name.toLowerCase() === filters.subject.toLowerCase();
+
+    return matchesSearch && matchesYear && matchesSubject;
+  })
+  .sort((a, b) => {
+    switch (filters.sortBy) {
+      case "name":
+        return filters.sortOrder === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      default:
+        return 0;
+    }
+  });
+
+
+
+  const totalPages = Math.ceil(filterSubjects.length / ITEMS_PER_PAGE);
+  const currentSubjects = filterSubjects.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -369,12 +400,16 @@ const handleDownloadPdf = () => {
               Filter
             </button>
             {/* Filter Modal */}
-            <FilterModal
-            route="/class"
-              onFilterChange={handleFilterChange}
-              isOpen={isFilterOpen}
-              onClose={() => setFilterOpen(false)} initialFilters={null}
-            />
+         <FilterModal
+  route="/class" // Keep the route consistent
+  onFilterChange={(newFilters) => {
+    setFilters(newFilters as ClassFilterState); // Update the state with the new filters
+    console.log("Applied Filters:", newFilters);
+  }}
+  isOpen={isFilterOpen}
+  onClose={() => setFilterOpen(false)}
+  initialFilters={filters} // Pass the current filters as initial values
+/>
         </div>
       </div>
 
@@ -420,10 +455,10 @@ const handleDownloadPdf = () => {
           Showing data{" "}
           {Math.min(
             (currentPage - 1) * ITEMS_PER_PAGE + 1,
-            filteredSubjects.length
+            filterSubjects.length
           )}{" "}
-          to {Math.min(currentPage * ITEMS_PER_PAGE, filteredSubjects.length)}{" "}
-          of {filteredSubjects.length} entries
+          to {Math.min(currentPage * ITEMS_PER_PAGE, filterSubjects.length)}{" "}
+          of {filterSubjects.length} entries
         </span>
         <div className="flex items-center space-x-2">
           <button

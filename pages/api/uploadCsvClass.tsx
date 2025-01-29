@@ -23,6 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ClassId: string;
       ClassName: string;
       ClassDivision: string;
+      ClassYear: string;
       ClassTeacherId:  string; 
       ClassSubjects: string; // JSON string of subjects
       [key: string]: string;
@@ -93,6 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await classDocRef.update({
           ClassName: classItem.ClassName,
           ClassDivision: classItem.ClassDivision,
+          ClassYear:classItem.ClassYear,
           ClassTeacherId: teacherIds,
           ClassUpdatedAt: Timestamp.now(),
 
@@ -106,6 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ClassId: classItem.ClassId,
         ClassName: classItem.ClassName,
         ClassDivision: classItem.ClassDivision,
+        ClassYear:classItem.ClassYear,
         ClassTeacherId: teacherIds,
         ClassSubjects: subjects,  
   ClassCreatedAt: Timestamp.now(),
