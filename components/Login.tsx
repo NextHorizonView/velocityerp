@@ -12,7 +12,7 @@ import { AiOutlineApple } from "react-icons/ai";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
 import { doc, setDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
-const { auth, db } = getFirebaseServices();
+const { auth, db, requestFCMToken } = getFirebaseServices();
 import withAuthentication from '@/lib/withAuthentication';
 import { Eye, EyeOff } from 'lucide-react';
 import { ReloadIcon } from '@radix-ui/react-icons';
@@ -63,7 +63,10 @@ const Login: React.FC<LoginProps> = () => {
       if (role === 'admin' || role === 'teacher' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
-        const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
+        
+        //Fetch FCM Token
+        const fcmToken = await requestFCMToken();
+        console.log('FCM Token:', fcmToken);
 
         // Add user to Firestore LoggedInUsers collection
         const loggedInDoc = doc(db, 'LoggedInUsers', userId);
