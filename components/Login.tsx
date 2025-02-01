@@ -49,6 +49,21 @@ const Login: React.FC<LoginProps> = () => {
     }
   }, []);
 
+  // Retry fetching FCM token if null
+  const fetchFCMToken = async (retries = 3): Promise<string | null> => {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const token = await requestFCMToken();
+        if (token) return token;
+      } catch (error) {
+        console.error(`FCM token fetch failed (attempt ${attempt + 1}):`, error);
+      }
+      await new Promise((res) => setTimeout(res, 2000)); // Wait before retrying
+    }
+    console.error("Failed to fetch FCM token after multiple attempts.");
+    return null;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); // Start loading
@@ -64,9 +79,10 @@ const Login: React.FC<LoginProps> = () => {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
         
-        //Fetch FCM Token
-        const fcmToken = await requestFCMToken();
-        console.log('FCM Token:', fcmToken);
+        // Fetch FCM Token
+        const fcmToken = await fetchFCMToken();
+        if (!fcmToken) throw new Error("Unable to retrieve FCM token.");
+
 
         // Add user to Firestore LoggedInUsers collection
         const loggedInDoc = doc(db, 'LoggedInUsers', userId);
