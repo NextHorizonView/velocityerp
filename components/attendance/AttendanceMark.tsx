@@ -1,25 +1,72 @@
-"use client"
-import React, { useState } from 'react';
+// // components/AttendanceMark.tsx
+"use client";
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Search } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 interface Student {
     rn: number;
     name: string;
-    status: 'present' | 'absent' | 'leave'; 
+    status: 'present' | 'absent' | 'leave';
 }
 
 export default function AttendanceMarkingPage() {
-    const [students, ] = useState<Student[]>([
-        { rn: 1, name: 'Rajvardhansingh', status: 'present' },
-        { rn: 2, name: 'Samar Singh', status: 'leave' },
-        { rn: 3, name: 'Lily', status: 'present' },
-        { rn: 4, name: 'Lily', status: 'absent' },
-        { rn: 5, name: 'Lily', status: 'present' },
-        { rn: 6, name: 'Lily', status: 'absent' }
-    ]);
-
+    const [students, setStudents] = useState<Student[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false); // Track save state
+    const [selectAll, setSelectAll] = useState(false); // Track select all state
+
+    const searchParams = useSearchParams();
+    const classId = searchParams?.get('classId') ?? '';
+    const date = searchParams?.get('date') ?? '';
+    const year = searchParams?.get('year') ?? '';
+
+    // Fetch attendance data from the API
+    useEffect(() => {
+        if (!classId || !date || !year) {
+            setLoading(false);
+            return;
+        }
+
+        const fetchAttendanceData = async () => {
+            try {
+                const response = await fetch(`/api/attendance?classId=${classId}&date=${date}&year=${year}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch attendance data.');
+                }
+                const data = await response.json();
+                if (data.Students) {
+                    // Transform the fetched data into the required format
+                    const studentList = Object.entries(data.Students).map(([name, status], index) => ({
+                        rn: index + 1,
+                        name,
+                        status: String(status).toLowerCase() as 'present' | 'absent' | 'leave',
+                    }));
+                    setStudents(studentList);
+                } else {
+                    alert('No attendance data found for this date.');
+                }
+            } catch (err) {
+                alert(err instanceof Error ? err.message : 'An error occurred while fetching data.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAttendanceData();
+    }, [classId, date, year]);
+
+    // Handle status change for a student
+    const handleStatusChange = (rn: number, newStatus: 'present' | 'absent' | 'leave') => {
+        setStudents((prevStudents) =>
+            prevStudents.map((student) =>
+                student.rn === rn ? { ...student, status: newStatus } : student
+            )
+        );
+        updateSelectAll();
+    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -32,11 +79,82 @@ export default function AttendanceMarkingPage() {
         }
     };
 
+    // Function to Save Attendance
+    const saveAttendance = async () => {
+        if (!classId || !date || !year) {
+            alert("Class ID or Date is missing.");
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const attendanceData = {
+                classId,
+                date,
+                year,
+                Students: students.reduce((acc, student) => {
+                    acc[student.name] = student.status;
+                    return acc;
+                }, {} as Record<string, "present" | "absent" | "leave">),
+            };
+
+            const response = await fetch("/api/attendance", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(attendanceData),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to save attendance.");
+            }
+
+            alert("Attendance saved successfully!");
+        } catch (error) {
+            console.error("Error saving attendance:", error);
+            alert("Error saving attendance. Please try again.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Handle Select All
+    const handleSelectAll = (checked: boolean) => {
+        setSelectAll(checked);
+        setStudents((prevStudents) =>
+            prevStudents.map((student) => ({
+                ...student,
+                status: checked ? 'present' : 'absent',
+            }))
+        );
+    };
+
+    // Handle Absent/Present buttons
+    const handleSetAllStatus = (status: 'present' | 'absent') => {
+        handleSelectAll(true);
+        setStudents((prevStudents) =>
+            prevStudents.map((student) => ({
+                ...student,
+                status,
+            }))
+        );
+    };
+
+    // Update Select All based on students' status
+    const updateSelectAll = () => {
+        const allPresent = students.every(student => student.status === 'present');
+        const allAbsent = students.every(student => student.status === 'absent');
+        setSelectAll(allPresent || allAbsent);
+    };
+
+    if (loading) {
+        return <div className="p-6 max-w-4xl mx-auto bg-gray-50">Loading...</div>;
+    }
+
     return (
         <div className="p-6 max-w-4xl mx-auto bg-gray-50">
             {/* Back Navigation */}
             <div className="flex items-center mb-6">
-                <Link href="/attendance " className="flex items-center text-[#576086]">
+                <Link href="/attendance" className="flex items-center text-[#576086]">
                     <ChevronLeft className="w-5 h-5" />
                     <span className="text-lg text-[#576086]">Attendance</span>
                 </Link>
@@ -45,34 +163,18 @@ export default function AttendanceMarkingPage() {
             {/* Main Content */}
             <div className="bg-white rounded-lg p-6 shadow-sm">
                 {/* Class Title */}
-                <h2 className="text-[#0E2C75] font-semibold text-lg mb-4">Today&apos;s Classes/VII A</h2>
+                <h2 className="text-[#0E2C75] font-semibold text-lg mb-4">Today&apos;s Classes/{classId}</h2>
 
                 {/* Class Details Card */}
                 <div className="border border-[#F7A9A0] rounded-lg p-4 mb-6">
                     <div className="grid grid-cols-2 gap-y-2">
                         <div>
                             <span className="text-[#3E494E]">Class: </span>
-                            <span>VII-B</span>
-                        </div>
-                        <div>
-                            <span className="text-[#3E494E]">Subject: </span>
-                            <span>History</span>
+                            <span>{classId}</span>
                         </div>
                         <div>
                             <span className="text-[#3E494E]">Date: </span>
-                            <span>2 Jan 2024</span>
-                        </div>
-                        <div>
-                            <span className="text-[#3E494E]">Period: </span>
-                            <span>11:30-12:30</span>
-                        </div>
-                        <div>
-                            <span className="text-[#3E494E]">Subject Teacher: </span>
-                            <span>Ms. Ruma K</span>
-                        </div>
-                        <div>
-                            <span className="text-[#3E494E]">Class Teacher: </span>
-                            <span>Mr. Das</span>
+                            <span>{date}</span>
                         </div>
                     </div>
                     <button className="bg-[#576086] text-white px-4 py-1.5 rounded text-sm float-right -mt-8">
@@ -94,10 +196,10 @@ export default function AttendanceMarkingPage() {
                     </div>
                     <div className="flex justify-between items-center">
                         <div className="space-x-2">
-                            <button className="px-4 py-1.5 rounded bg-red-50 text-red-500">
+                            <button className="px-4 py-1.5 rounded bg-red-50 text-red-500" onClick={() => handleSetAllStatus('absent')}>
                                 Absent
                             </button>
-                            <button className="px-4 py-1.5 rounded bg-green-50 text-green-500">
+                            <button className="px-4 py-1.5 rounded bg-green-50 text-green-500" onClick={() => handleSetAllStatus('present')}>
                                 Present
                             </button>
                         </div>
@@ -127,11 +229,16 @@ export default function AttendanceMarkingPage() {
                         </div>
                         <div className="flex items-center gap-2">
                             <span>Select All</span>
-                            <input type="checkbox" className="rounded" />
+                            <input
+                                type="checkbox"
+                                className="rounded"
+                                checked={selectAll}
+                                onChange={(e) => handleSelectAll(e.target.checked)}
+                            />
                         </div>
                     </div>
                     {students.map((student) => (
-                        <div 
+                        <div
                             key={student.rn}
                             className={`px-4 py-4 flex justify-between items-center ${getStatusColor(student.status)}`}
                         >
@@ -139,15 +246,26 @@ export default function AttendanceMarkingPage() {
                                 <span>{student.rn}</span>
                                 <span>{student.name}</span>
                             </div>
-                            <input type="checkbox" className="rounded" />
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    className="rounded"
+                                    checked={selectAll || student.status === 'present'}
+                                    onChange={(e) => handleStatusChange(student.rn, e.target.checked ? 'present' : 'absent')}
+                                />
+                            </div>
                         </div>
                     ))}
                 </div>
 
                 {/* Save Button */}
                 <div className="flex justify-end mt-6">
-                    <button className="bg-[#576086] text-white px-8 py-2 rounded">
-                        Save
+                    <button
+                        className="bg-blue-500 text-white px-4 py-2 rounded"
+                        onClick={saveAttendance}
+                        disabled={saving}
+                    >
+                        {saving ? "Saving..." : "Save Attendance"}
                     </button>
                 </div>
             </div>

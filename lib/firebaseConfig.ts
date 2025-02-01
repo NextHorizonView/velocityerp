@@ -1,19 +1,21 @@
-import { initializeApp, getApps, FirebaseApp } from "firebase/app"; 
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
-type FirebaseConfig = {
-  apiKey: string;
-  authDomain: string;
-  projectId: string;
-  storageBucket: string;
-  messagingSenderId: string;
-  appId: string;
-};
+interface FirebaseConfigs {
+  [key: string]: {
+    apiKey: string;
+    authDomain: string;
+    projectId: string;
+    storageBucket: string;
+    messagingSenderId: string;
+    appId: string;
+  };
+}
 
-const firebaseConfigs: Record<string, FirebaseConfig> = {
+// Firebase configurations for multiple schools
+const firebaseConfigs: FirebaseConfigs = {
   default: {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
@@ -40,131 +42,33 @@ const firebaseConfigs: Record<string, FirebaseConfig> = {
   },
 };
 
-// Helper function to determine the school ID from the URL
+// Helper to extract the school ID from the URL
 const getSchoolIdFromPath = (): string => {
   if (typeof window !== "undefined") {
-    const { hostname, pathname } = window.location;
-    const subdomainMatch = hostname.split(".")[0];
-
-    if (subdomainMatch && subdomainMatch !== "localhost" && subdomainMatch !== "www") {
-      return subdomainMatch;
-    }
-
-    const pathParts = pathname.split("/");
-    if (pathParts[1] && pathParts[1] !== "") {
-      return pathParts[1];
-    }
+    const pathParts = window.location.pathname.split("/");
+    return pathParts[1]; // Assumes the structure is /school1, /school2, etc.
   }
-
-  return "default";
+  return "default"; // Default config if no school ID is found
 };
 
-// Lazy initialization of Firebase
-let firebaseApp: FirebaseApp | null = null;
-
+// Helper to get Firebase app based on the school ID
 const getFirebaseApp = (): FirebaseApp => {
-  if (!firebaseApp) {
-    const schoolId = getSchoolIdFromPath();
-    const configKey = firebaseConfigs[schoolId] ? schoolId : "default";
-    const config = firebaseConfigs[configKey];
+  const schoolId = getSchoolIdFromPath();
+  const configKey = firebaseConfigs[schoolId] ? schoolId : "default"; // Fallback to default if school ID not found
+  const config = firebaseConfigs[configKey];
 
-    const existingApp = getApps().find((app) => app.name === configKey);
-    firebaseApp = existingApp || initializeApp(config, configKey);
-  }
-
-  return firebaseApp;
+  const existingApp = getApps().find((app) => app.name === configKey);
+  return existingApp || initializeApp(config, configKey);
 };
 
 // Export Firebase services dynamically
 const getFirebaseServices = () => {
   const app = getFirebaseApp();
   const auth = getAuth(app);
-  setPersistence(auth, browserLocalPersistence).catch((error) => {
-    console.error("Error setting persistence:", error);
-  });
-
   const db = getFirestore(app);
   const storage = getStorage(app);
-  const messaging = getMessaging(app);
 
-  // Register the service worker before requesting the token
-const registerServiceWorker = async () => {
-  if ("serviceWorker" in navigator) {
-    try {
-      const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-      console.log("Service Worker registered:", registration);
-      return registration;
-    } catch (error) {
-      console.error("Service Worker registration failed:", error);
-    }
-  }
-  return null;
-};
-  
-  // Request FCM Token
-  const requestFCMToken = async () => {
-    if (typeof window === "undefined") return null;
-  
-    if (!("Notification" in window)) {
-      console.error("This browser does not support notifications.");
-      return null;
-    }
-  
-    if (Notification.permission === "denied") {
-      console.warn("Notifications are blocked.");
-      return null;
-    }
-  
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        console.warn("User denied notification permission.");
-        return null;
-      }
-  
-      // Check if token exists
-      const existingToken = localStorage.getItem("fcmToken");
-      if (existingToken) return existingToken;
-  
-      const fcmToken = await getToken(messaging, {
-        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-      });
-  
-      if (fcmToken) {
-        console.log("FCM Token received:", fcmToken);
-  
-        // Store token in Firestore
-        const user = auth.currentUser;
-        if (user) {
-          const userRef = doc(db, "Users", user.uid);
-          await setDoc(userRef, { fcmToken }, { merge: true });
-        }
-  
-        // Save token in local storage
-        localStorage.setItem("fcmToken", fcmToken);
-        return fcmToken;
-      } else {
-        console.error("Failed to get FCM token.");
-        return null;
-      }
-    } catch (error) {
-      console.error("Error requesting FCM token:", error);
-      return null;
-    }
-  };
-  
-
-  // Listen for incoming messages
-  const onMessageListener = () => {
-    return new Promise((resolve) => {
-      onMessage(messaging, (payload) => {
-        console.log("Message received:", payload);
-        resolve(payload);
-      });
-    });
-  };
-
-  return { app, auth, db, storage, requestFCMToken, onMessageListener, registerServiceWorker };
+  return { app, auth, db, storage };
 };
 
 export { getFirebaseServices };

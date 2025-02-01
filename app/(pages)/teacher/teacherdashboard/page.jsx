@@ -1,3 +1,5 @@
+// // pages\teacher\teacherdashboard\page.jsx
+
 import React from 'react'
 import DashboardLayout from "@/components/DashboardLayout";
 import TeacherDashboard from '@/components/Teacher/TeacherDashboard'

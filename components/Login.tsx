@@ -1,3 +1,4 @@
+// /components/Login.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -12,11 +13,11 @@ import { AiOutlineApple } from "react-icons/ai";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, AuthError } from 'firebase/auth';
 import { getFirebaseServices } from '@/lib/firebaseConfig';
 import { doc, setDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
-const { auth, db, requestFCMToken } = getFirebaseServices();
+const { auth, db } = getFirebaseServices();
 import withAuthentication from '@/lib/withAuthentication';
 import { Eye, EyeOff } from 'lucide-react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-
+import { useFirebaseMessaging } from "@/hooks/useFirebaseMessaging";
 
 interface LoginProps {
   authUser: { uid: string; email: string; role: string; domain: string } | null;
@@ -29,6 +30,8 @@ const Login: React.FC<LoginProps> = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false); // Loading state
   const [showPassword, setShowPassword] = useState(false);
+
+  const { fcmToken } = useFirebaseMessaging();
 
   // Auto-login if credentials exist in localStorage
   // useEffect(() => {
@@ -49,11 +52,19 @@ const Login: React.FC<LoginProps> = () => {
     }
   }, []);
 
+  
+
   // Retry fetching FCM token if null
   const fetchFCMToken = async (retries = 3): Promise<string | null> => {
+    if (fcmToken) {
+      return fcmToken; // Return the token if it's available
+    }
+
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
-        const token = await requestFCMToken();
+        // If it's not available, request a new token
+        const token = fcmToken;  // Use fcmToken directly
+
         if (token) return token;
       } catch (error) {
         console.error(`FCM token fetch failed (attempt ${attempt + 1}):`, error);
@@ -63,6 +74,7 @@ const Login: React.FC<LoginProps> = () => {
     console.error("Failed to fetch FCM token after multiple attempts.");
     return null;
   };
+  
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
