@@ -1,3 +1,4 @@
+// /components/Login.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -16,7 +17,7 @@ const { auth, db } = getFirebaseServices();
 import withAuthentication from '@/lib/withAuthentication';
 import { Eye, EyeOff } from 'lucide-react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-
+import { useFirebaseMessaging } from "@/hooks/useFirebaseMessaging";
 
 interface LoginProps {
   authUser: { uid: string; email: string; role: string; domain: string } | null;
@@ -29,6 +30,8 @@ const Login: React.FC<LoginProps> = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false); // Loading state
   const [showPassword, setShowPassword] = useState(false);
+
+  const { fcmToken } = useFirebaseMessaging();
 
   // Auto-login if credentials exist in localStorage
   // useEffect(() => {
@@ -49,6 +52,30 @@ const Login: React.FC<LoginProps> = () => {
     }
   }, []);
 
+  
+
+  // Retry fetching FCM token if null
+  const fetchFCMToken = async (retries = 3): Promise<string | null> => {
+    if (fcmToken) {
+      return fcmToken; // Return the token if it's available
+    }
+
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        // If it's not available, request a new token
+        const token = fcmToken;  // Use fcmToken directly
+
+        if (token) return token;
+      } catch (error) {
+        console.error(`FCM token fetch failed (attempt ${attempt + 1}):`, error);
+      }
+      await new Promise((res) => setTimeout(res, 2000)); // Wait before retrying
+    }
+    console.error("Failed to fetch FCM token after multiple attempts.");
+    return null;
+  };
+  
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); // Start loading
@@ -63,7 +90,11 @@ const Login: React.FC<LoginProps> = () => {
       if (role === 'admin' || role === 'teacher' || role === 'superAdmin' || role === 'student') {
         console.log('User logged in successfully');
         const userId = userCredential.user.uid;
-        const fcmToken = 'dummy_fcm_token'; // Replace with actual FCM token if available
+        
+        // Fetch FCM Token
+        const fcmToken = await fetchFCMToken();
+        if (!fcmToken) throw new Error("Unable to retrieve FCM token.");
+
 
         // Add user to Firestore LoggedInUsers collection
         const loggedInDoc = doc(db, 'LoggedInUsers', userId);
