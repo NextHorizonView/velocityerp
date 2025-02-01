@@ -44,8 +44,16 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
       return "Enquiry - Business";
     } else if (pathname === "/students") {
       return "Students";
-    } else if (pathname === "/teacher") {
+    } else if (pathname && pathname.startsWith("/editstudent/")) {
+      return "Edit Student";
+    }
+    else if (pathname === "/teacher") {
       return "Teachers";
+    } else if (pathname && pathname.startsWith("/editteacher/")) {
+      return "Edit Teacher";
+    } else if (pathname === "/parents") {
+    } else if (pathname && pathname.startsWith("/teacherform")) {
+      return "Add Teacher";
     } else if (pathname === "/parents") {
       return "Parents";
     } else if (pathname === "/notice") {
@@ -67,20 +75,26 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
     } else if (pathname === "/editstudents") {
       return "Update Student";
     }
-      else if (pathname === '/studentform'){
-        return "Add Student";
+    else if (pathname === '/studentform') {
+      return "Add Student";
     }
-    else if (pathname === '/addsubject'){
+    else if (pathname === '/addsubject') {
       return "Add Subject";
     }
-    else if (pathname === '/editsubject'){
+    else if (pathname && pathname.startsWith("/editsubject/")) {
       return "Edit Subject";
     }
-    else if (pathname === '/class'){
+    else if (pathname === '/class') {
       return 'Class'
     }
-    else if (pathname === '/addclass'){
+    else if (pathname === '/addclass') {
       return 'Add Class'
+    }
+    else if (pathname === '/attendance/adminattendance') {
+      return 'Attendance'
+    }
+    else if (pathname && pathname.startsWith("/editclass/")) {
+      return "Edit Class";
     }
 
     return 'Dashboard'
@@ -133,7 +147,7 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ isCollapsed }) => {
           </button>
         </div>
 
-        
+
 
         {/* Right side */}
         <div className="flex items-center gap-4 lg:gap-10">

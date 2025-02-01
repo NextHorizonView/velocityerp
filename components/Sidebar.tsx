@@ -15,6 +15,7 @@ import {
   RiUserAddLine,
   RiLogoutBoxLine,
 } from "react-icons/ri";
+import { Megaphone } from "lucide-react";
 
 import { MdClass, MdOutlineSubject } from "react-icons/md";
 import Image from "next/image";
@@ -166,6 +167,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     { icon: <MdClass size={20} />, label: "Class", path: "/class" },
     { icon: <RiFileListLine size={20} />, label: "Exam", path: "/exam" },
     { icon: <RiNotificationLine size={20} />, label: "Notice", path: "/notice" },
+    { icon: <Megaphone size={20} />, label: "Attendance", path: "/attendance/adminattendance" },
   ];
 
   // Filter menu items based on permissions
@@ -213,7 +215,7 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
               isActive =
                 pathname === "/subjects" ||
                 pathname === "/addsubject" ||
-                pathname === "/editsubject";
+                pathname.startsWith("/editsubject/");
             }
             // Custom logic for "Students"
             else if (item.label === "Students") {

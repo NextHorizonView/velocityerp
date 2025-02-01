@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { getFirebaseServices } from '@/lib/firebaseConfig';
 
 const { db } = getFirebaseServices();
-import { doc, getDoc, serverTimestamp, Timestamp, updateDoc } from "firebase/firestore";
+import {  doc, getDoc, serverTimestamp, Timestamp, updateDoc } from "firebase/firestore";
 import FadeLoader from "../Loader";
 import { AiOutlineClose, AiOutlineSearch } from "react-icons/ai";
 import { collection, getDocs } from "firebase/firestore";
@@ -24,6 +24,11 @@ interface Teacher {
   position?: string;
 }
 
+interface Student {
+  StudentId: string;
+  StudentName: string;
+}
+
 interface ClassTeacherMap {
   id: string;
   "First Name": string;
@@ -32,24 +37,25 @@ interface ClassTeacherMap {
   City: string;
 }
 
-
 const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
-  // console.log(classid);
-
   const router = useRouter();
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [selectedTeachers, setSelectedTeachers] = useState<Teacher[]>([]);
+  const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherPosition, setNewTeacherPosition] = useState("");
+  const [newStudentName, setNewStudentName] = useState("");
   const [Teachers, setTeachers] = useState<Teacher>({ id: "", name: "", position: "" });
   const [classData, setClassData] = useState<{
     ClassId: string;
     ClassName: string;
     ClassDivision: string;
     ClassTeacherId: ClassTeacherMap[];
+    ClassStudentList: Student[];
     ClassCreatedAt?: Timestamp;
     ClassYear?: string;
-  }>({ ClassId: "", ClassName: "", ClassDivision: "", ClassYear: "", ClassTeacherId: [] });
+  }>({ ClassId: "", ClassName: "", ClassDivision: "", ClassYear: "", ClassTeacherId: [], ClassStudentList: [] });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -58,7 +64,6 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
         setLoading(true);
         try {
           const classData = await fetchClassDataById(classid);
-          // console.log(classData, "Fetched classData Data");
           const teacherIds = classData.ClassTeacherId || [];
           const teacherPromises = teacherIds.map((teacherId: string) =>
             getDoc(doc(db, "teachers", teacherId))
@@ -69,29 +74,22 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
             ...doc.data(),
           }));
 
+          // Fetch students from the StudentsList array
+          const studentsList = classData.StudentsList || [];
+          const students = studentsList.map((student: { StudentId: string, StudentName: string }) => ({
+            StudentId: student.StudentId,
+            StudentName: student.StudentName,
+          }));
+
           setClassData({
             ClassId: classid,
             ClassName: classData.ClassName || "",
             ClassDivision: classData.ClassDivision || "",
             ClassYear: classData.ClassYear || "",
-            // ClassTeacherId:
-            //   classData.ClassTeacherId.map(
-            //     (teacher: {
-            //       id: string;
-            //       name: string;
-            //       position: string;
-            //     }) => ({
-            //       id: teacher.id || "",
-            //       name: teacher.name,
-            //       position: teacher.position,
-            //     })
-            //   ) || [],
             ClassTeacherId: teachers,
+            ClassStudentList: students, // Set the fetched students
             ClassCreatedAt: classData.ClassCreatedAt || "",
-
           });
-          // console.log("Class Dataaa:", classData);
-
         } catch (error) {
           console.error("Error fetching class data:", error);
         } finally {
@@ -104,8 +102,6 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
   }, [classid]);
 
   useEffect(() => {
-    // console.log("Selected class id:", classid);
-
     const fetchTeachers = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "teachers"));
@@ -114,16 +110,30 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
           name: doc.data()["First Name"],
           position: doc.data()["Position"],
         }));
-
+        console.log("Teacher to add:", Teachers);
         setSelectedTeachers(fetchedTeachers);
       } catch (error) {
         console.error("Error fetching teachers:", error);
       }
     };
 
-    fetchTeachers();
-  }, []);
+    const fetchStudents = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "students"));
+        const fetchedStudents = querySnapshot.docs.map((doc) => ({
+          StudentId: doc.id, // Use StudentId
+          StudentName: doc.data()["First Name"], // Use the `name` field directly
+        }));
+        console.log("Fetched Students:", fetchedStudents);
+        setSelectedStudents(fetchedStudents);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      }
+    };
 
+    fetchTeachers();
+    fetchStudents();
+  }, []);
 
   const handleRemoveNewTeacher = (index: number) => {
     setSelectedTeachers((prevSelectedTeachers) =>
@@ -138,6 +148,12 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
     }));
   };
 
+  const handleRemoveStudent = (index: number | string) => {
+    setClassData((prevClassData) => ({
+      ...prevClassData,
+      ClassStudentList: prevClassData.ClassStudentList.filter((_, i) => i !== index),
+    }));
+  };
 
   const handleAddTeacher = async () => {
     if (!newTeacherName || !newTeacherPosition) {
@@ -159,16 +175,11 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
       Position: newTeacherPosition || "Default Position",
     });
 
-
-    // Update the local state for the teacher
     setTeachers({
       id: teacherToAdd.id,
       name: teacherToAdd.name,
       position: newTeacherPosition || "Default Position",
     });
-
-    console.log("Teacher to add:", Teachers);
-
 
     setClassData((prevClassData) => ({
       ...prevClassData,
@@ -195,6 +206,35 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
     setIsAddTeacherModalOpen(false);
   };
 
+  const handleAddStudent = async () => {
+    if (!newStudentName) {
+      alert("Please select a student!");
+      return;
+    }
+  
+    const studentToAdd = selectedStudents.find(
+      (student) => student.StudentName === newStudentName
+    );
+  
+    if (!studentToAdd) {
+      alert("Selected student not found!");
+      return;
+    }
+  
+    setClassData((prevClassData) => ({
+      ...prevClassData,
+      ClassStudentList: [
+        ...prevClassData.ClassStudentList,
+        {
+          StudentId: studentToAdd.StudentId, // Use StudentId
+          StudentName: studentToAdd.StudentName, // Use StudentName
+        },
+      ],
+    }));
+  
+    setNewStudentName("");
+    setIsAddStudentModalOpen(false);
+  };
   const handleUpdate = async () => {
     try {
       setLoading(true);
@@ -206,42 +246,31 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
       const classesRef = doc(db, "classes", classid?.toString());
       const docSnapshot = await getDoc(classesRef);
 
-
-
       if (!docSnapshot.exists()) {
         throw new Error("Class not found!");
       }
 
       const existingData = docSnapshot.data();
 
-      // Ensure existingData and classData are properly defined
-      // console.log("Existing Data:", existingData);
-      // console.log("Class Data:", classData);
-
-      // Ensure selectedTeachers is an array
-      if (!Array.isArray(selectedTeachers)) {
-        throw new Error("selectedTeachers is not an array");
-      }
       const classTeacherIds = classData.ClassTeacherId.map(teacher => teacher.id);
-
-
+      const classStudentList = classData.ClassStudentList.map(student => ({
+        StudentId: student.StudentId,
+        StudentName: student.StudentName,
+      }));
 
       const updatedClassData = {
         ClassName: classData.ClassName || existingData?.ClassName || "",
         ClassDivision: classData.ClassDivision || existingData?.ClassDivision || "",
         ClassYear: classData.ClassYear || existingData?.ClassYear || "",
-
         ClassTeacherId: classTeacherIds,
+        StudentsList: classStudentList, // Update StudentsList
         ClassCreatedAt: existingData?.ClassCreatedAt,
         ClassUpdatedAt: serverTimestamp(),
       };
 
-      // console.log("Updated Class Data:", updatedClassData);
-
       await updateDoc(classesRef, updatedClassData);
 
-
-      setClassData({ ClassId: classid, ClassName: "", ClassDivision: "", ClassYear: "", ClassTeacherId: [] });
+      setClassData({ ClassId: classid, ClassName: "", ClassDivision: "", ClassYear: "", ClassTeacherId: [], ClassStudentList: [] });
       router.push("/class");
 
       alert("Class updated successfully!");
@@ -253,14 +282,13 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
     }
   };
 
-
-
   const filteredTeachers = selectedTeachers.filter((teacher) =>
     teacher?.name?.toLowerCase().includes(newTeacherName?.toLowerCase() || "")
   );
 
-
-
+  const filteredStudents = selectedStudents.filter((student) =>
+    student?.StudentName?.toLowerCase().includes(newStudentName?.toLowerCase() || "")
+  );
 
   return (
     <>
@@ -336,7 +364,7 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
             type="text"
             id="classYear"
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
-            placeholder="Enter Class Name"
+            placeholder="Enter Class Year"
             value={classData.ClassYear}
             onChange={(e) =>
               setClassData({ ...classData, ClassYear: e.target.value })
@@ -440,6 +468,51 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
             </>
           )}
         </div>
+
+        {/* Class students section */}
+        <div className="mb-6 px-6 pt-11">
+          <div className="flex items-center space-x-3 mb-4">
+            <h3 className="text-lg font-medium text-gray-700">
+              Class Students
+            </h3>
+            <button
+              className="bg-[#576086] text-white rounded-md text-xs p-1 px-5 hover:bg-[#414d6b] focus:outline-none"
+              onClick={() => setIsAddStudentModalOpen(true)}
+            >
+              Add Student
+            </button>
+          </div>
+
+          <table className="w-full text-left border-collapse">
+            <thead></thead>
+            <tbody>
+              {classData.ClassStudentList.map((student, index) => (
+                <tr key={index} className="border-b hover:bg-gray-100">
+                  <td className="p-3">
+                    <div className="flex items-center text-gray-500">
+                      <TbGridDots size={20} />
+                    </div>
+                  </td>
+                  <td className="p-3 flex items-center space-x-2">
+                    <AiOutlineUser size={20} className="text-gray-500" />
+                    <span className="font-medium text-gray-700">
+                      {student.StudentName} {/* Use StudentName */}
+                    </span>
+                  </td>
+                  <td className="p-3">
+                    <button
+                      className="text-gray-500 hover:text-gray-700 focus:outline-none m-2"
+                      onClick={() => handleRemoveStudent(index)}
+                    >
+                      <AiOutlineClose size={20} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
         {isAddTeacherModalOpen && (
           <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-10">
             <div className="bg-white p-6 rounded-md w-full max-w-md">
@@ -545,6 +618,99 @@ const EditClass: React.FC<EditClassFormProps> = ({ classid }) => {
             </div>
           </div>
         )}
+
+{isAddStudentModalOpen && (
+  <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-10">
+    <div className="bg-white p-6 rounded-md w-full max-w-md">
+      {/* Modal Header */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-gray-700">
+          Add Student
+        </h2>
+        <button
+          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          onClick={() => setIsAddStudentModalOpen(false)}
+        >
+          <AiOutlineClose size={20} />
+        </button>
+      </div>
+
+      {/* Search Input */}
+      <div className="relative mb-6">
+        <AiOutlineSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500" />
+        <input
+          type="text"
+          className="w-full px-10 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#576086] focus:border-[#576086]"
+          placeholder="Find Student"
+          value={newStudentName}
+          onChange={(e) => setNewStudentName(e.target.value)}
+        />
+      </div>
+
+      {newStudentName.length > 0 && filteredStudents.length > 0 ? (
+        <>
+          <p className="font-medium text-gray-700 mb-2">
+            Select a Student:
+          </p>
+          <div className="mb-4 bg-gray-50 p-1 rounded-lg shadow max-h-52 overflow-scroll overflow-x-hidden">
+            {filteredStudents.map((student) => (
+              <div
+                key={student.StudentId} // Use StudentId as the key
+                className="cursor-pointer hover:bg-gray-200 bg-white p-2 m-2 rounded-md"
+                onClick={() => setNewStudentName(student.StudentName)}
+              >
+                {student.StudentName} {/* Use StudentName */}
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="font-medium text-gray-700 mb-2 bg-gray-50 p-2 rounded-full text-center">
+          Sorry, No student found Named = &quot;{`${newStudentName}`}&quot;
+        </p>
+      )}
+
+      {/* Add Student Form */}
+      <div className="mb-6">
+        <button
+          className="bg-[#576086] mx-auto my-5 text-white px-4 py-2 rounded-md hover:bg-[#414d6b] focus:outline-none"
+          onClick={handleAddStudent}
+        >
+          Add Student
+        </button>
+      </div>
+
+      {/* Selected Student List */}
+      <div className="space-y-4 max-h-44 overflow-scroll overflow-x-hidden">
+        {selectedStudents.map((student, index) => (
+          <div
+            key={index}
+            className="p-4 bg-gray-50 rounded-lg shadow-sm flex items-center justify-between"
+          >
+            <div className="flex items-center space-x-4">
+              <AiOutlineUser size={28} className="text-gray-500" />
+              <div>
+                <p className="font-medium text-gray-700">
+                  {student.StudentName}
+                </p>
+              </div>
+            </div>
+            <button
+              className="text-gray-500 hover:text-gray-700 focus:outline-none"
+              onClick={() => {
+                setSelectedStudents((prev) =>
+                  prev.filter((_, i) => i !== index)
+                );
+              }}
+            >
+              <AiOutlineClose size={20} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
 
         <div>
           <button
