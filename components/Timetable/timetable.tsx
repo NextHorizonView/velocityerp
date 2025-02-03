@@ -118,18 +118,18 @@ const TimeTable = () => {
     return checkIndex >= startIndex && checkIndex < startIndex + width;
   };
 
-  const getAvailableSlots = (targetId: string, requiredWidth: number) => {
-    const [targetDay, targetTimeIndex] = targetId.split('-');
-    const timeIndex = parseInt(targetTimeIndex);
+  // const getAvailableSlots = (targetId: string, requiredWidth: number) => {
+  //   const [targetDay, targetTimeIndex] = targetId.split('-');
+  //   const timeIndex = parseInt(targetTimeIndex);
 
-    for (let i = 0; i < requiredWidth; i++) {
-      const checkId = `${targetDay}-${timeIndex + i}`;
-      if (!grid[checkId] || (grid[checkId].content && grid[checkId].width !== 0)) {
-        return false;
-      }
-    }
-    return true;
-  };
+  //   for (let i = 0; i < requiredWidth; i++) {
+  //     const checkId = `${targetDay}-${timeIndex + i}`;
+  //     if (!grid[checkId] || (grid[checkId].content && grid[checkId].width !== 0)) {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // };
 
   const handleDrop = (targetId: string) => {
     if (!draggedId || !isEditMode) return;
@@ -269,7 +269,7 @@ const TimeTable = () => {
 
     const [firstId, ...otherIds] = sortedCells;
     const firstCell = grid[firstId];
-    const allEmpty = sortedCells.every(cellId => !grid[cellId].content);
+    // const allEmpty = sortedCells.every(cellId => !grid[cellId].content);
 
     setGrid(prev => {
       const newGrid = { ...prev };
