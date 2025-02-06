@@ -238,6 +238,13 @@ const Sidebar: FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                 pathname === "/addclass" ||
                 pathname.startsWith("/editclass/");
             }
+           
+              else if (item.label === "Attendance") {
+                isActive =
+                  pathname === "/attendance" ||
+                  pathname.startsWith("/attendance/") 
+                  // pathname.startsWith("/attendance/adminadttence");
+            }
             // Default logic for other menu items
             else {
               isActive = pathname === item.path;
