@@ -1,4 +1,4 @@
-// // components/AttendanceMarkingPage.tsx
+// components/AttendanceMarkingPage.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -11,15 +11,16 @@ interface Student {
   status: "present" | "absent" | "leave";
 }
 interface StudentData {
-    name: string;
-    status: string;
-  }
+  name: string;
+  status: string;
+}
 export default function AttendanceMarkingPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false); // Track save state
-  const [selectAll, setSelectAll] = useState(false); // Track select all state
+  const [selectedStatus, setSelectedStatus] = useState<"present" | "absent" | null>(null); // Track the selected status
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set()); // Track selected students
 
   const searchParams = useSearchParams();
   const classId = searchParams?.get("classId") ?? "";
@@ -86,7 +87,6 @@ export default function AttendanceMarkingPage() {
         student.uid === uid ? { ...student, status: newStatus } : student
       )
     );
-    updateSelectAll();
   };
 
   const getStatusColor = (status: string) => {
@@ -141,42 +141,31 @@ export default function AttendanceMarkingPage() {
 
   // Handle Select All
   const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    setStudents((prevStudents) =>
-      prevStudents.map((student) => ({
-        ...student,
-        status: checked ? "present" : "absent",
-      }))
-    );
+    if (checked) {
+      setSelectedStudents(new Set(students.map((student) => student.uid)));
+    } else {
+      setSelectedStudents(new Set());
+    }
   };
 
   // Handle Absent/Present buttons
-  const handleSetAllStatus = (status: "present" | "absent") => {
-    handleSelectAll(true);
-    setStudents((prevStudents) =>
-      prevStudents.map((student) => ({
-        ...student,
-        status,
-      }))
-    );
+  const handleSetStatus = (status: "present" | "absent") => {
+    setSelectedStatus(status);
   };
 
-  // Update Select All based on students' status
-  const updateSelectAll = () => {
-    const allPresent = students.every(
-      (student) => student.status === "present"
-    );
-    const allAbsent = students.every(
-      (student) => student.status === "absent"
-    );
-    setSelectAll(allPresent || allAbsent);
-  };
+  // Apply selected status to selected students
+  useEffect(() => {
+    if (selectedStatus !== null) {
+      selectedStudents.forEach((uid) => {
+        handleStatusChange(uid, selectedStatus);
+      });
+    }
+  }, [selectedStatus, selectedStudents]);
 
   if (loading) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto bg-gray-50">Loading...</div>
-    );
+    return <p>Loading attendance data...</p>;
   }
+  
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-50">
@@ -228,13 +217,13 @@ export default function AttendanceMarkingPage() {
             <div className="space-x-2">
               <button
                 className="px-4 py-1.5 rounded bg-red-50 text-red-500"
-                onClick={() => handleSetAllStatus("absent")}
+                onClick={() => handleSetStatus("absent")}
               >
                 Absent
               </button>
               <button
                 className="px-4 py-1.5 rounded bg-green-50 text-green-500"
-                onClick={() => handleSetAllStatus("present")}
+                onClick={() => handleSetStatus("present")}
               >
                 Present
               </button>
@@ -268,7 +257,7 @@ export default function AttendanceMarkingPage() {
               <input
                 type="checkbox"
                 className="rounded"
-                checked={selectAll}
+                checked={selectedStudents.size === students.length}
                 onChange={(e) => handleSelectAll(e.target.checked)}
               />
             </div>
@@ -285,23 +274,31 @@ export default function AttendanceMarkingPage() {
                 className={`px-4 py-4 flex justify-between items-center ${getStatusColor(
                   student.status
                 )}`}
+                onClick={() => {
+                  const newSelectedStudents = new Set(selectedStudents);
+                  if (newSelectedStudents.has(student.uid)) {
+                    newSelectedStudents.delete(student.uid);
+                  } else {
+                    newSelectedStudents.add(student.uid);
+                  }
+                  setSelectedStudents(newSelectedStudents);
+                }}
+                style={{ cursor: "pointer" }}
               >
                 <div className="flex items-center gap-8">
                   <span>{index + 1}</span>
                   <span>{student.name || "No Name"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="rounded"
-                    checked={selectAll || student.status === "present"}
-                    onChange={(e) =>
-                      handleStatusChange(
-                        student.uid,
-                        e.target.checked ? "present" : "absent"
-                      )
-                    }
-                  />
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      student.status === "present"
+                        ? "bg-green-400"
+                        : student.status === "absent"
+                        ? "bg-red-400"
+                        : "bg-gray-400"
+                    }`}
+                  ></div>
                 </div>
               </div>
             ))}

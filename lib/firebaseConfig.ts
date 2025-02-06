@@ -1,3 +1,4 @@
+// /lib/firebaseConfig.ts
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
